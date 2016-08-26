@@ -1,14 +1,8 @@
-from builtins import str
-from builtins import object
 import os
 import logging
 import datetime
 import time
 import re
-import tarfile
-import zipfile
-
-from biomaj.utils import Utils
 
 
 class _FakeLock(object):
@@ -25,6 +19,7 @@ class _FakeLock(object):
     def release(self):
         pass
 
+
 class DownloadInterface(object):
     '''
     Main interface that all downloaders must extend
@@ -38,7 +33,7 @@ class DownloadInterface(object):
         self.files_to_copy = []
         self.error = False
         self.credentials = None
-        #bank name
+        # bank name
         self.bank = None
         self.mkdir_lock = _FakeLock()
         self.kill_received = False
@@ -47,6 +42,7 @@ class DownloadInterface(object):
         self.timeout = 3600 * 24
         # Optional save target for single file downloaders
         self.save_as = None
+        self.logger = logging.getLogger('biomaj')
 
     def set_files_to_download(self, files):
         self.files_to_download = files
@@ -63,7 +59,6 @@ class DownloadInterface(object):
         self.proxy = proxy
         self.proxy_auth = proxy_auth
 
-
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.
@@ -79,7 +74,7 @@ class DownloadInterface(object):
         :param submatch: first call to match, or called from match
         :type submatch: bool
         '''
-        logging.debug('Download:File:RegExp:'+str(patterns))
+        self.logger.debug('Download:File:RegExp:' + str(patterns))
 
         if dir_list is None:
             dir_list = []
@@ -99,49 +94,47 @@ class DownloadInterface(object):
                     for rfile in file_list:
                         rfile['root'] = self.rootdir
                         if prefix != '':
-                            rfile['name'] = prefix + '/' +rfile['name']
+                            rfile['name'] = prefix + '/' + rfile['name']
                         self.files_to_download.append(rfile)
-                        logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     return
                 for direlt in dir_list:
                     subdir = direlt['name']
-                    logging.debug('Download:File:Subdir:Check:'+subdir)
+                    self.logger.debug('Download:File:Subdir:Check:' + subdir)
                     if pattern == '**/*':
-                        (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-                        self.match([pattern], subfile_list, subdirs_list, prefix+'/'+subdir, True)
+                        (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
+                        self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
                         for rfile in file_list:
                             if pattern == '**/*' or re.match(pattern, rfile['name']):
                                 rfile['root'] = self.rootdir
                                 if prefix != '':
-                                    rfile['name'] = prefix + '/' +rfile['name']
+                                    rfile['name'] = prefix + '/' + rfile['name']
                                 self.files_to_download.append(rfile)
-                                logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+                                self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     else:
                         if re.match(subdirs_pattern[0], subdir):
-                            logging.debug('Download:File:Subdir:Match:'+subdir)
+                            self.logger.debug('Download:File:Subdir:Match:' + subdir)
                             # subdir match the beginning of the pattern
                             # check match in subdir
-                            (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-                            self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix+'/'+subdir, True)
+                            (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
+                            self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix + '/' + subdir, True)
 
             else:
                 for rfile in file_list:
                     if re.match(pattern, rfile['name']):
                         rfile['root'] = self.rootdir
                         if prefix != '':
-                            rfile['name'] = prefix + '/' +rfile['name']
+                            rfile['name'] = prefix + '/' + rfile['name']
                         self.files_to_download.append(rfile)
-                        logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
-
-
 
     def set_permissions(self, file_path, file_info):
         '''
         Sets file attributes to remote ones
         '''
-        if 'year' in file_info and 'month' in file_info and 'day' in file_info:
+        if file_info['year'] and file_info['month'] and file_info['day']:
             ftime = datetime.date(file_info['year'], file_info['month'], file_info['day'])
             settime = time.mktime(ftime.timetuple())
             os.utime(file_path, (settime, settime))
@@ -177,7 +170,8 @@ class DownloadInterface(object):
         if len(new_or_modified_files) > 0:
             for dfile in self.files_to_download:
                 if index < len(new_or_modified_files) and \
-                  dfile['name'] == new_or_modified_files[index][0]:
+                        dfile['name'] == new_or_modified_files[index][0]:
+
                     new_files_to_download.append(dfile)
                     index += 1
                 else:
@@ -197,7 +191,6 @@ class DownloadInterface(object):
                     new_files_to_download.append(dfile)
 
         self.files_to_download = new_files_to_download
-
 
     def download(self, local_dir):
         '''

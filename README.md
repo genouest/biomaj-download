@@ -10,3 +10,7 @@ Messages go through RabbitMQ (to be installed).
 To compile protobuf, in biomaj_download/message:
 
 protoc --python_out=. message.proto
+
+# Development
+
+    flake8  biomaj_download/*.py biomaj_download/download

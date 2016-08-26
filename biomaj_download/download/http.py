@@ -1,20 +1,16 @@
-from future import standard_library
-standard_library.install_aliases()
-import logging
 import pycurl
-import io
 import re
-import os
 import hashlib
 import datetime
 
-from biomaj.utils import Utils
+from biomaj_download.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
 
 try:
     from io import BytesIO
 except ImportError:
     from StringIO import StringIO as BytesIO
+
 
 class HTTPDownload(FTPDownload):
     '''
@@ -34,18 +30,17 @@ class HTTPDownload(FTPDownload):
         FTPDownload.__init__(self, protocol, host, rootdir)
         self.http_parse = http_parse
 
-
     def list(self, directory=''):
         '''
         List FTP directory
 
         :return: tuple of file and dirs in current directory with details
         '''
-        logging.debug('Download:List:'+self.url + self.rootdir + directory)
-        #self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+        self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
+
         try:
             self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
-        except Exception as a:
+        except Exception:
             self.crl.setopt(pycurl.URL, (self.url + self.rootdir + directory).encode('ascii', 'ignore'))
 
         if self.proxy is not None:
@@ -90,7 +85,7 @@ class HTTPDownload(FTPDownload):
         rfiles = []
         rdirs = []
 
-        dirs = re.findall(self.http_parse['dir_line'], result)
+        dirs = re.findall(self.http_parse.dir_line, result)
         if dirs is not None and len(dirs) > 0:
             for founddir in dirs:
                 rfile = {}
@@ -98,38 +93,38 @@ class HTTPDownload(FTPDownload):
                 rfile['group'] = ''
                 rfile['user'] = ''
                 rfile['size'] = '0'
-                date = founddir[self.http_parse['dir_date'] - 1]
+                date = founddir[self.http_parse.dir_date - 1]
                 dirdate = date.split()
                 parts = dirdate[0].split('-')
-                #19-Jul-2014 13:02
+                # 19-Jul-2014 13:02
                 rfile['month'] = Utils.month_to_num(parts[1])
                 rfile['day'] = parts[0]
                 rfile['year'] = parts[2]
-                rfile['name'] = founddir[self.http_parse['dir_name'] - 1]
+                rfile['name'] = founddir[self.http_parse.dir_name - 1]
                 rdirs.append(rfile)
 
-        files = re.findall(self.http_parse['file_line'], result)
+        files = re.findall(self.http_parse.file_line, result)
         if files is not None and len(files) > 0:
             for foundfile in files:
                 rfile = {}
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
-                rfile['size'] = foundfile[self.http_parse['file_size'] - 1]
-                date = foundfile[self.http_parse['file_date'] - 1]
-                if self.http_parse['file_date_format']:
-                    date_object = datetime.datetime.strptime(date, self.http_parse['file_date_format'].replace('%%', '%'))
+                rfile['size'] = foundfile[self.http_parse.file_size - 1]
+                date = foundfile[self.http_parse.file_date - 1]
+                if self.http_parse.file_date_format:
+                    date_object = datetime.datetime.strptime(date, self.http_parse.file_date_format.replace('%%', '%'))
                     rfile['month'] = date_object.month
                     rfile['day'] = date_object.day
                     rfile['year'] = date_object.year
                 else:
                     dirdate = date.split()
                     parts = dirdate[0].split('-')
-                    #19-Jul-2014 13:02
+                    # 19-Jul-2014 13:02
                     rfile['month'] = Utils.month_to_num(parts[1])
                     rfile['day'] = parts[0]
                     rfile['year'] = parts[2]
-                rfile['name'] = foundfile[ self.http_parse['file_name'] - 1]
+                rfile['name'] = foundfile[self.http_parse.file_name - 1]
                 filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                 rfile['hash'] = hashlib.md5(filehash).hexdigest()
                 rfiles.append(rfile)

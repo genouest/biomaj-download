@@ -1,23 +1,19 @@
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
 import datetime
-import logging
 import pycurl
-import io
 import os
 import re
-import urllib.request, urllib.parse, urllib.error
 import hashlib
+import urllib
 
 from biomaj_download.download.interface import DownloadInterface
 from biomaj_download.download.ftp import FTPDownload
-from biomaj.utils import Utils
+from biomaj_download.utils import Utils
 
 try:
     from io import BytesIO
 except ImportError:
     from StringIO import StringIO as BytesIO
+
 
 class MultiDownload(DownloadInterface):
     '''
@@ -35,7 +31,6 @@ class MultiDownload(DownloadInterface):
         self.downloaders += downloaders
         for d in downloaders:
             self.files_to_download += d.files_to_download
-
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         if dir_list is None:
@@ -124,7 +119,6 @@ class DirectFTPDownload(FTPDownload):
         self.files_to_download = file_list
 
 
-
 class DirectHttpDownload(DirectFTPDownload):
 
     def __init__(self, protocol, host, rootdir=''):
@@ -147,12 +141,12 @@ class DirectHttpDownload(DirectFTPDownload):
         :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        logging.debug('DirectHTTP:Download')
+        self.logger.debug('DirectHTTP:Download')
         nb_files = len(self.files_to_download)
 
         if nb_files > 1:
             self.files_to_download = []
-            logging.error('DirectHTTP accepts only 1 file')
+            self.logger.error('DirectHTTP accepts only 1 file')
 
         cur_files = 1
 
@@ -171,19 +165,10 @@ class DirectHttpDownload(DirectFTPDownload):
             # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
-            '''
-            self.mkdir_lock.acquire()
-            try:
-                if not os.path.exists(file_dir):
-                    os.makedirs(file_dir)
-            except Exception as e:
-                logging.error(e)
-            finally:
-                self.mkdir_lock.release() # release lock, no matter what
-            '''
-            logging.debug('DirectHTTP:Download:Progress'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name']+', save as '+self.save_as)
+
+            self.logger.debug('DirectHTTP:Download:Progress' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'] + ', save as ' + self.save_as)
             cur_files += 1
-            if not 'url' in rfile:
+            if 'url' not in rfile:
                 rfile['url'] = self.url
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
@@ -204,16 +189,16 @@ class DirectHttpDownload(DirectFTPDownload):
 
                 curl.setopt(pycurl.POSTFIELDS, postfields)
                 try:
-                    curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
-                except Exception as a:
-                    curl.setopt(pycurl.URL, (rfile['url']+rfile['root']+'/'+rfile['name']).encode('ascii', 'ignore'))
-                #curl.setopt(pycurl.URL, rfile['url']+rfile['root']+'/'+rfile['name'])
+                    curl.setopt(pycurl.URL, rfile['url'] + rfile['root'] + '/' + rfile['name'])
+                except Exception:
+                    curl.setopt(pycurl.URL, (rfile['url'] + rfile['root'] + '/' + rfile['name']).encode('ascii', 'ignore'))
+
             else:
-                url = rfile['url']+rfile['root']+'/'+rfile['name']+'?'+urllib.parse.urlencode(self.param)
-                #curl.setopt(pycurl.URL, url)
+                url = rfile['url'] + rfile['root'] + '/' + rfile['name'] + '?' + urllib.parse.urlencode(self.param)
+
                 try:
                     curl.setopt(pycurl.URL, url)
-                except Exception as a:
+                except Exception:
                     curl.setopt(pycurl.URL, url.encode('ascii', 'ignore'))
 
             curl.setopt(pycurl.WRITEDATA, fp)
@@ -221,7 +206,7 @@ class DirectHttpDownload(DirectFTPDownload):
 
             curl.close()
             fp.close()
-            logging.debug('downloaded!')
+            self.logger.debug('downloaded!')
             rfile['name'] = self.save_as
             self.set_permissions(file_path, rfile)
         return self.files_to_download
@@ -275,10 +260,10 @@ class DirectHttpDownload(DirectFTPDownload):
 
             self.crl.setopt(pycurl.NOBODY, True)
             try:
-                self.crl.setopt(pycurl.URL, self.url+self.rootdir+rfile['name'])
-            except Exception as a:
-                self.crl.setopt(pycurl.URL, (self.url+self.rootdir+rfile['name']).encode('ascii', 'ignore'))
-            #self.crl.setopt(pycurl.URL, self.url+self.rootdir+file['name'])
+                self.crl.setopt(pycurl.URL, self.url + self.rootdir + rfile['name'])
+            except Exception:
+                self.crl.setopt(pycurl.URL, (self.url + self.rootdir + rfile['name']).encode('ascii', 'ignore'))
+
             output = BytesIO()
             # lets assign this buffer to pycurl object
             self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
@@ -316,7 +301,7 @@ class DirectHttpDownload(DirectFTPDownload):
                         rfile['month'] = Utils.month_to_num(res.group(3))
                         rfile['year'] = res.group(4)
                         continue
-                    #Sunday, 06-Nov-94
+                    # Sunday, 06-Nov-94
                     res = re.match('(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
@@ -324,7 +309,7 @@ class DirectHttpDownload(DirectFTPDownload):
                         rfile['month'] = Utils.month_to_num(res.group(3))
                         rfile['year'] = str(2000 + int(res.group(4)))
                         continue
-                    #Sun Nov  6 08:49:37 1994
+                    # Sun Nov  6 08:49:37 1994
                     res = re.match('(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()

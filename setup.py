@@ -44,11 +44,9 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': ['nose',
-                         'pymongo==3.2',
                          'pycurl',
                          'mock',
                          'py-bcrypt',
-                         'future',
                          'pika',
                          'redis',
                          'PyYAML'

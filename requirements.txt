@@ -2,7 +2,6 @@ mock
 nose
 pycurl
 py-bcrypt
-future
 pika
 redis
 PyYAML

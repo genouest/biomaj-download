@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='message.proto',
   package='biomaj',
-  serialized_pb=_b('\n\rmessage.proto\x12\x06\x62iomaj\"\x83\x08\n\x0c\x44ownloadFile\x12\x0c\n\x04\x62\x61nk\x18\x01 \x02(\t\x12\x0f\n\x07session\x18\x02 \x02(\t\x12\x11\n\tlocal_dir\x18\x03 \x02(\t\x12\x18\n\x10timeout_download\x18\x04 \x01(\x05\x12\x34\n\x0bremote_file\x18\x05 \x02(\x0b\x32\x1f.biomaj.DownloadFile.RemoteFile\x12)\n\x05proxy\x18\x06 \x01(\x0b\x32\x1a.biomaj.DownloadFile.Proxy\x1a$\n\x05Param\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\x1a\xa7\x01\n\tHttpParse\x12\x10\n\x08\x64ir_line\x18\x01 \x02(\t\x12\x11\n\tfile_line\x18\x02 \x02(\t\x12\x10\n\x08\x64ir_name\x18\x03 \x02(\x05\x12\x10\n\x08\x64ir_date\x18\x04 \x02(\x05\x12\x11\n\tfile_name\x18\x05 \x02(\x05\x12\x11\n\tfile_date\x18\x06 \x02(\x05\x12\x18\n\x10\x66ile_date_format\x18\x07 \x01(\t\x12\x11\n\tfile_size\x18\x08 \x02(\x05\x1aj\n\x04\x46ile\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\x0c\n\x04root\x18\x02 \x01(\t\x12\x0f\n\x07save_as\x18\x03 \x01(\t\x12\x0b\n\x03url\x18\x04 \x01(\t\x12\x0c\n\x04year\x18\x05 \x01(\x05\x12\r\n\x05month\x18\x06 \x01(\x05\x12\x0b\n\x03\x64\x61y\x18\x07 \x01(\x05\x1a\xcc\x02\n\nRemoteFile\x12(\n\x05\x66iles\x18\x01 \x03(\x0b\x32\x19.biomaj.DownloadFile.File\x12/\n\x08protocol\x18\x02 \x02(\x0e\x32\x1d.biomaj.DownloadFile.Protocol\x12\x0e\n\x06server\x18\x03 \x02(\t\x12\x12\n\nremote_dir\x18\x04 \x02(\t\x12\x0f\n\x07save_as\x18\x05 \x01(\t\x12)\n\x05param\x18\x06 \x03(\x0b\x32\x1a.biomaj.DownloadFile.Param\x12\x32\n\nhttp_parse\x18\x07 \x01(\x0b\x32\x1e.biomaj.DownloadFile.HttpParse\x12:\n\x0bhttp_method\x18\x08 \x01(\x0e\x32 .biomaj.DownloadFile.HTTP_METHOD:\x03GET\x12\x13\n\x0b\x63redentials\x18\t \x01(\t\x1a*\n\x05Proxy\x12\r\n\x05proxy\x18\x01 \x02(\t\x12\x12\n\nproxy_auth\x18\x02 \x01(\t\"m\n\x08Protocol\x12\x07\n\x03\x46TP\x10\x00\x12\x08\n\x04SFTP\x10\x01\x12\x08\n\x04HTTP\x10\x02\x12\t\n\x05HTTPS\x10\x03\x12\r\n\tDIRECTFTP\x10\x04\x12\x0e\n\nDIRECTHTTP\x10\x05\x12\x0f\n\x0b\x44IRECTHTTPS\x10\x06\x12\t\n\x05LOCAL\x10\x07\" \n\x0bHTTP_METHOD\x12\x07\n\x03GET\x10\x00\x12\x08\n\x04POST\x10\x01')
+  serialized_pb=_b('\n\rmessage.proto\x12\x06\x62iomaj\"\xf0\x01\n\x04\x46ile\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\x0c\n\x04root\x18\x02 \x01(\t\x12\x0f\n\x07save_as\x18\x03 \x01(\t\x12\x0b\n\x03url\x18\x04 \x01(\t\x12\'\n\x08metadata\x18\x05 \x01(\x0b\x32\x15.biomaj.File.MetaData\x1a\x84\x01\n\x08MetaData\x12\x13\n\x0bpermissions\x18\x01 \x01(\t\x12\r\n\x05group\x18\x02 \x01(\t\x12\x0c\n\x04size\x18\x03 \x01(\x05\x12\x0c\n\x04hash\x18\x04 \x01(\t\x12\x0c\n\x04year\x18\x05 \x01(\x05\x12\r\n\x05month\x18\x06 \x01(\x05\x12\x0b\n\x03\x64\x61y\x18\x07 \x01(\x05\x12\x0e\n\x06\x66ormat\x18\x08 \x01(\t\"\xc1\t\n\x0c\x44ownloadFile\x12\x0c\n\x04\x62\x61nk\x18\x01 \x02(\t\x12\x0f\n\x07session\x18\x02 \x02(\t\x12\x11\n\tlocal_dir\x18\x03 \x02(\t\x12\x18\n\x10timeout_download\x18\x04 \x01(\x05\x12\x34\n\x0bremote_file\x18\x05 \x02(\x0b\x32\x1f.biomaj.DownloadFile.RemoteFile\x12)\n\x05proxy\x18\x06 \x01(\x0b\x32\x1a.biomaj.DownloadFile.Proxy\x1a$\n\x05Param\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\r\n\x05value\x18\x02 \x02(\t\x1a\xcd\x03\n\tHttpParse\x12\x91\x01\n\x08\x64ir_line\x18\x01 \x02(\t:\x7f<img[\\s]+src=\"[\\S]+\"[\\s]+alt=\"\\[DIR\\]\"[\\s]*/?>[\\s]*<a[\\s]+href=\"([\\S]+)/\"[\\s]*>.*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})\x12\xa5\x01\n\tfile_line\x18\x02 \x02(\t:\x91\x01<img[\\s]+src=\"[\\S]+\"[\\s]+alt=\"\\[[\\s]+\\]\"[\\s]*/?>[\\s]<a[\\s]+href=\"([\\S]+)\".*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})[\\s]+([\\d\\.]+[MKG]{0,1})\x12\x13\n\x08\x64ir_name\x18\x03 \x02(\x05:\x01\x31\x12\x13\n\x08\x64ir_date\x18\x04 \x02(\x05:\x01\x32\x12\x14\n\tfile_name\x18\x05 \x02(\x05:\x01\x31\x12\x14\n\tfile_date\x18\x06 \x02(\x05:\x01\x32\x12\x18\n\x10\x66ile_date_format\x18\x07 \x01(\t\x12\x14\n\tfile_size\x18\x08 \x02(\x05:\x01\x33\x1a\xd0\x02\n\nRemoteFile\x12\x1b\n\x05\x66iles\x18\x01 \x03(\x0b\x32\x0c.biomaj.File\x12/\n\x08protocol\x18\x02 \x02(\x0e\x32\x1d.biomaj.DownloadFile.Protocol\x12\x0e\n\x06server\x18\x03 \x02(\t\x12\x12\n\nremote_dir\x18\x04 \x02(\t\x12\x0f\n\x07save_as\x18\x05 \x01(\t\x12)\n\x05param\x18\x06 \x03(\x0b\x32\x1a.biomaj.DownloadFile.Param\x12\x32\n\nhttp_parse\x18\x07 \x01(\x0b\x32\x1e.biomaj.DownloadFile.HttpParse\x12:\n\x0bhttp_method\x18\x08 \x01(\x0e\x32 .biomaj.DownloadFile.HTTP_METHOD:\x03GET\x12\x13\n\x0b\x63redentials\x18\t \x01(\t\x12\x0f\n\x07matches\x18\n \x03(\t\x1a*\n\x05Proxy\x12\r\n\x05proxy\x18\x01 \x02(\t\x12\x12\n\nproxy_auth\x18\x02 \x01(\t\"m\n\x08Protocol\x12\x07\n\x03\x46TP\x10\x00\x12\x08\n\x04SFTP\x10\x01\x12\x08\n\x04HTTP\x10\x02\x12\t\n\x05HTTPS\x10\x03\x12\r\n\tDIRECTFTP\x10\x04\x12\x0e\n\nDIRECTHTTP\x10\x05\x12\x0f\n\x0b\x44IRECTHTTPS\x10\x06\x12\t\n\x05LOCAL\x10\x07\" \n\x0bHTTP_METHOD\x12\x07\n\x03GET\x10\x00\x12\x08\n\x04POST\x10\x01')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -65,8 +65,8 @@ _DOWNLOADFILE_PROTOCOL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=910,
-  serialized_end=1019,
+  serialized_start=1343,
+  serialized_end=1452,
 )
 _sym_db.RegisterEnumDescriptor(_DOWNLOADFILE_PROTOCOL)
 
@@ -87,10 +87,146 @@ _DOWNLOADFILE_HTTP_METHOD = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1021,
-  serialized_end=1053,
+  serialized_start=1454,
+  serialized_end=1486,
 )
 _sym_db.RegisterEnumDescriptor(_DOWNLOADFILE_HTTP_METHOD)
+
+
+_FILE_METADATA = _descriptor.Descriptor(
+  name='MetaData',
+  full_name='biomaj.File.MetaData',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='permissions', full_name='biomaj.File.MetaData.permissions', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='group', full_name='biomaj.File.MetaData.group', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='size', full_name='biomaj.File.MetaData.size', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='hash', full_name='biomaj.File.MetaData.hash', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='year', full_name='biomaj.File.MetaData.year', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='month', full_name='biomaj.File.MetaData.month', index=5,
+      number=6, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='day', full_name='biomaj.File.MetaData.day', index=6,
+      number=7, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='format', full_name='biomaj.File.MetaData.format', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=134,
+  serialized_end=266,
+)
+
+_FILE = _descriptor.Descriptor(
+  name='File',
+  full_name='biomaj.File',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='biomaj.File.name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='root', full_name='biomaj.File.root', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='save_as', full_name='biomaj.File.save_as', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='url', full_name='biomaj.File.url', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='metadata', full_name='biomaj.File.metadata', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[_FILE_METADATA, ],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=26,
+  serialized_end=266,
+)
 
 
 _DOWNLOADFILE_PARAM = _descriptor.Descriptor(
@@ -125,8 +261,8 @@ _DOWNLOADFILE_PARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=215,
-  serialized_end=251,
+  serialized_start=458,
+  serialized_end=494,
 )
 
 _DOWNLOADFILE_HTTPPARSE = _descriptor.Descriptor(
@@ -139,42 +275,42 @@ _DOWNLOADFILE_HTTPPARSE = _descriptor.Descriptor(
     _descriptor.FieldDescriptor(
       name='dir_line', full_name='biomaj.DownloadFile.HttpParse.dir_line', index=0,
       number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      has_default_value=True, default_value=_b("<img[\\s]+src=\"[\\S]+\"[\\s]+alt=\"\\[DIR\\]\"[\\s]*/?>[\\s]*<a[\\s]+href=\"([\\S]+)/\"[\\s]*>.*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='file_line', full_name='biomaj.DownloadFile.HttpParse.file_line', index=1,
       number=2, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      has_default_value=True, default_value=_b("<img[\\s]+src=\"[\\S]+\"[\\s]+alt=\"\\[[\\s]+\\]\"[\\s]*/?>[\\s]<a[\\s]+href=\"([\\S]+)\".*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})[\\s]+([\\d\\.]+[MKG]{0,1})").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='dir_name', full_name='biomaj.DownloadFile.HttpParse.dir_name', index=2,
       number=3, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='dir_date', full_name='biomaj.DownloadFile.HttpParse.dir_date', index=3,
       number=4, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=2,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='file_name', full_name='biomaj.DownloadFile.HttpParse.file_name', index=4,
       number=5, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='file_date', full_name='biomaj.DownloadFile.HttpParse.file_date', index=5,
       number=6, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=2,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -188,7 +324,7 @@ _DOWNLOADFILE_HTTPPARSE = _descriptor.Descriptor(
     _descriptor.FieldDescriptor(
       name='file_size', full_name='biomaj.DownloadFile.HttpParse.file_size', index=7,
       number=8, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=3,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -203,79 +339,8 @@ _DOWNLOADFILE_HTTPPARSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=254,
-  serialized_end=421,
-)
-
-_DOWNLOADFILE_FILE = _descriptor.Descriptor(
-  name='File',
-  full_name='biomaj.DownloadFile.File',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='name', full_name='biomaj.DownloadFile.File.name', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='root', full_name='biomaj.DownloadFile.File.root', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='save_as', full_name='biomaj.DownloadFile.File.save_as', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='url', full_name='biomaj.DownloadFile.File.url', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='year', full_name='biomaj.DownloadFile.File.year', index=4,
-      number=5, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='month', full_name='biomaj.DownloadFile.File.month', index=5,
-      number=6, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='day', full_name='biomaj.DownloadFile.File.day', index=6,
-      number=7, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=423,
-  serialized_end=529,
+  serialized_start=497,
+  serialized_end=958,
 )
 
 _DOWNLOADFILE_REMOTEFILE = _descriptor.Descriptor(
@@ -348,6 +413,13 @@ _DOWNLOADFILE_REMOTEFILE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='matches', full_name='biomaj.DownloadFile.RemoteFile.matches', index=9,
+      number=10, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -359,8 +431,8 @@ _DOWNLOADFILE_REMOTEFILE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=532,
-  serialized_end=864,
+  serialized_start=961,
+  serialized_end=1297,
 )
 
 _DOWNLOADFILE_PROXY = _descriptor.Descriptor(
@@ -395,8 +467,8 @@ _DOWNLOADFILE_PROXY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=866,
-  serialized_end=908,
+  serialized_start=1299,
+  serialized_end=1341,
 )
 
 _DOWNLOADFILE = _descriptor.Descriptor(
@@ -451,7 +523,7 @@ _DOWNLOADFILE = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_DOWNLOADFILE_PARAM, _DOWNLOADFILE_HTTPPARSE, _DOWNLOADFILE_FILE, _DOWNLOADFILE_REMOTEFILE, _DOWNLOADFILE_PROXY, ],
+  nested_types=[_DOWNLOADFILE_PARAM, _DOWNLOADFILE_HTTPPARSE, _DOWNLOADFILE_REMOTEFILE, _DOWNLOADFILE_PROXY, ],
   enum_types=[
     _DOWNLOADFILE_PROTOCOL,
     _DOWNLOADFILE_HTTP_METHOD,
@@ -461,14 +533,15 @@ _DOWNLOADFILE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=26,
-  serialized_end=1053,
+  serialized_start=269,
+  serialized_end=1486,
 )
 
+_FILE_METADATA.containing_type = _FILE
+_FILE.fields_by_name['metadata'].message_type = _FILE_METADATA
 _DOWNLOADFILE_PARAM.containing_type = _DOWNLOADFILE
 _DOWNLOADFILE_HTTPPARSE.containing_type = _DOWNLOADFILE
-_DOWNLOADFILE_FILE.containing_type = _DOWNLOADFILE
-_DOWNLOADFILE_REMOTEFILE.fields_by_name['files'].message_type = _DOWNLOADFILE_FILE
+_DOWNLOADFILE_REMOTEFILE.fields_by_name['files'].message_type = _FILE
 _DOWNLOADFILE_REMOTEFILE.fields_by_name['protocol'].enum_type = _DOWNLOADFILE_PROTOCOL
 _DOWNLOADFILE_REMOTEFILE.fields_by_name['param'].message_type = _DOWNLOADFILE_PARAM
 _DOWNLOADFILE_REMOTEFILE.fields_by_name['http_parse'].message_type = _DOWNLOADFILE_HTTPPARSE
@@ -479,7 +552,23 @@ _DOWNLOADFILE.fields_by_name['remote_file'].message_type = _DOWNLOADFILE_REMOTEF
 _DOWNLOADFILE.fields_by_name['proxy'].message_type = _DOWNLOADFILE_PROXY
 _DOWNLOADFILE_PROTOCOL.containing_type = _DOWNLOADFILE
 _DOWNLOADFILE_HTTP_METHOD.containing_type = _DOWNLOADFILE
+DESCRIPTOR.message_types_by_name['File'] = _FILE
 DESCRIPTOR.message_types_by_name['DownloadFile'] = _DOWNLOADFILE
+
+File = _reflection.GeneratedProtocolMessageType('File', (_message.Message,), dict(
+
+  MetaData = _reflection.GeneratedProtocolMessageType('MetaData', (_message.Message,), dict(
+    DESCRIPTOR = _FILE_METADATA,
+    __module__ = 'message_pb2'
+    # @@protoc_insertion_point(class_scope:biomaj.File.MetaData)
+    ))
+  ,
+  DESCRIPTOR = _FILE,
+  __module__ = 'message_pb2'
+  # @@protoc_insertion_point(class_scope:biomaj.File)
+  ))
+_sym_db.RegisterMessage(File)
+_sym_db.RegisterMessage(File.MetaData)
 
 DownloadFile = _reflection.GeneratedProtocolMessageType('DownloadFile', (_message.Message,), dict(
 
@@ -494,13 +583,6 @@ DownloadFile = _reflection.GeneratedProtocolMessageType('DownloadFile', (_messag
     DESCRIPTOR = _DOWNLOADFILE_HTTPPARSE,
     __module__ = 'message_pb2'
     # @@protoc_insertion_point(class_scope:biomaj.DownloadFile.HttpParse)
-    ))
-  ,
-
-  File = _reflection.GeneratedProtocolMessageType('File', (_message.Message,), dict(
-    DESCRIPTOR = _DOWNLOADFILE_FILE,
-    __module__ = 'message_pb2'
-    # @@protoc_insertion_point(class_scope:biomaj.DownloadFile.File)
     ))
   ,
 
@@ -524,7 +606,6 @@ DownloadFile = _reflection.GeneratedProtocolMessageType('DownloadFile', (_messag
 _sym_db.RegisterMessage(DownloadFile)
 _sym_db.RegisterMessage(DownloadFile.Param)
 _sym_db.RegisterMessage(DownloadFile.HttpParse)
-_sym_db.RegisterMessage(DownloadFile.File)
 _sym_db.RegisterMessage(DownloadFile.RemoteFile)
 _sym_db.RegisterMessage(DownloadFile.Proxy)
 

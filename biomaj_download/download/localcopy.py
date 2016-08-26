@@ -1,16 +1,10 @@
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-import logging
-import pycurl
-import io
-import re
 import os
 import datetime
 import hashlib
 
-from biomaj.utils import Utils
+from biomaj_download.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
+
 
 class LocalDownload(DownloadInterface):
     '''
@@ -24,12 +18,10 @@ class LocalDownload(DownloadInterface):
 
     '''
 
-
     def __init__(self, rootdir):
         DownloadInterface.__init__(self)
-        logging.debug('Download')
+        self.logger.debug('Download')
         self.rootdir = rootdir
-
 
     def download(self, local_dir):
         '''
@@ -39,7 +31,7 @@ class LocalDownload(DownloadInterface):
         :type local_dir: str
         :return: list of downloaded files
         '''
-        logging.debug('Local:Download')
+        self.logger.debug('Local:Download')
         Utils.copy_files(self.files_to_download, local_dir, lock=self.mkdir_lock)
 
         return self.files_to_download
@@ -50,7 +42,7 @@ class LocalDownload(DownloadInterface):
 
         :return: tuple of file and dirs in current directory with details
         '''
-        logging.debug('Download:List:'+self.rootdir+directory)
+        self.logger.debug('Download:List:' + self.rootdir + directory)
         # lets walk through each line
 
         rfiles = []
@@ -59,7 +51,7 @@ class LocalDownload(DownloadInterface):
         files = [f for f in os.listdir(self.rootdir + directory)]
         for file_in_files in files:
             rfile = {}
-            fstat = os.stat(os.path.join(self.rootdir + directory,file_in_files))
+            fstat = os.stat(os.path.join(self.rootdir + directory, file_in_files))
 
             rfile['permissions'] = str(fstat.st_mode)
             rfile['group'] = str(fstat.st_gid)
@@ -70,7 +62,7 @@ class LocalDownload(DownloadInterface):
             rfile['day'] = fstat_mtime.day
             rfile['year'] = fstat_mtime.year
             rfile['name'] = file_in_files
-            filehash = (rfile['name']+str(fstat.st_mtime)+rfile['size']).encode('utf-8')
+            filehash = (rfile['name'] + str(fstat.st_mtime) + rfile['size']).encode('utf-8')
             rfile['hash'] = hashlib.md5(filehash).hexdigest()
 
             is_dir = False
@@ -83,7 +75,6 @@ class LocalDownload(DownloadInterface):
                 rdirs.append(rfile)
         return (rfiles, rdirs)
 
-
     def chroot(self, cwd):
-        logging.debug('Download: change dir '+cwd)
+        self.logger.debug('Download: change dir ' + cwd)
         os.chdir(cwd)

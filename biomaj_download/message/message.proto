@@ -1,5 +1,30 @@
 package biomaj;
 
+message File {
+    // Name of the file
+    required string name = 1;
+    // Location on remote server, defaults to root directory
+    optional string root = 2;
+    // Save file under different name
+    optional string save_as = 3;
+    // Specific file url
+    optional string url = 4;
+
+    message MetaData {
+        optional string permissions = 1;
+        optional string group = 2;
+        optional int32 size = 3;
+        optional string hash = 4;
+        optional int32 year = 5;
+        optional int32 month = 6;
+        optional int32 day = 7;
+        optional string format = 8;
+    }
+
+    optional MetaData metadata = 5;
+
+}
+
 message DownloadFile {
     required string bank = 1;
     required string session = 2;
@@ -25,34 +50,19 @@ message DownloadFile {
     }
 
     message HttpParse {
-        required string dir_line = 1;
-        required string file_line = 2;
-        required int32 dir_name = 3;
-        required int32 dir_date = 4;
-        required int32 file_name = 5;
-        required int32 file_date = 6;
+        required string dir_line = 1 [default = '<img[\\s]+src="[\\S]+"[\\s]+alt="\\[DIR\\]"[\\s]*/?>[\\s]*<a[\\s]+href="([\\S]+)/"[\\s]*>.*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})'];
+        required string file_line = 2 [default = '<img[\\s]+src="[\\S]+"[\\s]+alt="\\[[\\s]+\\]"[\\s]*/?>[\\s]<a[\\s]+href="([\\S]+)".*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})[\\s]+([\\d\\.]+[MKG]{0,1})'];
+        required int32 dir_name = 3 [default =1];
+        required int32 dir_date = 4 [default = 2];
+        required int32 file_name = 5 [default = 1];
+        required int32 file_date = 6 [default = 2];
         optional string file_date_format = 7;
-        required int32 file_size = 8;
+        required int32 file_size = 8 [default = 3];
     }
 
     enum HTTP_METHOD {
         GET = 0;
         POST = 1;
-    }
-
-    message File {
-        // Name of the file
-        required string name = 1;
-        // Location on remote server, defaults to root directory
-        optional string root = 2;
-        // Save file under different name
-        optional string save_as = 3;
-        // Specific file url
-        optional string url = 4;
-        // Remote file date info to set download file with original date
-        optional int32 year = 5;
-        optional int32 month = 6;
-        optional int32 day = 7;
     }
 
     message RemoteFile {
@@ -65,6 +75,7 @@ message DownloadFile {
         optional HttpParse http_parse = 7;
         optional HTTP_METHOD http_method = 8 [ default = GET];
         optional string credentials = 9;
+        repeated string matches = 10;
     }
 
     required RemoteFile remote_file = 5;

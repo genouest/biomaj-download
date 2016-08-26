@@ -21,7 +21,7 @@ log_config:
             'level': 'DEBUG'
     'loggers':
         'root':
-            'level': 'DEBUG'
+            'level': 'INFO'
             'handlers':
                 - 'console'
         'biomaj':

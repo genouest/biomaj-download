@@ -1,17 +1,11 @@
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-import logging
 import pycurl
-import io
 import re
 import os
 from datetime import datetime
 import hashlib
 
-from biomaj.utils import Utils
+from biomaj_download.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
-
 
 try:
     from io import BytesIO
@@ -31,12 +25,11 @@ class FTPDownload(DownloadInterface):
 
     '''
 
-
     def __init__(self, protocol, host, rootdir):
         DownloadInterface.__init__(self)
-        logging.debug('Download')
+        self.logger.debug('Download')
         self.crl = pycurl.Curl()
-        url = protocol+'://'+host
+        url = protocol + '://' + host
         self.rootdir = rootdir
         self.url = url
         self.headers = {}
@@ -56,7 +49,7 @@ class FTPDownload(DownloadInterface):
         :param submatch: first call to match, or called from match
         :type submatch: bool
         '''
-        logging.debug('Download:File:RegExp:'+str(patterns))
+        self.logger.debug('Download:File:RegExp:' + str(patterns))
         if dir_list is None:
             dir_list = []
         if not submatch:
@@ -64,52 +57,52 @@ class FTPDownload(DownloadInterface):
         for pattern in patterns:
             subdirs_pattern = pattern.split('/')
             if len(subdirs_pattern) > 1:
-            # Pattern contains sub directories
+                # Pattern contains sub directories
                 subdir = subdirs_pattern[0]
                 if subdir == '^':
                     subdirs_pattern = subdirs_pattern[1:]
                     subdir = subdirs_pattern[0]
                 for direlt in dir_list:
                     subdir = direlt['name']
-                    logging.debug('Download:File:Subdir:Check:'+subdir)
+                    self.logger.debug('Download:File:Subdir:Check:' + subdir)
                     if pattern == '**/*':
-                        (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-                        self.match([pattern], subfile_list, subdirs_list, prefix+'/'+subdir, True)
+                        (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
+                        self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
                         for rfile in file_list:
                             if pattern == '**/*' or re.match(pattern, rfile['name']):
                                 rfile['root'] = self.rootdir
                                 if prefix != '':
-                                    rfile['name'] = prefix + '/' +rfile['name']
+                                    rfile['name'] = prefix + '/' + rfile['name']
                                 self.files_to_download.append(rfile)
-                                logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+                                self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     else:
                         if re.match(subdirs_pattern[0], subdir):
-                            logging.debug('Download:File:Subdir:Match:'+subdir)
+                            self.logger.debug('Download:File:Subdir:Match:' + subdir)
                             # subdir match the beginning of the pattern
                             # check match in subdir
-                            (subfile_list, subdirs_list) = self.list(prefix+'/'+subdir+'/')
-                            self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix+'/'+subdir, True)
+                            (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
+                            self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix + '/' + subdir, True)
 
             else:
                 for rfile in file_list:
                     if re.match(pattern, rfile['name']):
                         rfile['root'] = self.rootdir
                         if prefix != '':
-                            rfile['name'] = prefix + '/' +rfile['name']
+                            rfile['name'] = prefix + '/' + rfile['name']
                         self.files_to_download.append(rfile)
-                        logging.debug('Download:File:MatchRegExp:'+rfile['name'])
+                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
 
     def curl_download(self, file_path, file_to_download):
         error = True
         nbtry = 1
-        while(error==True and nbtry<3):
+        while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
             try:
                 curl.setopt(pycurl.URL, file_to_download)
-            except Exception as a:
+            except Exception:
                 curl.setopt(pycurl.URL, file_to_download.encode('ascii', 'ignore'))
             if self.proxy is not None:
                 curl.setopt(pycurl.PROXY, self.proxy)
@@ -123,7 +116,6 @@ class FTPDownload(DownloadInterface):
             # Download should not take more than 5minutes
             curl.setopt(pycurl.TIMEOUT, self.timeout)
             curl.setopt(pycurl.NOSIGNAL, 1)
-
             curl.setopt(pycurl.WRITEDATA, fp)
 
             try:
@@ -131,11 +123,11 @@ class FTPDownload(DownloadInterface):
                 errcode = curl.getinfo(pycurl.HTTP_CODE)
                 if int(errcode) != 226 and int(errcode) != 200:
                     error = True
-                    logging.error('Error while downloading '+file_to_download+' - '+str(errcode))
+                    self.logger.error('Error while downloading ' + file_to_download + ' - ' + str(errcode))
                 else:
                     error = False
             except Exception as e:
-                logging.error('Could not get errcode:' + str(e))
+                self.logger.error('Could not get errcode:' + str(e))
             nbtry += 1
             curl.close()
             fp.close()
@@ -151,7 +143,7 @@ class FTPDownload(DownloadInterface):
         :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        logging.debug('FTP:Download')
+        self.logger.debug('FTP:Download')
 
         nb_files = len(self.files_to_download)
         cur_files = 1
@@ -169,33 +161,22 @@ class FTPDownload(DownloadInterface):
             # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
-            '''
-            self.mkdir_lock.acquire()
-            try:
-                if not os.path.exists(file_dir):
-                    os.makedirs(file_dir)
-            except Exception as e:
-                logging.error(e)
-            finally:
-                self.mkdir_lock.release() # release lock, no matter what
-            '''
-            logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' downloading file '+rfile['name'])
-            logging.debug('FTP:Download:Progress:'+str(cur_files)+'/'+str(nb_files)+' save as '+rfile['save_as'])
+
+            self.logger.debug('FTP:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'])
+            self.logger.debug('FTP:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' save as ' + rfile['save_as'])
             cur_files += 1
-            if not 'url' in rfile or not rfile['url']:
+            if 'url' not in rfile or not rfile['url']:
                 rfile['url'] = self.url
-            if not 'root' in rfile or not rfile['root']:
+            if 'root' not in rfile or not rfile['root']:
                 rfile['root'] = self.rootdir
 
-            error = self.curl_download(file_path, rfile['url']+rfile['root']+'/'+rfile['name'])
+            error = self.curl_download(file_path, rfile['url'] + rfile['root'] + '/' + rfile['name'])
             if error:
-                raise Exception("FTP:Download:Error:"+rfile['url']+rfile['root']+'/'+rfile['name'])
+                raise Exception("FTP:Download:Error:" + rfile['url'] + rfile['root'] + '/' + rfile['name'])
 
-            #logging.debug('downloaded!')
             self.set_permissions(file_path, rfile)
 
         return self.files_to_download
-
 
     def header_function(self, header_line):
         # HTTP standard specifies that headers are encoded in iso-8859-1.
@@ -225,19 +206,18 @@ class FTPDownload(DownloadInterface):
         # Now we can actually record the header name and value.
         self.headers[name] = value
 
-
     def list(self, directory=''):
         '''
         List FTP directory
 
         :return: tuple of file and dirs in current directory with details
         '''
-        logging.debug('Download:List:'+self.url+self.rootdir+directory)
-        #self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
+        self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
+
         try:
-            self.crl.setopt(pycurl.URL, self.url+self.rootdir+directory)
-        except Exception as a:
-            self.crl.setopt(pycurl.URL, (self.url+self.rootdir+directory).encode('ascii', 'ignore'))
+            self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
+        except Exception:
+            self.crl.setopt(pycurl.URL, (self.url + self.rootdir + directory).encode('ascii', 'ignore'))
 
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)
@@ -251,7 +231,6 @@ class FTPDownload(DownloadInterface):
         self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
         self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
 
-
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
         # Download should not take more than 5minutes
         self.crl.setopt(pycurl.TIMEOUT, self.timeout)
@@ -259,7 +238,7 @@ class FTPDownload(DownloadInterface):
         try:
             self.crl.perform()
         except Exception as e:
-            logging.error('Could not get errcode:' + str(e))
+            self.logger.error('Could not get errcode:' + str(e))
 
         # Figure out what encoding was sent with the response, if any.
         # Check against lowercased header name.
@@ -280,7 +259,6 @@ class FTPDownload(DownloadInterface):
 
         # FTP LIST output is separated by \r\n
         # lets split the output in lines
-        #lines = result.split(r'[\r\n]+')
         lines = re.split(r'[\n\r]+', result)
         # lets walk through each line
         rfiles = []
@@ -291,7 +269,8 @@ class FTPDownload(DownloadInterface):
             # lets print each part separately
             parts = line.split()
             # the individual fields in this list of parts
-            if not parts: continue
+            if not parts:
+                continue
             rfile['permissions'] = parts[0]
             rfile['group'] = parts[2]
             rfile['user'] = parts[3]
@@ -326,9 +305,8 @@ class FTPDownload(DownloadInterface):
                 rdirs.append(rfile)
         return (rfiles, rdirs)
 
-
     def chroot(self, cwd):
-        logging.debug('Download: change dir '+cwd)
+        self.logger.debug('Download: change dir ' + cwd)
 
     def close(self):
         if self.crl is not None:
