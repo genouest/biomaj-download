@@ -1,0 +1,31 @@
+
+
+redis:
+    host: '131.254.17.40'
+    port: 6379
+    db: 0
+    prefix: 'biomaj'
+
+rabbitmq:
+    host: '127.0.0.1'
+
+log_config:
+    'version': 1
+    'formatters':
+        'generic':
+            'format': '%(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s'
+    'handlers':
+        'console':
+            'class': 'logging.StreamHandler'
+            'formatter': 'generic'
+            'level': 'DEBUG'
+    'loggers':
+        'root':
+            'level': 'DEBUG'
+            'handlers':
+                - 'console'
+        'biomaj':
+            'level': 'DEBUG'
+            'handlers':
+                - 'console'
+    'disable_existing_loggers': False
