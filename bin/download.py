@@ -10,6 +10,7 @@ from flask import request
 from prometheus_client import Counter
 from prometheus_client import Gauge
 from prometheus_client.exposition import generate_latest
+import consul
 
 
 from biomaj_download.downloadservice import DownloadService
@@ -53,6 +54,13 @@ def start_server(config):
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         context.load_cert_chain(config['tls']['cert'], config['tls']['key'])
 
+    if config['consul']['host']:
+        consul_agent = consul.Consult(host=config['consul']['host'])
+        consul_agent.agent.service.register('biomaj_download', service_id=config['consul']['id'], port=config['web']['port'], tags=['biomaj'])
+        check = consul.Check.http(url=config['web']['local_endpoint'], interval=20)
+        consul_agent.agent.check.register(name + '_check', check=check, service_id=config['consul']['id'])
+
+
     app.run(host='0.0.0.0', port=config['web']['port'], ssl_context=context, threaded=True, debug=config['web']['debug'])
 
 
@@ -70,7 +78,7 @@ def shutdown():
     return 'Server shutting down...'
 
 @app.route('/metrics')
-def hello_world():
+def metrics():
     return generate_latest()
 
 

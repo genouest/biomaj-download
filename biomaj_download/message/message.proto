@@ -19,6 +19,7 @@ message File {
         optional int32 month = 6;
         optional int32 day = 7;
         optional string format = 8;
+        optional int32 download_time = 9;
     }
 
     optional MetaData metadata = 5;

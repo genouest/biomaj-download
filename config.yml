@@ -12,10 +12,13 @@ rabbitmq:
 
 consul:
     host: null
+    # Unique agent identifier name among biomaj downloaders
+    id: 'biomaj_download_agent'
 
 web:
     debug: true
     port: 5000
+    local_endpoint: 'http://127.0.0.1:5000'
 
 tls:
     key: null
