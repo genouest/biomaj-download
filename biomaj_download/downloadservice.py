@@ -6,6 +6,7 @@ import yaml
 import redis
 import uuid
 import traceback
+import shutil
 
 import pika
 
@@ -82,16 +83,19 @@ class DownloadService(object):
 
         timeout_download = biomaj_file_info.timeout_download
         if timeout_download is not None and timeout_download:
-            downloader.timeout = timeout_download
+            downloader.set_timeout(timeout_download)
 
         if biomaj_file_info.remote_file.credentials:
             downloader.set_credentials(biomaj_file_info.remote_file.credentials)
 
         if biomaj_file_info.remote_file.save_as:
-            downloader.save_as = biomaj_file_info.remote_file.save_as
+            downloader.set_save_as(biomaj_file_info.remote_file.save_as)
 
         if biomaj_file_info.remote_file.param:
-            downloader.save_as = biomaj_file_info.remote_file.param
+            params = {}
+            for param in biomaj_file_info.remote_file.param:
+                params[param.name] = param.value
+            downloader.set_param(biomaj_file_info.remote_file.params)
 
         remote_files = []
         for remote_file in biomaj_file_info.remote_file.files:
@@ -105,6 +109,7 @@ class DownloadService(object):
         downloader.set_files_to_download(remote_files)
 
         return downloader
+
 
     def clean(self, biomaj_file_info):
         '''

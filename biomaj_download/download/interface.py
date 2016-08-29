@@ -43,9 +43,19 @@ class DownloadInterface(object):
         # Optional save target for single file downloaders
         self.save_as = None
         self.logger = logging.getLogger('biomaj')
+        self.param = None
 
     def set_files_to_download(self, files):
         self.files_to_download = files
+
+    def set_files_to_downloadparam(self, param):
+        self.param = param
+
+    def set_timeout(self, timeout):
+        self.timeout = timeout
+
+    def set_save_as(self, save_as):
+        self.save_as = save_as
 
     def set_proxy(self, proxy, proxy_auth=None):
         '''
