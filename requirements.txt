@@ -6,3 +6,6 @@ pika
 redis
 PyYAML
 protobuf
+flask
+python-consul
+prometheus_client

@@ -1,4 +1,5 @@
 import datetime
+import time
 import pycurl
 import os
 import re
@@ -202,7 +203,12 @@ class DirectHttpDownload(DirectFTPDownload):
                     curl.setopt(pycurl.URL, url.encode('ascii', 'ignore'))
 
             curl.setopt(pycurl.WRITEDATA, fp)
+            start_time = datetime.datetime.now()
+            start_time = time.mktime(start_time.timetuple())
             curl.perform()
+            end_time = datetime.datetime.now()
+            end_time = time.mktime(end_time.timetuple())
+            rfile['download_time'] = end_time - start_time
 
             curl.close()
             fp.close()

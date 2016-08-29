@@ -1,4 +1,5 @@
-from builtins import str
+import os
+import datetime
 import logging
 import logging.config
 import yaml
@@ -19,6 +20,7 @@ from biomaj_download.message import message_pb2
 class DownloadService(object):
 
     def __init__(self, config_file):
+        self.download_callback = None
         with open(config_file, 'r') as ymlfile:
             self.config = yaml.load(ymlfile)
 
@@ -38,6 +40,10 @@ class DownloadService(object):
         connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host']))
         self.channel = connection.channel()
         self.logger.info('Download service started')
+
+
+    def on_download_callback(self, func):
+        self.download_callback = func
 
     def get_handler(self, biomaj_file_info):
         """
@@ -198,8 +204,9 @@ class DownloadService(object):
         download_handler = self.get_handler(biomaj_file_info)
         if download_handler is None:
             self.logger.error('Could not get a handler for %s with session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
+        downloaded_files = None
         try:
-            download_handler.download(biomaj_file_info.local_dir)
+            downloaded_files = download_handler.download(biomaj_file_info.local_dir)
         except Exception as e:
             self.logger.error('Download exception for bank %s and file %s: %s' % (biomaj_file_info.bank, biomaj_file_info.remote_file.files, str(e)))
             traceback.print_exc()
@@ -208,6 +215,23 @@ class DownloadService(object):
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
 
         self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
+        self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
+        return downloaded_files
+
+    def get_file_info(self, local_dir, downloaded_files):
+        for downloaded_file in downloaded_files:
+            file_dir = local_dir + '/' + os.path.dirname(downloaded_file['save_as'])
+            fstat = os.stat(file_dir)
+            downloaded_file['permissions'] = str(fstat.st_mode)
+            downloaded_file['group'] = str(fstat.st_gid)
+            downloaded_file['user'] = str(fstat.st_uid)
+            downloaded_file['size'] = str(fstat.st_size)
+            fstat_mtime = datetime.datetime.fromtimestamp(fstat.st_mtime)
+            downloaded_file['month'] = fstat_mtime.month
+            downloaded_file['day'] = fstat_mtime.day
+            downloaded_file['year'] = fstat_mtime.year
+
+
 
     def ask_download(self, biomaj_info_file):
         self.channel.basic_publish(exchange='',
@@ -234,7 +258,9 @@ class DownloadService(object):
                     self.list(message)
             else:
                 self.logger.debug('Download operation %s, %s' % (message.bank, message.session))
-                self.download(message)
+                downloaded_files = self.download(message)
+                if self.download_callback is not None:
+                    self.download_callback(message.bank, downloaded_files)
         except Exception as e:
             self.logger.error('Error with message: %s' % (str(e)))
             traceback.print_exc()

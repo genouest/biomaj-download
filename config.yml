@@ -1,13 +1,25 @@
 
 
 redis:
-    host: '131.254.17.40'
+    host: '127.0.0.1'
+    #host: '131.254.17.40'
     port: 6379
     db: 0
     prefix: 'biomaj'
 
 rabbitmq:
     host: '127.0.0.1'
+
+consul:
+    host: null
+
+web:
+    debug: true
+    port: 5000
+
+tls:
+    key: null
+    cert: null
 
 log_config:
     'version': 1

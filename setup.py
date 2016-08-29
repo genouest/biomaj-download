@@ -49,7 +49,11 @@ config = {
                          'py-bcrypt',
                          'pika',
                          'redis',
-                         'PyYAML'
+                         'PyYAML',
+                         'flask',
+                         'python-consul',
+                         'prometheus_client',
+                         'protobuf'
                          ],
     'packages': find_packages(),
     'include_package_data': True,

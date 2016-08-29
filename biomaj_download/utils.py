@@ -3,6 +3,7 @@ import re
 import logging
 import shutil
 import datetime
+import time
 import subprocess
 from subprocess import CalledProcessError
 
@@ -141,7 +142,12 @@ class Utils(object):
             if move:
                 shutil.move(from_file, to_file)
             else:
+                start_time = datetime.datetime.now()
+                start_time = time.mktime(start_time.timetuple())
                 shutil.copyfile(from_file, to_file)
+                end_time = datetime.datetime.now()
+                end_time = time.mktime(end_time.timetuple())
+                file_to_copy['download_time'] = end_time - start_time
                 shutil.copystat(from_file, to_file)
 
     @staticmethod

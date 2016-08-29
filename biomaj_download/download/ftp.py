@@ -2,6 +2,7 @@ import pycurl
 import re
 import os
 from datetime import datetime
+import time
 import hashlib
 
 from biomaj_download.utils import Utils
@@ -169,10 +170,17 @@ class FTPDownload(DownloadInterface):
                 rfile['url'] = self.url
             if 'root' not in rfile or not rfile['root']:
                 rfile['root'] = self.rootdir
-
+            start_time = datetime.now()
+            start_time = time.mktime(start_time.timetuple())
             error = self.curl_download(file_path, rfile['url'] + rfile['root'] + '/' + rfile['name'])
             if error:
+                rfile['download_time'] = 0
+                rfile['error'] = True
                 raise Exception("FTP:Download:Error:" + rfile['url'] + rfile['root'] + '/' + rfile['name'])
+            else:
+                end_time = datetime.now()
+                end_time = time.mktime(end_time.timetuple())
+                rfile['download_time'] = end_time - start_time
 
             self.set_permissions(file_path, rfile)
 
