@@ -251,7 +251,7 @@ class DownloadService(object):
         self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
 
 
-    def _download(self, biomaj_file_info):
+    def local_download(self, biomaj_file_info):
         '''
         Download files, no session
         '''
@@ -262,9 +262,10 @@ class DownloadService(object):
         try:
             downloaded_files = download_handler.download(biomaj_file_info.local_dir)
         except Exception as e:
-            self.logger.error("Download error: " + str(e))
+            self.logger.error("Download error:%s:%s: " % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
         else:
             self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
+        self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
         return downloaded_files
 
     def download(self, biomaj_file_info):
@@ -283,16 +284,15 @@ class DownloadService(object):
             return
         downloaded_files = []
         try:
-            downloaded_files = self._download(biomaj_file_info)
+            downloaded_files = self.local_download(biomaj_file_info)
         except Exception as e:
             self.logger.error("Download error: " + str(e))
-            traceback.print_exc()
+            # traceback.print_exc()
             self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
         else:
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
 
         self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
-        self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
         return downloaded_files
 
     def get_file_info(self, local_dir, downloaded_files):
