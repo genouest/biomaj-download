@@ -9,7 +9,6 @@ from subprocess import CalledProcessError
 
 from mimetypes import MimeTypes
 
-
 class Utils(object):
     """
     Utility classes

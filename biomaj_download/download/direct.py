@@ -97,7 +97,10 @@ class DirectFTPDownload(FTPDownload):
             rfile['month'] = today.month
             rfile['day'] = today.day
             rfile['year'] = today.year
-            rfile['name'] = file_to_download
+            if file_to_download.startswith('/'):
+                rfile['name'] = file_to_download[:-1]
+            else:
+                rfile['name'] = file_to_download
             rfile['hash'] = None
             self.files_to_download.append(rfile)
 
@@ -297,7 +300,7 @@ class DirectHttpDownload(DirectFTPDownload):
             for line in lines:
                 parts = line.split(':')
                 if parts[0].strip() == 'Content-Length':
-                    rfile['size'] = parts[1].strip()
+                    rfile['size'] = int(parts[1].strip())
                 if parts[0].strip() == 'Last-Modified':
                     # Sun, 06 Nov 1994
                     res = re.match('(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())

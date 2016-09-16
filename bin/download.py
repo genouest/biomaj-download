@@ -1,3 +1,8 @@
+'''
+Web interface to query list/download status
+Manage sessions and metrics
+'''
+
 import ssl
 import os
 import threading
@@ -5,14 +10,16 @@ import logging
 
 import yaml
 from flask import Flask
+from flask import jsonify
 from flask import g
 from flask import request
+from flask import Response
 from prometheus_client import Counter
 from prometheus_client import Gauge
 from prometheus_client.exposition import generate_latest
 import consul
 
-
+from biomaj_download.message import message_pb2
 from biomaj_download.downloadservice import DownloadService
 
 app = Flask(__name__)
@@ -29,23 +36,6 @@ if 'BIOMAJ_CONFIG' in os.environ:
 config = None
 with open(config_file, 'r') as ymlfile:
     config = yaml.load(ymlfile)
-
-
-def on_download(bank, downloaded_files):
-    logging.error(downloaded_files)
-    for downloaded_file in downloaded_files:
-        if 'error' in downloaded_file and downloaded_file['error']:
-            download_error_metric.labels(bank).inc()
-        else:
-            download_metric.labels(bank).inc()
-            download_size_metric.labels(bank).set(downloaded_file['size'])
-            download_time_metric.labels(bank).set(downloaded_file['download_time'])
-
-
-download = DownloadService(config_file)
-download.on_download_callback(on_download)
-mq_recieve_thread = threading.Thread(target=download.wait_for_messages)
-mq_recieve_thread.start()
 
 
 def start_server(config):
@@ -65,21 +55,91 @@ def start_server(config):
 
 
 def shutdown_server():
-    download.channel.cancel()
-    # download.channel.stop_consuming()
+    #download.channel.cancel()
+    download.channel.stop_consuming('biomajdownload')
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
 
-@app.route('/shutdown', methods=['POST'])
+@app.route('/api/download/shutdown', methods=['POST'])
 def shutdown():
     shutdown_server()
     return 'Server shutting down...'
 
-@app.route('/metrics')
+@app.route('/api/download/metrics', methods=['GET'])
 def metrics():
     return generate_latest()
+
+@app.route('/api/download/metrics', methods=['POST'])
+def add_metrics():
+    '''
+    Expects a JSON request with an array of {'bank': 'bank_name', 'error': 'error_message', 'size': size_of_download, 'download_time': seconds_to_download}
+    '''
+    downloaded_files = request.get_json()
+    for downloaded_file in downloaded_files:
+        if 'error' in downloaded_file and downloaded_file['error']:
+            download_error_metric.labels(downloaded_file['bank']).inc()
+        else:
+            download_metric.labels(downloaded_file['bank']).inc()
+            download_size_metric.labels(downloaded_file['bank']).set(downloaded_file['size'])
+            download_time_metric.labels(downloaded_file['bank']).set(downloaded_file['download_time'])
+    return jsonify({'msg': 'OK'})
+
+@app.route('/api/download/status/list/<bank>/<session>')
+def list_status(bank, session):
+    '''
+    Check if listing request is over
+    '''
+    dserv = DownloadService(config_file, rabbitmq=False)
+    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info.bank = bank
+    biomaj_file_info.session = session
+    biomaj_file_info.local_dir = '/tmp'
+    status = dserv.list_status(biomaj_file_info)
+    return jsonify({'status': status})
+
+@app.route('/api/download/status/download/<bank>/<session>')
+def download_status(bank, session):
+    '''
+    Get number of downloads and errors for bank and session. Progress includes successful download and errored downloads.
+    '''
+    dserv = DownloadService(config_file, rabbitmq=False)
+    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info.bank = bank
+    biomaj_file_info.session = session
+    biomaj_file_info.local_dir = '/tmp'
+    (progress, errors) = dserv.download_status(biomaj_file_info)
+    return jsonify({'progress': progress, 'errors': errors})
+
+@app.route('/api/download/list/<bank>/<session>')
+def list_result(bank, session):
+    '''
+    Get file listing for bank and session, using FileList protobuf serialized string
+    '''
+    dserv = DownloadService(config_file, rabbitmq=False)
+    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info.bank = bank
+    biomaj_file_info.session = session
+    biomaj_file_info.local_dir = '/tmp'
+    list_elts = dserv.list_result(biomaj_file_info, protobuf_decode=False)
+    return jsonify({'files': list_elts})
+    #return Response(list_elts, mimetype="application/x-protobuf")
+
+@app.route('/api/download/session/<bank>', methods=['POST'])
+def create_session(bank):
+    dserv = DownloadService(config_file, rabbitmq=False)
+    session = dserv._create_session(bank)
+    return jsonify({'session': session})
+
+@app.route('/api/download/session/<bank>/<session>', methods=['DELETE'])
+def clean_session(bank, session):
+    dserv = DownloadService(config_file, rabbitmq=False)
+    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info.bank = bank
+    biomaj_file_info.session = session
+    dserv.clean(biomaj_file_info)
+    return jsonify({'msg': 'session cleared'})
 
 
 if __name__ == "__main__":

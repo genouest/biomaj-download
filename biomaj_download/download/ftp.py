@@ -282,9 +282,9 @@ class FTPDownload(DownloadInterface):
             rfile['permissions'] = parts[0]
             rfile['group'] = parts[2]
             rfile['user'] = parts[3]
-            rfile['size'] = parts[4]
+            rfile['size'] = int(parts[4])
             rfile['month'] = Utils.month_to_num(parts[5])
-            rfile['day'] = parts[6]
+            rfile['day'] = int(parts[6])
             rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
             try:
                 rfile['year'] = int(parts[7])
@@ -296,7 +296,7 @@ class FTPDownload(DownloadInterface):
                 if rfile['month'] > curdate.month:
                     rfile['year'] = curdate.year - 1
                 # Same month but later day => previous year
-                if rfile['month'] == curdate.month and int(rfile['day']) > curdate.day:
+                if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
                     rfile['year'] = curdate.year - 1
             rfile['name'] = parts[8]
             if len(parts) >= 10 and parts[9] == '->':

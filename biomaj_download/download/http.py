@@ -92,14 +92,14 @@ class HTTPDownload(FTPDownload):
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
-                rfile['size'] = '0'
+                rfile['size'] = 0
                 date = founddir[self.http_parse.dir_date - 1]
                 dirdate = date.split()
                 parts = dirdate[0].split('-')
                 # 19-Jul-2014 13:02
                 rfile['month'] = Utils.month_to_num(parts[1])
-                rfile['day'] = parts[0]
-                rfile['year'] = parts[2]
+                rfile['day'] = int(parts[0])
+                rfile['year'] = int(parts[2])
                 rfile['name'] = founddir[self.http_parse.dir_name - 1]
                 rdirs.append(rfile)
 
@@ -122,8 +122,8 @@ class HTTPDownload(FTPDownload):
                     parts = dirdate[0].split('-')
                     # 19-Jul-2014 13:02
                     rfile['month'] = Utils.month_to_num(parts[1])
-                    rfile['day'] = parts[0]
-                    rfile['year'] = parts[2]
+                    rfile['day'] = int(parts[0])
+                    rfile['year'] = int(parts[2])
                 rfile['name'] = foundfile[self.http_parse.file_name - 1]
                 filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                 rfile['hash'] = hashlib.md5(filehash).hexdigest()

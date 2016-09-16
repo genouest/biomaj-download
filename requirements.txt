@@ -9,3 +9,4 @@ protobuf
 flask
 python-consul
 prometheus_client
+requests

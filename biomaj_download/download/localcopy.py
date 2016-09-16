@@ -56,13 +56,13 @@ class LocalDownload(DownloadInterface):
             rfile['permissions'] = str(fstat.st_mode)
             rfile['group'] = str(fstat.st_gid)
             rfile['user'] = str(fstat.st_uid)
-            rfile['size'] = str(fstat.st_size)
+            rfile['size'] = fstat.st_size
             fstat_mtime = datetime.datetime.fromtimestamp(fstat.st_mtime)
             rfile['month'] = fstat_mtime.month
             rfile['day'] = fstat_mtime.day
             rfile['year'] = fstat_mtime.year
             rfile['name'] = file_in_files
-            filehash = (rfile['name'] + str(fstat.st_mtime) + rfile['size']).encode('utf-8')
+            filehash = (rfile['name'] + str(fstat.st_mtime) + str(rfile['size'])).encode('utf-8')
             rfile['hash'] = hashlib.md5(filehash).hexdigest()
 
             is_dir = False
