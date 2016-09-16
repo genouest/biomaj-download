@@ -14,3 +14,22 @@ protoc --python_out=. message.proto
 # Development
 
     flake8  biomaj_download/*.py biomaj_download/download
+
+# Prometheus metrics
+
+Endpoint: /api/download/metrics
+
+
+# Run
+
+## Message consumer:
+export BIOMAJ_CONFIG=path_to_config.yml
+python bin/download_consumer.py
+
+## Web server
+
+In bin directory:
+export BIOMAJ_CONFIG=path_to_config.yml
+gunicorn download:app
+
+Web processes should be behind a proxy/load balancer, API base url /api/download
