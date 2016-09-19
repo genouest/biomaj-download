@@ -1,25 +1,50 @@
 from biomaj_download.downloadservice import DownloadService
 import requests
 import logging
+import uuid
+import time
+
 import pika
+
+from Queue import Queue
+from biomaj_download.download.downloadthreads import DownloadThread
 
 class DownloadClient(DownloadService):
 
-    def __init__(self, rabbitmq_host):
+    def __init__(self, rabbitmq_host, pool_size=5):
         self.logger = logging
-        connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
-        self.channel = connection.channel()
+        self.channel = None
+        self.pool_size = pool_size
+        self.proxy = None
+        self.bank = None
+        if rabbitmq_host:
+            self.remote = True
+            connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
+            self.channel = connection.channel()
+        else:
+            self.remote = False
+        self.logger.info("Use remote: %s" % (str(self.remote)))
+        self.download_pool = []
+        self.files_to_download = 0
+
+    def set_queue_size(size):
+        self.pool = Pool(size)
 
     def create_session(self, bank, proxy):
+        if not self.remote:
+            return str(uuid.uuid4())
         r = requests.post(proxy + '/api/download/session/' + bank)
         if not r.status_code == 200:
             raise Exception('Failed to connect to the download proxy')
         result = r.json()
+        self.session = result['session']
+        self.proxy = proxy
+        self.bank = bank
         return result['session']
 
-    def download_status(self, bank, session, proxy):
-        # If biomaj_proxy 
-        r = requests.get(proxy + '/api/download/status/download/' + bank + '/' + session)
+    def download_status(self):
+        # If biomaj_proxy
+        r = requests.get(self.proxy + '/api/download/status/download/' + self.bank + '/' + self.session)
         if not r.status_code == 200:
             raise Exception('Failed to connect to the download proxy')
         result = r.json()
@@ -29,11 +54,84 @@ class DownloadClient(DownloadService):
 
     def download_remote_file(self, message):
         # If biomaj_proxy
-        self.ask_download(message)
-        # TODO else add to queues
+        self.files_to_download += 1
+        if self.remote:
+            self.ask_download(message)
+        else:
+            self.download_pool.append(message)
+
+    def download_pool_file(self, message):
+        try:
+            message = message_pb2.DownloadFile()
+            message.ParseFromString(body)
+            self.logger.debug('Received message: %s' % (message))
+            if not message.remote_file.files:
+                self.logger.debug('List operation %s, %s' % (message.bank, message.session))
+                if len(message.remote_file.matches) == 0:
+                    self.logger.error('No pattern match for a list operation')
+                else:
+                    self.list(message)
+            else:
+                self.logger.debug('Download operation %s, %s' % (message.bank, message.session))
+                downloaded_files = self.download(message)
+        except Exception as e:
+            self.logger.error('Error with message: %s' % (str(e)))
+            traceback.print_exc()
+
+    def download_pool_files(self):
+        thlist = []
+        message_queue = Queue()
+        for message in self.download_pool:
+            message_queue.put(message)
+        for i in range(self.pool_size):
+            th = DownloadThread(self, message_queue)
+            thlist.append(th)
+            th.start()
+
+        message_queue.join()
+
+        logging.info("Workflow:wf_download:Download:Threads:Over")
+        nb_error = 0
+        is_error = False
+        nb_files_to_download = 0
+        for th in thlist:
+            nb_files_to_download += th.files_to_download
+            if th.error > 0:
+                is_error = True
+                nb_error += 1
+        return nb_error
 
 
-    def clean(self, bank, session, proxy):
-        r = requests.delete(proxy + '/api/download/session/' + bank + '/' + session)
-        if not r.status_code == 200:
-            raise Exception('Failed to connect to the download proxy')
+    def wait_for_download(self):
+        over = False
+        nb_files_to_download = self.files_to_download
+        logging.info("Workflow:wf_download:RemoteDownload:Waiting")
+        if self.remote:
+            download_error = False
+            while not over:
+                (progress, error) = self.download_status()
+                if progress == nb_files_to_download:
+                    over = True
+                    logging.info("Workflow:wf_download:RemoteDownload:Completed:" + str(progress))
+                    logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
+                else:
+                    if progress % 10 == 0:
+                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + nb_files_to_download)
+                    time.sleep(1)
+                if error > 0:
+                    download_error = True
+            return download_error
+        else:
+            error = self.download_pool_files()
+            logging.info('Workflow:wf_download:RemoteDownload:Completed')
+            if error > 0:
+                logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
+                return True
+            else:
+                return False
+
+    def clean(self):
+        if self.remote:
+            r = requests.delete(self.proxy + '/api/download/session/' + self.bank + '/' + self.session)
+            if not r.status_code == 200:
+                raise Exception('Failed to connect to the download proxy')

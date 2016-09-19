@@ -45,7 +45,8 @@ class DownloadService(object):
             self.logger.info('Download service started')
 
     def close(self):
-        self.channel.close()
+        if self.channel:
+            self.channel.close()
 
     def on_download_callback(self, func):
         self.download_callback = func
