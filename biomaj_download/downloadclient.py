@@ -60,29 +60,17 @@ class DownloadClient(DownloadService):
         else:
             self.download_pool.append(message)
 
-    def download_pool_file(self, message):
-        try:
-            message = message_pb2.DownloadFile()
-            message.ParseFromString(body)
-            self.logger.debug('Received message: %s' % (message))
-            if not message.remote_file.files:
-                self.logger.debug('List operation %s, %s' % (message.bank, message.session))
-                if len(message.remote_file.matches) == 0:
-                    self.logger.error('No pattern match for a list operation')
-                else:
-                    self.list(message)
-            else:
-                self.logger.debug('Download operation %s, %s' % (message.bank, message.session))
-                downloaded_files = self.download(message)
-        except Exception as e:
-            self.logger.error('Error with message: %s' % (str(e)))
-            traceback.print_exc()
-
-    def download_pool_files(self):
+    def _download_pool_files(self):
         thlist = []
+
+        logging.info("Workflow:wf_download:Download:Threads:FillQueue")
+
         message_queue = Queue()
         for message in self.download_pool:
             message_queue.put(message)
+
+        logging.info("Workflow:wf_download:Download:Threads:Start")
+
         for i in range(self.pool_size):
             th = DownloadThread(self, message_queue)
             thlist.append(th)
@@ -122,7 +110,7 @@ class DownloadClient(DownloadService):
                     download_error = True
             return download_error
         else:
-            error = self.download_pool_files()
+            error = self._download_pool_files()
             logging.info('Workflow:wf_download:RemoteDownload:Completed')
             if error > 0:
                 logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
