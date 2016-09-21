@@ -164,8 +164,6 @@ class DownloadService(object):
         '''
         Clean session and download info
         '''
-        self.logger.debug('Clean session: '+ biomaj_file_info.session)
-
         self.logger.debug('Clean %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
         self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session)
         self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
@@ -256,6 +254,11 @@ class DownloadService(object):
                     file_pb2.save_as = file_elt['save_as']
                 if 'url' in file_elt:
                     file_pb2.url = file_elt['url']
+                if 'param' in file_elt and file_elt['param']:
+                    for key in list(file_elt['param'].keys()):
+                        param = remote_file.param.add()
+                        param.name = key
+                        param.value = file_elt['param'][key]                    
                 metadata = message_pb2.File.MetaData()
                 metadata.permissions = file_elt['permissions']
                 metadata.group = file_elt['group']
@@ -296,17 +299,7 @@ class DownloadService(object):
         download_handler = self._get_handler(biomaj_file_info)
         if download_handler is None:
             self.logger.error('Could not get a handler for %s with session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
-        downloaded_files = None
         downloaded_files = download_handler.download(biomaj_file_info.local_dir)
-        '''
-        try:
-            downloaded_files = download_handler.download(biomaj_file_info.local_dir)
-        except Exception as e:
-            traceback.print_exc()
-            self.logger.error("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
-        else:
-            self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
-        '''
         self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
         self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
         return downloaded_files

@@ -24,10 +24,10 @@ from biomaj_download.downloadservice import DownloadService
 
 app = Flask(__name__)
 
-download_metric = Counter("bank_download_total", "Bank total download.", ['bank'])
-download_error_metric = Counter("bank_download_errors", "Bank total download errors.", ['bank'])
-download_size_metric =  Gauge("bank_download_file_size", "Bank download file size in bytes.", ['bank'])
-download_time_metric =  Gauge("bank_download_file_time", "Bank download file time in seconds.", ['bank'])
+download_metric = Counter("biomaj_download_total", "Bank total download.", ['bank'])
+download_error_metric = Counter("biomaj_download_errors", "Bank total download errors.", ['bank'])
+download_size_metric =  Gauge("biomaj_download_file_size", "Bank download file size in bytes.", ['bank'])
+download_time_metric =  Gauge("biomaj_download_file_time", "Bank download file time in seconds.", ['bank'])
 
 config_file = 'config.yml'
 if 'BIOMAJ_CONFIG' in os.environ:
