@@ -21,6 +21,9 @@ from biomaj_download.message import message_pb2
 
 class DownloadService(object):
 
+    channel = None
+    redis_client = None
+
     def __init__(self, config_file=None, rabbitmq=True):
         self.logger = logging
         self.download_callback = None
@@ -33,13 +36,15 @@ class DownloadService(object):
             logging.config.dictConfig(self.config['log_config'])
             self.logger = logging.getLogger('biomaj')
 
-        self.logger.debug('Init redis connection')
-        self.redis_client = redis.StrictRedis(host=self.config['redis']['host'],
+
+        if not self.redis_client:
+            self.logger.debug('Init redis connection')
+            self.redis_client = redis.StrictRedis(host=self.config['redis']['host'],
                                               port=self.config['redis']['port'],
                                               db=self.config['redis']['db'],
                                               decode_responses=True)
 
-        if rabbitmq:
+        if rabbitmq and not self.channel:
             connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host']))
             self.channel = connection.channel()
             self.logger.info('Download service started')
@@ -166,6 +171,7 @@ class DownloadService(object):
         self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
         self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
         self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':files')
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info')
 
     def _create_session(self, bank):
         '''
@@ -175,6 +181,17 @@ class DownloadService(object):
         self.redis_client.set(self.config['redis']['prefix'] + ':' + bank + ':session:' + session, 1)
         self.logger.debug('Create %s new session %s' % (bank, session))
         return session
+
+    def download_errors(self, biomaj_file_info):
+        '''
+        Get errors
+        '''
+        errors = []
+        error = self.redis_client.rpop(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info')
+        while error:
+            errors.append(error)
+            error = self.redis_client.rpop(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info')
+        return errors
 
     def download_status(self, biomaj_file_info):
         '''
@@ -227,6 +244,7 @@ class DownloadService(object):
         except Exception as e:
             self.logger.error('List exception for bank %s: %s' % (biomaj_file_info.bank, str(e)))
             self.redis_client.set(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error', 1)
+            self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info', str(e))
         else:
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
             for file_elt in download_handler.files_to_download:
@@ -279,6 +297,8 @@ class DownloadService(object):
         if download_handler is None:
             self.logger.error('Could not get a handler for %s with session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
         downloaded_files = None
+        downloaded_files = download_handler.download(biomaj_file_info.local_dir)
+        '''
         try:
             downloaded_files = download_handler.download(biomaj_file_info.local_dir)
         except Exception as e:
@@ -286,6 +306,8 @@ class DownloadService(object):
             self.logger.error("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
         else:
             self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
+        '''
+        self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
         self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
         return downloaded_files
 
@@ -307,9 +329,10 @@ class DownloadService(object):
         try:
             downloaded_files = self.local_download(biomaj_file_info)
         except Exception as e:
-            self.logger.error("Download error: " + str(e))
+            self.logger.error("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
             # traceback.print_exc()
             self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
+            self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info', str(e))
         else:
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
 

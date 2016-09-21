@@ -21,17 +21,20 @@ with open(config_file, 'r') as ymlfile:
 
 
 def on_download(bank, downloaded_files):
-    logging.error(downloaded_files)
     metrics = []
-    for downloaded_file in downloaded_files:
-        metric = {'bank': bank}
-        if 'error' in downloaded_file and downloaded_file['error']:
-            metric['error'] = 1
-        else:
-            metric['size'] = downloaded_file['size']
-            metric['download_time'] = downloaded_file['download_time']
-        metrics.append(metric)
-    r = requests.post(config['web']['local_endpoint'] + '/api/download/metrics', json = metrics)
+    if not downloaded_files:
+        metric = {'bank': bank, 'error': 1}
+        metrics.append(metrics)
+    else:
+        for downloaded_file in downloaded_files:
+            metric = {'bank': bank}
+            if 'error' in downloaded_file and downloaded_file['error']:
+                metric['error'] = 1
+            else:
+                metric['size'] = downloaded_file['size']
+                metric['download_time'] = downloaded_file['download_time']
+            metrics.append(metric)
+        r = requests.post(config['web']['local_endpoint'] + '/api/download/metrics', json = metrics)
 
 
 download = DownloadService(config_file)

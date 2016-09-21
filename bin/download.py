@@ -112,6 +112,20 @@ def download_status(bank, session):
     (progress, errors) = dserv.download_status(biomaj_file_info)
     return jsonify({'progress': progress, 'errors': errors})
 
+@app.route('/api/download/error/download/<bank>/<session>')
+def download_error(bank, session):
+    '''
+    Get errors info for bank and session
+    '''
+    dserv = DownloadService(config_file, rabbitmq=False)
+    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info.bank = bank
+    biomaj_file_info.session = session
+    biomaj_file_info.local_dir = '/tmp'
+    errors = dserv.download_errors(biomaj_file_info)
+    return jsonify({'error': errors})
+
+
 @app.route('/api/download/list/<bank>/<session>')
 def list_result(bank, session):
     '''

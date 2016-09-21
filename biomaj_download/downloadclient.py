@@ -72,7 +72,10 @@ class DownloadClient(DownloadService):
                 protocol = downloader.protocol
                 remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
                 remote_file.server = downloader.server
-                remote_file.remote_dir = cf.get('remote.dir')
+                if cf.get('remote.dir'):
+                    remote_file.remote_dir = cf.get('remote.dir')
+                else:
+                    remote_file.remote_dir = ''
 
                 biomaj_file = remote_file.files.add()
                 biomaj_file.name = file_to_download['name']
@@ -169,6 +172,12 @@ class DownloadClient(DownloadService):
                     time.sleep(1)
                 if error > 0:
                     download_error = True
+                    r = requests.get(self.proxy + '/api/download/error/download/' + self.bank + '/' + self.session)
+                    if not r.status_code == 200:
+                        raise Exception('Failed to connect to the download proxy')
+                    result = r.json()
+                    for err in result['error']:
+                        logging.info("Workflow:wf_download:RemoteDownload:Errors:Info:" + str(err))
             return download_error
         else:
             error = self._download_pool_files()
