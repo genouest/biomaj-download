@@ -8,6 +8,7 @@ import pika
 
 from Queue import Queue
 from biomaj_download.download.downloadthreads import DownloadThread
+from biomaj_download.message import message_pb2
 
 class DownloadClient(DownloadService):
 
@@ -30,16 +31,17 @@ class DownloadClient(DownloadService):
     def set_queue_size(size):
         self.pool = Pool(size)
 
-    def create_session(self, bank, proxy):
+    def create_session(self, bank, proxy=None):
+        self.bank = bank
         if not self.remote:
-            return str(uuid.uuid4())
+            self.session = str(uuid.uuid4())
+            return self.session
         r = requests.post(proxy + '/api/download/session/' + bank)
         if not r.status_code == 200:
             raise Exception('Failed to connect to the download proxy')
         result = r.json()
         self.session = result['session']
         self.proxy = proxy
-        self.bank = bank
         return result['session']
 
     def download_status(self):
@@ -48,9 +50,68 @@ class DownloadClient(DownloadService):
         if not r.status_code == 200:
             raise Exception('Failed to connect to the download proxy')
         result = r.json()
-        # TODO else
-        # launch pool of threads that pulls files to download from queue and finish when queue is empty
         return (result['progress'], result['errors'])
+
+
+    def download_remote_files(self, cf, downloaders, offline_dir):
+        '''
+        cf = Config
+        downloaders = list of downloader
+        offline_dir = base dir to download files
+
+        '''
+        for downloader in downloaders:
+            for file_to_download in downloader.files_to_download:
+                operation = message_pb2.Operation()
+                operation.type = 1
+                message = message_pb2.DownloadFile()
+                message.bank = self.bank
+                message.session = self.session
+                message.local_dir = offline_dir
+                remote_file = message_pb2.DownloadFile.RemoteFile()
+                protocol = downloader.protocol
+                remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
+                remote_file.server = downloader.server
+                remote_file.remote_dir = cf.get('remote.dir')
+
+                biomaj_file = remote_file.files.add()
+                biomaj_file.name = file_to_download['name']
+                if 'root' in file_to_download and file_to_download['root']:
+                    biomaj_file.root = file_to_download['root']
+                if 'param' in file_to_download and file_to_download['param']:
+                    for key in list(file_to_download['param'].keys()):
+                        param = remote_file.param.add()
+                        param.name = key
+                        param.value = file_to_download['param'][key]
+                if 'save_as' in file_to_download and file_to_download['save_as']:
+                    biomaj_file.save_as = file_to_download['save_as']
+                if 'url' in file_to_download and file_to_download['url']:
+                    biomaj_file.url = file_to_download['url']
+                if 'permissions' in file_to_download and file_to_download['permissions']:
+                    biomaj_file.metadata.permissions = file_to_download['permissions']
+                if 'size' in file_to_download and file_to_download['size']:
+                    biomaj_file.metadata.size = file_to_download['size']
+                if 'year' in file_to_download and file_to_download['year']:
+                    biomaj_file.metadata.year = file_to_download['year']
+                if 'month' in file_to_download and file_to_download['month']:
+                    biomaj_file.metadata.month = file_to_download['month']
+                if 'day' in file_to_download and file_to_download['day']:
+                    biomaj_file.metadata.day = file_to_download['day']
+                if 'hash' in file_to_download and file_to_download['hash']:
+                    biomaj_file.metadata.hash = file_to_download['hash']
+                if 'md5' in file_to_download and file_to_download['md5']:
+                    biomaj_file.metadata.md5 = file_to_download['md5']
+
+                message.http_method = message_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
+
+                timeout_download = cf.get('timeout.download', None)
+                if timeout_download:
+                    message.timeout_download = timeout_download
+
+                message.remote_file.MergeFrom(remote_file)
+                operation.download.MergeFrom(message)
+                self.download_remote_file(operation)
+
 
     def download_remote_file(self, operation):
         # If biomaj_proxy
