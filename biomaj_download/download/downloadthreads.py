@@ -10,6 +10,7 @@ import copy
 #import tarfile
 #import zipfile
 import traceback
+import sys
 
 class DownloadThread(threading.Thread):
 
@@ -36,10 +37,15 @@ class DownloadThread(threading.Thread):
         except Exception:
             return
         while message:
-            files = self.ds.local_download(message)
-            if files is None:
+            try:
+                files = self.ds.local_download(message)
+                if files is None:
+                    self.error += 1
+                self.files_to_download += 1
+            except Exception as e:
+                logging.error("Download error: " + str(e))
+                traceback.print_exc(file=sys.stdout)
                 self.error += 1
-            self.files_to_download += 1
             self.queue.task_done()
             try:
                 message = self.queue.get(False)

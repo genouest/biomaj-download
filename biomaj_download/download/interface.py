@@ -44,11 +44,24 @@ class DownloadInterface(object):
         self.save_as = None
         self.logger = logging.getLogger('biomaj')
         self.param = None
+        self.method = None
+        self.protocol = None
+        self.server = None
+
+    def set_server(self, server):
+        self.server = server
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
 
     def set_files_to_download(self, files):
         self.files_to_download = files
+        for file_to_download in self.files_to_download:
+            if self.param:
+                if 'param' not in file_to_download or not file_to_download['param']:
+                    file_to_download['param'] = self.param
 
-    def set_files_to_downloadparam(self, param):
+    def set_param(self, param):
         self.param = param
 
     def set_timeout(self, timeout):
@@ -68,6 +81,12 @@ class DownloadInterface(object):
         '''
         self.proxy = proxy
         self.proxy_auth = proxy_auth
+
+    def set_method(self, method):
+        self.method = method
+
+    def set_param(self, param):
+        self.param = param
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''

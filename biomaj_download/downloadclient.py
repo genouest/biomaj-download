@@ -52,13 +52,13 @@ class DownloadClient(DownloadService):
         # launch pool of threads that pulls files to download from queue and finish when queue is empty
         return (result['progress'], result['errors'])
 
-    def download_remote_file(self, message):
+    def download_remote_file(self, operation):
         # If biomaj_proxy
         self.files_to_download += 1
         if self.remote:
-            self.ask_download(message)
+            self.ask_download(operation)
         else:
-            self.download_pool.append(message)
+            self.download_pool.append(operation.download)
 
     def _download_pool_files(self):
         thlist = []

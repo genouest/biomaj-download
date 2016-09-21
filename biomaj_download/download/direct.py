@@ -8,64 +8,12 @@ import urllib
 
 from biomaj_download.download.interface import DownloadInterface
 from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.utils import Utils
+from biomaj_core.utils import Utils
 
 try:
     from io import BytesIO
 except ImportError:
     from StringIO import StringIO as BytesIO
-
-
-class MultiDownload(DownloadInterface):
-    '''
-    Base interface for a downloader using multiple downloaders
-    '''
-    def __init__(self):
-        DownloadInterface.__init__(self)
-        self.downloaders = []
-        self.files_to_download = []
-
-    def add_downloaders(self, downloaders):
-        '''
-        Adds a list of downloaders
-        '''
-        self.downloaders += downloaders
-        for d in downloaders:
-            self.files_to_download += d.files_to_download
-
-    def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
-        if dir_list is None:
-            dir_list = []
-        self.files_to_download = []
-        for d in self.downloaders:
-            d.match(patterns, d.files_to_download, [], prefix, submatch)
-        self.files_to_download = []
-        for d in self.downloaders:
-            self.files_to_download += d.files_to_download
-
-    def download(self, local_dir):
-        self.files_to_download = []
-        for d in self.downloaders:
-            if self.kill_received:
-                raise Exception('Kill request received, exiting')
-            d.download(local_dir)
-        self.files_to_download = []
-        for d in self.downloaders:
-            self.files_to_download += d.files_to_download
-        return (self.files_to_download, [])
-
-    def list(self):
-        self.files_to_download = []
-        for d in self.downloaders:
-            d.list()
-        self.files_to_download = []
-        for d in self.downloaders:
-            self.files_to_download += d.files_to_download
-        return (self.files_to_download, [])
-
-    def close(self):
-        for d in self.downloaders:
-            d.close()
 
 
 class DirectFTPDownload(FTPDownload):
@@ -89,7 +37,7 @@ class DirectFTPDownload(FTPDownload):
         self.files_to_download = []
         for file_to_download in files:
             rfile = {}
-            rfile['root'] = self.rootdir
+            rfile['root'] = ''
             rfile['permissions'] = ''
             rfile['group'] = ''
             rfile['user'] = ''
@@ -97,11 +45,14 @@ class DirectFTPDownload(FTPDownload):
             rfile['month'] = today.month
             rfile['day'] = today.day
             rfile['year'] = today.year
-            if file_to_download.startswith('/'):
+            if file_to_download.endswith('/'):
                 rfile['name'] = file_to_download[:-1]
             else:
                 rfile['name'] = file_to_download
             rfile['hash'] = None
+            if self.param:
+                if 'param' not in file_to_download or not file_to_download['param']:
+                    rfile['param'] = self.param            
             self.files_to_download.append(rfile)
 
     def list(self, directory=''):
@@ -158,9 +109,10 @@ class DirectHttpDownload(DirectFTPDownload):
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
 
-            if self.save_as is None:
+            if not self.save_as:
                 self.save_as = rfile['name']
-
+            else:
+                rfile['save_as'] = self.save_as
             file_dir = local_dir
             if keep_dirs:
                 file_dir = local_dir + os.path.dirname(self.save_as)
@@ -169,7 +121,6 @@ class DirectHttpDownload(DirectFTPDownload):
             # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
-
             self.logger.debug('DirectHTTP:Download:Progress' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'] + ', save as ' + self.save_as)
             cur_files += 1
             if 'url' not in rfile:
@@ -199,7 +150,6 @@ class DirectHttpDownload(DirectFTPDownload):
 
             else:
                 url = rfile['url'] + rfile['root'] + '/' + rfile['name'] + '?' + urllib.parse.urlencode(self.param)
-
                 try:
                     curl.setopt(pycurl.URL, url)
                 except Exception:
@@ -306,24 +256,24 @@ class DirectHttpDownload(DirectFTPDownload):
                     res = re.match('(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        rfile['day'] = res.group(2)
+                        rfile['day'] = int(res.group(2))
                         rfile['month'] = Utils.month_to_num(res.group(3))
-                        rfile['year'] = res.group(4)
+                        rfile['year'] = int(res.group(4))
                         continue
                     # Sunday, 06-Nov-94
                     res = re.match('(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        rfile['day'] = res.group(2)
+                        rfile['day'] = int(res.group(2))
                         rfile['month'] = Utils.month_to_num(res.group(3))
-                        rfile['year'] = str(2000 + int(res.group(4)))
+                        rfile['year'] = 2000 + int(res.group(4))
                         continue
                     # Sun Nov  6 08:49:37 1994
                     res = re.match('(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
-                        rfile['day'] = res.group(3)
+                        rfile['day'] = int(res.group(3))
                         rfile['month'] = Utils.month_to_num(res.group(2))
-                        rfile['year'] = res.group(4)
+                        rfile['year'] = int(res.group(4))
                         continue
         return (self.files_to_download, [])

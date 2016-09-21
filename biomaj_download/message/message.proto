@@ -31,6 +31,23 @@ message FileList {
     repeated File files = 1;
 }
 
+message Operation {
+
+    enum OPERATION {
+        LIST = 0;
+        DOWNLOAD = 1;
+        PROCESS = 2;
+    }
+
+    required OPERATION type = 1;
+    optional DownloadFile download = 2;
+    optional Process process = 3;
+}
+
+message Process {
+    required string exec =  1;
+}
+
 message DownloadFile {
     required string bank = 1;
     required string session = 2;
@@ -79,9 +96,8 @@ message DownloadFile {
         optional string save_as = 5;
         repeated Param param = 6;
         optional HttpParse http_parse = 7;
-        optional HTTP_METHOD http_method = 8 [ default = GET];
-        optional string credentials = 9;
-        repeated string matches = 10;
+        optional string credentials = 8;
+        repeated string matches = 9;
     }
 
     required RemoteFile remote_file = 5;
@@ -94,5 +110,6 @@ message DownloadFile {
 
     optional Proxy proxy = 6;
 
+    optional HTTP_METHOD http_method = 8 [ default = GET];
 
 }

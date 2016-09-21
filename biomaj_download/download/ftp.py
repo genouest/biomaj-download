@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 import hashlib
 
-from biomaj_download.utils import Utils
+from biomaj_core.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
 
 try:

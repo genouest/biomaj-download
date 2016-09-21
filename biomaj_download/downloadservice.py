@@ -52,11 +52,10 @@ class DownloadService(object):
         self.download_callback = func
 
     def get_handler(self, protocol_name, server, remote_dir, remote_files=[],
-                    credentials=None, http_parse=None, param=None,
+                    credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
                     save_as=None, timeout_download=None):
         protocol = message_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
-
         downloader = None
         if protocol in [0, 1]:
             downloader = FTPDownload(protocol_name, server, remote_dir)
@@ -73,6 +72,20 @@ class DownloadService(object):
         if downloader is None:
             return None
 
+        for remote_file in remote_files:
+            if remote_file['save_as']:
+                save_as = remote_file['save_as']
+
+        # For direct protocol, we only keep base name
+        if protocol in [4,5,6]:
+            tmp_remote = []
+            for remote_file in remote_files:
+                tmp_remote.append(remote_file['name'])
+            remote_files = tmp_remote
+
+        if http_method is not None:
+            downloader.set_method(http_method)
+
         if proxy is not None and proxy:
             downloader.set_proxy(proxy, proxy_auth)
 
@@ -82,11 +95,16 @@ class DownloadService(object):
         if credentials:
             downloader.set_credentials(credentials)
 
+
         if save_as:
             downloader.set_save_as(save_as)
 
         if param:
-            downloader.set_param(params)
+            downloader.set_param(param)
+
+        downloader.set_server(server)
+
+        downloader.set_protocol(protocol_name)
 
         downloader.logger = self.logger
         downloader.set_files_to_download(remote_files)
@@ -111,7 +129,8 @@ class DownloadService(object):
                                 'save_as': remote_file.save_as,
                                 'year': remote_file.metadata.year,
                                 'month': remote_file.metadata.month,
-                                'day': remote_file.metadata.day
+                                'day': remote_file.metadata.day,
+                                'root': remote_file.root
                                 })
 
         proxy = None
@@ -120,17 +139,17 @@ class DownloadService(object):
             proxy = biomaj_file_info.proxy.proxy
             proxy_auth = biomaj_file_info.proxy.proxy_auth
 
-        param = None
+        params = None
         if biomaj_file_info.remote_file.param:
             params = {}
             for param in biomaj_file_info.remote_file.param:
                 params[param.name] = param.value
-
         return self.get_handler(protocol_name, server, remote_dir,
                                 remote_files=remote_files,
                                 credentials=biomaj_file_info.remote_file.credentials,
                                 http_parse=biomaj_file_info.remote_file.http_parse,
-                                param=param,
+                                http_method=message_pb2.DownloadFile.HTTP_METHOD.Name(biomaj_file_info.http_method),
+                                param=params,
                                 proxy=proxy,
                                 proxy_auth=proxy_auth,
                                 save_as=biomaj_file_info.remote_file.save_as,
@@ -263,7 +282,8 @@ class DownloadService(object):
         try:
             downloaded_files = download_handler.download(biomaj_file_info.local_dir)
         except Exception as e:
-            self.logger.error("Download error:%s:%s: " % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
+            traceback.print_exc()
+            self.logger.error("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
         else:
             self.logger.debug("Downloaded " + str(len(downloaded_files)) + " file in " + biomaj_file_info.local_dir)
         self.get_file_info(biomaj_file_info.local_dir, downloaded_files)
@@ -297,6 +317,8 @@ class DownloadService(object):
         return downloaded_files
 
     def get_file_info(self, local_dir, downloaded_files):
+        if downloaded_files is None:
+            return
         for downloaded_file in downloaded_files:
             file_dir = local_dir + '/' + os.path.dirname(downloaded_file['save_as'])
             fstat = os.stat(file_dir)
@@ -324,20 +346,25 @@ class DownloadService(object):
         Manage download and send ACK message
         '''
         try:
-            message = message_pb2.DownloadFile()
-            message.ParseFromString(body)
+            operation = message_pb2.Operation()
+            operation.ParseFromString(body)
+            message = operation.download
             self.logger.debug('Received message: %s' % (message))
-            if not message.remote_file.files:
+            if operation.type == 0:
+                message = operation.download
                 self.logger.debug('List operation %s, %s' % (message.bank, message.session))
                 if len(message.remote_file.matches) == 0:
                     self.logger.error('No pattern match for a list operation')
                 else:
                     self.list(message)
-            else:
+            elif operation.type == 1:
+                message = operation.download
                 self.logger.debug('Download operation %s, %s' % (message.bank, message.session))
                 downloaded_files = self.download(message)
                 if self.download_callback is not None:
                     self.download_callback(message.bank, downloaded_files)
+            else:
+                self.logger.warn('Wrong message type, skipping')
         except Exception as e:
             self.logger.error('Error with message: %s' % (str(e)))
             traceback.print_exc()
