@@ -11,3 +11,4 @@ python-consul
 prometheus_client
 requests
 biomaj_core
+flake8
