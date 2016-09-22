@@ -10,6 +10,7 @@ from Queue import Queue
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.message import message_pb2
 
+
 class DownloadClient(DownloadService):
 
     def __init__(self, rabbitmq_host, pool_size=5):
@@ -28,8 +29,8 @@ class DownloadClient(DownloadService):
         self.download_pool = []
         self.files_to_download = 0
 
-    def set_queue_size(size):
-        self.pool = Pool(size)
+    def set_queue_size(self, size):
+        self.pool_size = size
 
     def create_session(self, bank, proxy=None):
         self.bank = bank
@@ -51,7 +52,6 @@ class DownloadClient(DownloadService):
             raise Exception('Failed to connect to the download proxy')
         result = r.json()
         return (result['progress'], result['errors'])
-
 
     def download_remote_files(self, cf, downloaders, offline_dir):
         '''
@@ -115,7 +115,6 @@ class DownloadClient(DownloadService):
                 operation.download.MergeFrom(message)
                 self.download_remote_file(operation)
 
-
     def download_remote_file(self, operation):
         # If biomaj_proxy
         self.files_to_download += 1
@@ -144,15 +143,12 @@ class DownloadClient(DownloadService):
 
         logging.info("Workflow:wf_download:Download:Threads:Over")
         nb_error = 0
-        is_error = False
         nb_files_to_download = 0
         for th in thlist:
             nb_files_to_download += th.files_to_download
             if th.error > 0:
-                is_error = True
                 nb_error += 1
         return nb_error
-
 
     def wait_for_download(self):
         over = False

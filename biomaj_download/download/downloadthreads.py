@@ -1,16 +1,10 @@
 from builtins import str
-from builtins import range
-#import os
+
 import logging
-#import datetime
-#import time
-#import re
 import threading
-import copy
-#import tarfile
-#import zipfile
 import traceback
 import sys
+
 
 class DownloadThread(threading.Thread):
 

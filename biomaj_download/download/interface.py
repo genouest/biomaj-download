@@ -85,9 +85,6 @@ class DownloadInterface(object):
     def set_method(self, method):
         self.method = method
 
-    def set_param(self, param):
-        self.param = param
-
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.

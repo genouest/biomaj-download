@@ -6,8 +6,6 @@ import yaml
 import redis
 import uuid
 import traceback
-import shutil
-import traceback
 
 import pika
 
@@ -36,13 +34,12 @@ class DownloadService(object):
             logging.config.dictConfig(self.config['log_config'])
             self.logger = logging.getLogger('biomaj')
 
-
         if not self.redis_client:
             self.logger.debug('Init redis connection')
             self.redis_client = redis.StrictRedis(host=self.config['redis']['host'],
-                                              port=self.config['redis']['port'],
-                                              db=self.config['redis']['db'],
-                                              decode_responses=True)
+                                                  port=self.config['redis']['port'],
+                                                  db=self.config['redis']['db'],
+                                                  decode_responses=True)
 
         if rabbitmq and not self.channel:
             connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host']))
@@ -82,7 +79,7 @@ class DownloadService(object):
                 save_as = remote_file['save_as']
 
         # For direct protocol, we only keep base name
-        if protocol in [4,5,6]:
+        if protocol in [4, 5, 6]:
             tmp_remote = []
             for remote_file in remote_files:
                 tmp_remote.append(remote_file['name'])
@@ -99,7 +96,6 @@ class DownloadService(object):
 
         if credentials:
             downloader.set_credentials(credentials)
-
 
         if save_as:
             downloader.set_save_as(save_as)
@@ -124,13 +120,13 @@ class DownloadService(object):
         server = biomaj_file_info.remote_file.server
         remote_dir = biomaj_file_info.remote_file.remote_dir
 
-        downloader = None
         protocol_name = message_pb2.DownloadFile.Protocol.Name(protocol).lower()
         self.logger.debug('%s request to download from %s://%s' % (biomaj_file_info.bank, protocol_name, server))
 
         remote_files = []
         for remote_file in biomaj_file_info.remote_file.files:
-            remote_files.append({'name': remote_file.name,
+            remote_files.append({
+                                'name': remote_file.name,
                                 'save_as': remote_file.save_as,
                                 'year': remote_file.metadata.year,
                                 'month': remote_file.metadata.month,
@@ -204,7 +200,6 @@ class DownloadService(object):
             progress = -1
         return (int(progress), int(error))
 
-
     def list_status(self, biomaj_file_info):
 
         list_progress = self.redis_client.get(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
@@ -212,7 +207,6 @@ class DownloadService(object):
             return True
         else:
             return False
-
 
     def list_result(self, biomaj_file_info, protobuf_decode=True):
         '''
@@ -227,8 +221,7 @@ class DownloadService(object):
 
         return file_list
 
-
-    def _list(self, biomaj_file_info):
+    def _list(self, download_handler, biomaj_file_info):
         '''
         List remote content, no session management
         '''
@@ -256,9 +249,9 @@ class DownloadService(object):
                     file_pb2.url = file_elt['url']
                 if 'param' in file_elt and file_elt['param']:
                     for key in list(file_elt['param'].keys()):
-                        param = remote_file.param.add()
+                        param = file_list_pb2.param.add()
                         param.name = key
-                        param.value = file_elt['param'][key]                    
+                        param.value = file_elt['param'][key]
                 metadata = message_pb2.File.MetaData()
                 metadata.permissions = file_elt['permissions']
                 metadata.group = file_elt['group']
@@ -285,12 +278,10 @@ class DownloadService(object):
         if download_handler is None:
             self.logger.error('Could not get a handler for %s with session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
 
-        file_list_pb2 = self._list(biomaj_file_info)
+        file_list_pb2 = self._list(download_handler, biomaj_file_info)
 
-            # self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':files', file_list_pb2)
         self.redis_client.set(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':files', str(file_list_pb2.SerializeToString()))
         self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
-
 
     def local_download(self, biomaj_file_info):
         '''
@@ -347,15 +338,15 @@ class DownloadService(object):
             downloaded_file['day'] = fstat_mtime.day
             downloaded_file['year'] = fstat_mtime.year
 
-
     def ask_download(self, biomaj_info_file):
-        self.channel.basic_publish(exchange='',
-                                    routing_key='biomajdownload',
-                                    body=biomaj_info_file.SerializeToString(),
-                                    properties=pika.BasicProperties(
-                                        # make message persistent
-                                        delivery_mode=2
-                                    ))
+        self.channel.basic_publish(
+            exchange='',
+            routing_key='biomajdownload',
+            body=biomaj_info_file.SerializeToString(),
+            properties=pika.BasicProperties(
+                # make message persistent
+                delivery_mode=2
+            ))
 
     def callback_messages(self, ch, method, properties, body):
         '''
@@ -392,6 +383,7 @@ class DownloadService(object):
         '''
         self.channel.queue_declare(queue='biomajdownload', durable=True)
         self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(self.callback_messages,
-                                    queue='biomajdownload')
+        self.channel.basic_consume(
+            self.callback_messages,
+            queue='biomajdownload')
         self.channel.start_consuming()

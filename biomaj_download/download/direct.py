@@ -6,7 +6,6 @@ import re
 import hashlib
 import urllib
 
-from biomaj_download.download.interface import DownloadInterface
 from biomaj_download.download.ftp import FTPDownload
 from biomaj_core.utils import Utils
 
@@ -52,7 +51,7 @@ class DirectFTPDownload(FTPDownload):
             rfile['hash'] = None
             if self.param:
                 if 'param' not in file_to_download or not file_to_download['param']:
-                    rfile['param'] = self.param            
+                    rfile['param'] = self.param
             self.files_to_download.append(rfile)
 
     def list(self, directory=''):
