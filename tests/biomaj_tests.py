@@ -412,7 +412,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
         ftpd.match([r'^db/FASTA/alu.*\.gz$'], file_list, dir_list)
     except Exception as e:
         print("Error: " + str(e))
-        self.skipTest("Skipping tests due to remote server error")
+        self.skipTest("Skipping test due to remote server error")
     ftpd.download(self.utils.data_dir)
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
