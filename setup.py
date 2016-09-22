@@ -42,6 +42,7 @@ config = {
         'Programming Language :: Python :: 3.4'
     ],
     'install_requires': ['nose',
+                         'biomaj_core',
                          'pycurl',
                          'mock',
                          'py-bcrypt',

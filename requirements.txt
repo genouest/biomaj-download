@@ -10,3 +10,4 @@ flask
 python-consul
 prometheus_client
 requests
+biomaj_core
