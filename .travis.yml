@@ -26,6 +26,7 @@ install:
 #script: nosetests --with-coverage --cover-package=biomaj -a '!network'
 #script: nosetests --with-coverage --cover-package=biomaj
 script: nosetests
-#after_success:
+after_success:
+   - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 #  - coveralls
 
