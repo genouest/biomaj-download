@@ -24,12 +24,11 @@ Endpoint: /api/download/metrics
 
 ## Message consumer:
 export BIOMAJ_CONFIG=path_to_config.yml
-python bin/download_consumer.py
+python bin/biomaj_download_consumer.py
 
 ## Web server
 
-In bin directory:
 export BIOMAJ_CONFIG=path_to_config.yml
-gunicorn download:app
+gunicorn biomaj_download.biomaj_download_web:app
 
 Web processes should be behind a proxy/load balancer, API base url /api/download

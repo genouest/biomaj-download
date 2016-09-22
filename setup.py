@@ -57,7 +57,7 @@ config = {
                          ],
     'packages': find_packages(),
     'include_package_data': True,
-    'scripts': [],
+    'scripts': ['bin/biomaj_download_consumer.py'],
     'name': 'biomaj_download'
 }
 
