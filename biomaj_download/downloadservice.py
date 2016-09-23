@@ -24,6 +24,8 @@ class DownloadService(object):
 
     def __init__(self, config_file=None, rabbitmq=True):
         self.logger = logging
+        self.session = None
+        self.bank = None
         self.download_callback = None
         with open(config_file, 'r') as ymlfile:
             self.config = yaml.load(ymlfile)
@@ -156,25 +158,32 @@ class DownloadService(object):
                                 save_as=biomaj_file_info.remote_file.save_as,
                                 timeout_download=biomaj_file_info.timeout_download)
 
-    def clean(self, biomaj_file_info):
+    def clean(self, biomaj_file_info=None):
         '''
         Clean session and download info
         '''
-        self.logger.debug('Clean %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
-        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session)
-        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
-        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
-        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':files')
-        self.redis_client.delete(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info')
+        session = self.session
+        bank = self.bank
+        if biomaj_file_info:
+            session = biomaj_file_info.session
+            bank = biomaj_file_info.bank
+
+        self.logger.debug('Clean %s session %s' % (bank, session))
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + bank + ':session:' + session)
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + bank + ':session:' + session + ':error')
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + bank + ':session:' + session + ':progress')
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + bank + ':session:' + session + ':files')
+        self.redis_client.delete(self.config['redis']['prefix'] + ':' + bank + ':session:' + session + ':error:info')
 
     def _create_session(self, bank):
         '''
         Creates a unique session
         '''
-        session = str(uuid.uuid4())
-        self.redis_client.set(self.config['redis']['prefix'] + ':' + bank + ':session:' + session, 1)
-        self.logger.debug('Create %s new session %s' % (bank, session))
-        return session
+        self.session = str(uuid.uuid4())
+        self.redis_client.set(self.config['redis']['prefix'] + ':' + bank + ':session:' + self.session, 1)
+        self.logger.debug('Create %s new session %s' % (bank, self.session))
+        self.bank = bank
+        return self.session
 
     def download_errors(self, biomaj_file_info):
         '''
