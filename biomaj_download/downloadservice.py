@@ -58,7 +58,7 @@ class DownloadService(object):
     def get_handler(self, protocol_name, server, remote_dir, remote_files=[],
                     credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
-                    save_as=None, timeout_download=None):
+                    save_as=None, timeout_download=None, offline_dir=None):
         protocol = message_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:
@@ -89,6 +89,9 @@ class DownloadService(object):
 
         if http_method is not None:
             downloader.set_method(http_method)
+
+        if offline_dir:
+            downloader.set_offline_dir(offline_dir)
 
         if proxy is not None and proxy:
             downloader.set_proxy(proxy, proxy_auth)
@@ -156,7 +159,8 @@ class DownloadService(object):
                                 proxy=proxy,
                                 proxy_auth=proxy_auth,
                                 save_as=biomaj_file_info.remote_file.save_as,
-                                timeout_download=biomaj_file_info.timeout_download)
+                                timeout_download=biomaj_file_info.timeout_download,
+                                offline_dir=biomaj_file_info.local_dir)
 
     def clean(self, biomaj_file_info=None):
         '''

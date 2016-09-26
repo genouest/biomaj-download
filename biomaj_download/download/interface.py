@@ -47,6 +47,10 @@ class DownloadInterface(object):
         self.method = None
         self.protocol = None
         self.server = None
+        self.offline_dir = None
+
+    def set_offline_dir(self, offline_dir):
+        self.offline_dir = offline_dir
 
     def set_server(self, server):
         self.server = server
