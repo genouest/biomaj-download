@@ -76,9 +76,9 @@ class RSYNCDownload(DownloadInterface):
             date =  parts[2].split('/')
             rfile['permissions'] = parts[0]
             rfile['size'] = parts[1]
-            rfile['month'] = date[1]
-            rfile['day'] = date[2]
-            rfile['year'] = date[0]
+            rfile['month'] = int(date[1])
+            rfile['day'] = int(date[2])
+            rfile['year'] = int(date[0])
             rfile['name'] = parts[4]
             is_dir = False
             if re.match('^d', rfile['permissions']):
@@ -130,22 +130,7 @@ class RSYNCDownload(DownloadInterface):
             if error:
                 raise Exception("RSYNC:Download:Error:" + rfile['root'] + '/' + rfile['name'])
             self.set_permissions(file_path, rfile)
-            #Add progress only per 10 files to limit db requests
-            if nb_files < 10:
-                nb = 1
-                do_progress = True
-            else:
-                if cur_files == nb_files:
-                    do_progress = True
-                    nb = cur_files % 10
-                elif cur_files > 0 and cur_files % 10 == 0:
-                    nb = 10
-                    do_progress = True
-                else:
-                    do_progress = False
-            if do_progress:
-                self.set_progress(nb, nb_files)
-        return(error,self.files_to_download)
+        return(self.files_to_download)
         
 #---------------------------------------------------------------
     def rsync_download(self,file_path, file_to_download):

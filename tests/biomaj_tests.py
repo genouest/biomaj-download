@@ -461,7 +461,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-
         
     def tearDown(self):
         self.utils.clean()
@@ -469,14 +468,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_list(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
-        #os.chdir(self.utils.data_dir)
+        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
     
     def test_rsync_match(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
-        #os.chdir(self.utils.data_dir)
+        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], files_list, dir_list,prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
@@ -484,7 +483,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_download(self):
         rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
-        #os.chdir(self.utils.data_dir)
+        rsyncd.set_offline_dir(self.utils.data_dir)
         error = rsyncd.rsync_download(self.utils.data_dir, "test2.fasta")
         self.assertTrue(error == 0)
     
@@ -492,15 +491,15 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_general_download(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
-        #os.chdir(self.utils.data_dir)
+        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'],files_list,dir_list)
-        error, download_files=rsyncd.download(self.curdir)
-        self.assertTrue(error==0)
+        download_files=rsyncd.download(self.curdir)
+        self.assertTrue(len(download_files)==1)
     
     def test_rsync_download_or_copy(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
-        #os.chdir(self.utils.data_dir)
+        rsyncd.set_offline_dir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list)
         files_to_download_prev = rsyncd.files_to_download
