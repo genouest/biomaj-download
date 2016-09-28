@@ -41,12 +41,17 @@ def start_server(config):
         context.load_cert_chain(config['tls']['cert'], config['tls']['key'])
 
     if config['consul']['host']:
-        consul_agent = consul.Consult(host=config['consul']['host'])
+        consul_agent = consul.Consul(host=config['consul']['host'])
         consul_agent.agent.service.register('biomaj_download', service_id=config['consul']['id'], port=config['web']['port'], tags=['biomaj'])
-        check = consul.Check.http(url=config['web']['local_endpoint'], interval=20)
+        check = consul.Check.http(url=config['web']['local_endpoint'] + '/api/download', interval=20)
         consul_agent.agent.check.register(config['consul']['id'] + '_check', check=check, service_id=config['consul']['id'])
 
     app.run(host='0.0.0.0', port=config['web']['port'], ssl_context=context, threaded=True, debug=config['web']['debug'])
+
+
+@app.route('/api/download', methods=['GET'])
+def ping():
+    return jsonify({'msg': 'pong'})
 
 
 @app.route('/api/download/metrics', methods=['GET'])
