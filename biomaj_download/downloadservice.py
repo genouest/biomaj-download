@@ -15,7 +15,7 @@ from biomaj_download.download.direct import DirectFTPDownload
 from biomaj_download.download.direct import DirectHttpDownload
 from biomaj_download.download.localcopy import LocalDownload
 from biomaj_download.message import message_pb2
-from biomaj.download.rsync import RSYNCDownload
+from biomaj_download.download.rsync import RSYNCDownload
 
 
 class DownloadService(object):
