@@ -146,7 +146,6 @@ class RSYNCDownload(DownloadInterface):
         err_code = ''
         logging.debug('RSYNC:RSYNC DOwNLOAD')
         #give a working directory to run rsync
-        logging.warning("self.credentials: "+self.credentials)
         try:
             os.chdir(self.offline_dir)
         except TypeError:
