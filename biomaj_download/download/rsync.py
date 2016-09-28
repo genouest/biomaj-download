@@ -48,13 +48,17 @@ class RSYNCDownload(DownloadInterface):
         rfiles = []
         rdirs = []
         logging.debug('RSYNC:List')
-        os.chdir(self.offline_dir)
+        
+        #give a working directory to run rsync
+        try:
+            os.chdir(self.offline_dir)
+        except TypeError:
+            logging.error("RSYNC:list:Could not find offline_dir")
         if self.remote_dir and self.credentials:
             cmd = str(self.protocol) + " --list-only " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(directory)
         elif (self.remote_dir and not self.credentials):
            cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
         else : #Local rsync for unitest 
-            #cmd = str(self.protocol) + " --list-only " + str(self.server)
             cmd = str(self.protocol) + " --list-only " + str(self.server)
         try:
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
@@ -75,7 +79,7 @@ class RSYNCDownload(DownloadInterface):
             if not parts: continue
             date =  parts[2].split('/')
             rfile['permissions'] = parts[0]
-            rfile['size'] = parts[1]
+            rfile['size'] = int(parts[1].replace(',',''))
             rfile['month'] = int(date[1])
             rfile['day'] = int(date[2])
             rfile['year'] = int(date[0])
@@ -105,7 +109,11 @@ class RSYNCDownload(DownloadInterface):
         logging.debug('RSYNC:Download')
         nb_files = len(self.files_to_download)
         cur_files = 1
-        os.chdir(self.offline_dir)
+        #give a working directory to run rsync
+        try:
+            os.chdir(self.offline_dir)
+        except TypeError:
+            logging.error("RSYNC:list:Could not find offline_dir")
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
@@ -137,7 +145,11 @@ class RSYNCDownload(DownloadInterface):
         error = False
         err_code = ''
         logging.debug('RSYNC:RSYNC DOwNLOAD')
-        os.chdir(self.offline_dir)
+        #give a working directory to run rsync
+        try:
+            os.chdir(self.offline_dir)
+        except TypeError:
+            logging.error("RSYNC:list:Could not find offline_dir")
         try :
             if self.remote_dir and self.credentials: #download on server
                 cmd = str(self.protocol) + " " + str(self.credentials) + "@" + str(self.server) + ":" + str(self.remote_dir) + str(file_to_download) + " " + str(file_path)
