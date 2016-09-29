@@ -76,7 +76,7 @@ class DownloadClient(DownloadService):
                     remote_file.remote_dir = cf.get('remote.dir')
                 else:
                     remote_file.remote_dir = ''
-                remote_file.credentials  = downloader.credentials
+                remote_file.credentials = downloader.credentials
                 biomaj_file = remote_file.files.add()
                 biomaj_file.name = file_to_download['name']
                 if 'root' in file_to_download and file_to_download['root']:
