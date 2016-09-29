@@ -13,7 +13,7 @@ from biomaj_download.message import message_pb2
 
 class DownloadClient(DownloadService):
 
-    def __init__(self, rabbitmq_host, pool_size=5):
+    def __init__(self, rabbitmq_host=None, pool_size=5):
         self.logger = logging
         self.channel = None
         self.pool_size = pool_size
