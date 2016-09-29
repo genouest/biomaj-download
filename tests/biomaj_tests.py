@@ -509,7 +509,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_download_in_subdir(self):
         rsyncd = RSYNCDownload('rsync', self.curdir+'/', "")
         rsyncd.set_offline_dir(self.curdir+'/')
-        logging.warning('PLOPPPPP: '+str(self.curdir+'/'))
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test.*\.gz$'], file_list, dir_list)
         rsyncd.download(self.utils.data_dir)
