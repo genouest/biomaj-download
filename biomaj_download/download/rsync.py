@@ -72,10 +72,11 @@ class RSYNCDownload(DownloadInterface):
             logging.error('Error while listing ' + str(err_code))
             return(rfiles, rdirs)
         list_rsync=str(list_rsync, encoding = 'utf-8')
-        for i in range(0,len(list_rsync.rstrip().split("\n"))):
+        lines=list_rsync.rstrip().split("\n")
+        for line in lines:
             rfile = {}
             #rsync LIST output is separated by \n                        
-            parts = list_rsync.rstrip().split("\n")[i].split()
+            parts = line.split()
             if not parts: continue
             date =  parts[2].split('/')
             rfile['permissions'] = parts[0]
