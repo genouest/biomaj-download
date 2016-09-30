@@ -511,6 +511,5 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.set_offline_dir(self.curdir+'/')
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
-        logging.warning("rsyncd.files_to_download :"+str(rsyncd.files_to_download))
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 3)
