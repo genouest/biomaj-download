@@ -48,7 +48,6 @@ class RSYNCDownload(DownloadInterface):
         rfiles = []
         rdirs = []
         logging.debug('RSYNC:List')
-        
         #give a working directory to run rsync
         try:
             os.chdir(self.offline_dir)
@@ -59,7 +58,7 @@ class RSYNCDownload(DownloadInterface):
         elif (self.remote_dir and not self.credentials):
            cmd = str(self.protocol) + " --list-only " + str(self.server) + ":" + str(self.remote_dir) + str(directory) 
         else : #Local rsync for unitest 
-            cmd = str(self.protocol) + " --list-only " + str(self.server)
+            cmd = str(self.protocol) + " --list-only " + str(self.server) +str(directory) 
         try:
             p = subprocess.Popen(cmd, stdin = subprocess.PIPE,stdout = subprocess.PIPE,stderr = subprocess.PIPE,shell = True)
             list_rsync, err = p.communicate()

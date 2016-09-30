@@ -477,7 +477,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'^test.*\.gz$'], files_list, dir_list,prefix='', submatch=False)
+        rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
     
     def test_rsync_download(self):
@@ -493,7 +493,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'^test.*\.gz$'],files_list,dir_list)
+        rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
         download_files=rsyncd.download(self.curdir)
         self.assertTrue(len(download_files)==1)
     
@@ -501,7 +501,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_offline_dir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'^test.*\.gz$'], file_list, dir_list)
+        rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
@@ -510,6 +510,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd = RSYNCDownload('rsync', self.curdir+'/', "")
         rsyncd.set_offline_dir(self.curdir+'/')
         (file_list, dir_list) = rsyncd.list()
-        rsyncd.match([r'^/bank/test.*\.gz$'], file_list, dir_list)
+        rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
+        logging.warning("rsyncd.files_to_download :"+str(rsyncd.files_to_download))
         rsyncd.download(self.utils.data_dir)
-        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        self.assertTrue(len(rsyncd.files_to_download) == 3)
