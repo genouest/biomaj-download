@@ -109,7 +109,10 @@ class DownloadClient(DownloadService):
 
                 timeout_download = cf.get('timeout.download', None)
                 if timeout_download:
-                    message.timeout_download = timeout_download
+                    try:
+                        message.timeout_download = int(timeout_download)
+                    except Exception as e:
+                        logging.error('Invalid timeout value, not an integer, skipping')
 
                 message.remote_file.MergeFrom(remote_file)
                 operation.download.MergeFrom(message)

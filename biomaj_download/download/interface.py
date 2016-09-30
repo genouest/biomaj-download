@@ -69,7 +69,13 @@ class DownloadInterface(object):
         self.param = param
 
     def set_timeout(self, timeout):
-        self.timeout = timeout
+        if isinstance(timeout, int):
+            self.timeout = timeout
+        else:
+            try:
+                self.timeout = int(timeout)
+            except Exception as e:
+                logging.error('Timeout is not a valid integer, skipping')
 
     def set_save_as(self, save_as):
         self.save_as = save_as
