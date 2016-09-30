@@ -9,6 +9,11 @@ redis:
 
 rabbitmq:
     host: '127.0.0.1'
+    port: 5672
+    user: null
+    password: null
+    virtual_host: '/'
+
 
 consul:
     host: null

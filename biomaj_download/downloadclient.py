@@ -13,7 +13,7 @@ from biomaj_download.message import message_pb2
 
 class DownloadClient(DownloadService):
 
-    def __init__(self, rabbitmq_host=None, pool_size=5):
+    def __init__(self, rabbitmq_host=None, rabbitmq_port=5672, rabbitmq_vhost='/', rabbitmq_user=None, rabbitmq_password=None, pool_size=5):
         self.logger = logging
         self.channel = None
         self.pool_size = pool_size
@@ -21,7 +21,12 @@ class DownloadClient(DownloadService):
         self.bank = None
         if rabbitmq_host:
             self.remote = True
-            connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
+            connection = None
+            if rabbitmq_user:
+                credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
+                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials))
+            else:
+                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost))
             self.channel = connection.channel()
         else:
             self.remote = False
