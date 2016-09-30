@@ -22,7 +22,7 @@ install:
 #  - "echo data_file=$TRAVIS_BUILD_DIR/.coverage >> .coveragerc"
 # command to run tests
 script:
-   - nosetests
+   - python setup.py test
    - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 #after_success:
 #  - coveralls
