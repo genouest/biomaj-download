@@ -74,7 +74,7 @@ class DownloadInterface(object):
         else:
             try:
                 self.timeout = int(timeout)
-            except Exception as e:
+            except Exception:
                 logging.error('Timeout is not a valid integer, skipping')
 
     def set_save_as(self, save_as):

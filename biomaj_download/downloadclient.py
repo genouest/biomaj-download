@@ -111,7 +111,7 @@ class DownloadClient(DownloadService):
                 if timeout_download:
                     try:
                         message.timeout_download = int(timeout_download)
-                    except Exception as e:
+                    except Exception:
                         logging.error('Invalid timeout value, not an integer, skipping')
 
                 message.remote_file.MergeFrom(remote_file)
