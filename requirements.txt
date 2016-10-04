@@ -12,3 +12,4 @@ prometheus_client
 requests
 biomaj_core
 flake8
+humanfriendly

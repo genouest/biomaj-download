@@ -3,6 +3,8 @@ import re
 import hashlib
 import datetime
 
+import humanfriendly
+
 from biomaj_core.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
 
@@ -132,7 +134,7 @@ class HTTPDownload(FTPDownload):
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
-                rfile['size'] = foundfile[self.http_parse.file_size - 1]
+                rfile['size'] = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
                 date = foundfile[self.http_parse.file_date - 1]
                 if self.http_parse.file_date_format:
                     date_object = datetime.datetime.strptime(date, self.http_parse.file_date_format.replace('%%', '%'))

@@ -52,7 +52,8 @@ config = {
                          'python-consul',
                          'prometheus_client',
                          'protobuf',
-                         'requests'
+                         'requests',
+                         'humanfriendly'
                         ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',
