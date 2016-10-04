@@ -6,13 +6,13 @@ import re
 import hashlib
 import sys
 
+from biomaj_download.download.ftp import FTPDownload
+from biomaj_core.utils import Utils
+
 if sys.version_info[0] < 3:
     from urllib import urlencode
 else:
     from urllib.parse import urlencode
-
-from biomaj_download.download.ftp import FTPDownload
-from biomaj_core.utils import Utils
 
 try:
     from io import BytesIO
