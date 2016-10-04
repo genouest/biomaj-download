@@ -172,7 +172,7 @@ class DownloadClient(DownloadService):
                     logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
                 else:
                     if progress % 10 == 0:
-                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + nb_files_to_download)
+                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download))
                     time.sleep(1)
                 if error > 0:
                     download_error = True

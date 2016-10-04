@@ -37,7 +37,6 @@ class DownloadService(object):
             self.logger = logging.getLogger('biomaj')
 
         if not self.redis_client:
-            self.logger.debug('Init redis connection')
             self.redis_client = redis.StrictRedis(host=self.config['redis']['host'],
                                                   port=self.config['redis']['port'],
                                                   db=self.config['redis']['db'],
