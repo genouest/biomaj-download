@@ -335,7 +335,7 @@ class DownloadService(object):
         try:
             downloaded_files = self.local_download(biomaj_file_info)
         except Exception as e:
-            self.logger.error("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
+            self.logger.exception("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
             # traceback.print_exc()
             self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
             self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info', str(e))

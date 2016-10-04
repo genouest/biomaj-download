@@ -4,7 +4,12 @@ import pycurl
 import os
 import re
 import hashlib
-import urllib
+import sys
+
+if sys.version_info[0] < 3:
+    from urllib import urlencode
+else:
+    from urllib.parse import urlencode
 
 from biomaj_download.download.ftp import FTPDownload
 from biomaj_core.utils import Utils
@@ -134,7 +139,7 @@ class DirectHttpDownload(DirectFTPDownload):
 
             if self.method == 'POST':
                 # Form data must be provided already urlencoded.
-                postfields = urllib.parse.urlencode(self.param)
+                postfields = urlencode(self.param)
                 # Sets request method to POST,
                 # Content-Type header to application/x-www-form-urlencoded
                 # and data to send in request body.
@@ -148,7 +153,7 @@ class DirectHttpDownload(DirectFTPDownload):
                     curl.setopt(pycurl.URL, (rfile['url'] + rfile['root'] + '/' + rfile['name']).encode('ascii', 'ignore'))
 
             else:
-                url = rfile['url'] + rfile['root'] + '/' + rfile['name'] + '?' + urllib.parse.urlencode(self.param)
+                url = rfile['url'] + rfile['root'] + '/' + rfile['name'] + '?' + urlencode(self.param)
                 try:
                     curl.setopt(pycurl.URL, url)
                 except Exception:
