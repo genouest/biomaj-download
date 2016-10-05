@@ -61,7 +61,7 @@ class DownloadService(object):
             try:
                 self.channel.close()
             except Exception as e:
-                logging.warn('Download:Service:Exception:'+str(e))
+                logging.warn('Download:Service:Exception:' + str(e))
 
     def on_download_callback(self, func):
         self.download_callback = func
