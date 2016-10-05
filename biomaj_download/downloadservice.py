@@ -58,7 +58,10 @@ class DownloadService(object):
 
     def close(self):
         if self.channel:
-            self.channel.close()
+            try:
+                self.channel.close()
+            except Exception as e:
+                logging.warn('Download:Service:Exception:'+str(e))
 
     def on_download_callback(self, func):
         self.download_callback = func
@@ -335,13 +338,18 @@ class DownloadService(object):
             downloaded_files = self.local_download(biomaj_file_info)
         except Exception as e:
             self.logger.exception("Download error:%s:%s:%s" % (biomaj_file_info.bank, biomaj_file_info.session, str(e)))
-            # traceback.print_exc()
-            self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
-            self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info', str(e))
+            session = self.redis_client.get(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session)
+            if session:
+                # If session deleted, do not track
+                self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error')
+                self.redis_client.lpush(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':error:info', str(e))
         else:
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
 
-        self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
+        session = self.redis_client.get(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session)
+        if session:
+            # If session deleted, do not track
+            self.redis_client.incr(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':progress')
         return downloaded_files
 
     def get_file_info(self, local_dir, downloaded_files):
