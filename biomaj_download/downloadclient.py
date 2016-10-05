@@ -13,12 +13,14 @@ from biomaj_download.message import message_pb2
 
 class DownloadClient(DownloadService):
 
-    def __init__(self, rabbitmq_host=None, rabbitmq_port=5672, rabbitmq_vhost='/', rabbitmq_user=None, rabbitmq_password=None, pool_size=5):
+    def __init__(self, rabbitmq_host=None, rabbitmq_port=5672, rabbitmq_vhost='/', rabbitmq_user=None, rabbitmq_password=None, pool_size=5, redis_client=None, redis_prefix=None):
         self.logger = logging
         self.channel = None
         self.pool_size = pool_size
         self.proxy = None
         self.bank = None
+        self.redis_client = redis_client
+        self.redis_prefix = redis_prefix
         if rabbitmq_host:
             self.remote = True
             connection = None
@@ -165,6 +167,12 @@ class DownloadClient(DownloadService):
         if self.remote:
             download_error = False
             while not over:
+                # Check for cancel request
+                if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank + ':action:cancel'):
+                    logging.warn('Cancel requested, stopping update')
+                    self.redis_client.delete(self.redis_prefix + ':' + self.bank + ':action:cancel')
+                    raise Exception('Cancel requested, stopping download')
+
                 (progress, error) = self.download_status()
                 if progress == nb_files_to_download:
                     over = True
@@ -173,7 +181,7 @@ class DownloadClient(DownloadService):
                 else:
                     if progress % 10 == 0:
                         logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download))
-                    time.sleep(1)
+                    time.sleep(10)
                 if error > 0:
                     download_error = True
                     r = requests.get(self.proxy + '/api/download/error/download/' + self.bank + '/' + self.session)
