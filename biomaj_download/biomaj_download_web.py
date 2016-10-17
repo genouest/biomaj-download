@@ -41,7 +41,7 @@ def consul_declare(config):
     if config['consul']['host']:
         consul_agent = consul.Consul(host=config['consul']['host'])
         consul_agent.agent.service.register('biomaj_download', service_id=config['consul']['id'], port=config['web']['port'], tags=['biomaj'])
-        check = consul.Check.http(url='http://' + config['web']['hostname'] + ':' + config['web']['port'] + '/api/download', interval=20)
+        check = consul.Check.http(url='http://' + config['web']['hostname'] + ':' + str(config['web']['port']) + '/api/download', interval=20)
         consul_agent.agent.check.register(config['consul']['id'] + '_check', check=check, service_id=config['consul']['id'])
 
 
