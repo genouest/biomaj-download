@@ -151,5 +151,5 @@ def clean_session(bank, session):
     return jsonify({'msg': 'session cleared'})
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" or __name__ == "biomaj_download.biomaj_download_web":
     start_server(config)
