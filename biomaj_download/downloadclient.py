@@ -14,6 +14,11 @@ else:
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.message import message_pb2
 
+is_py2 = sys.version[0] == '2'
+if is_py2:
+     from Queue import Queue
+else:
+     from queue import Queue
 
 class DownloadClient(DownloadService):
 
