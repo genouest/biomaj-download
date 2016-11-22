@@ -63,8 +63,8 @@ class RSYNCDownload(DownloadInterface):
             logging.error("RsyncError:" + str(e))
         if err_code != 0:
             logging.error('Error while listing ' + str(err_code))
-            return(rfiles, rdirs)
-        list_rsync = str(list_rsync, encoding='utf-8')
+            return(rfiles, rdirs)        
+        list_rsync = str(list_rsync.decode('utf-8'))
         lines = list_rsync.rstrip().split("\n")
         for line in lines:
             rfile = {}
@@ -165,14 +165,14 @@ class RSYNCDownload(DownloadInterface):
 
     def test_stderr_rsync_error(self, stderr):
         #stderr = str(stderr, encoding='utf8')
-        stderr =str(stderr.decode('utf-8'))
+        stderr = str(stderr.decode('utf-8'))
         if "rsync error" in str(stderr):
             reason = stderr.split(str(self.protocol) + " error:")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 
     def test_stderr_rsync_message(self, stderr):
         #stderr = str(stderr, encoding='utf8')
-        stderr =str(stderr.decode('utf-8'))
+        stderr = str(stderr.decode('utf-8'))
         if "rsync:" in str(stderr):
             reason = stderr.split(str(self.protocol) + ":")[1].split("\n")[0]
             raise ExceptionRsync(reason)
