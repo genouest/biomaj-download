@@ -22,7 +22,7 @@ from biomaj_download.download.direct import DirectFTPDownload, DirectHttpDownloa
 from biomaj_download.download.http import HTTPDownload, HTTPParse
 from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.downloadthreads import DownloadThread
-
+from biomaj_download.download.rsync import RSYNCDownload
 
 import unittest
 
@@ -448,3 +448,68 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['year']=='2013')
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
+    
+@attr('rsync')
+@attr('local')
+class TestBiomajRSYNCDownload(unittest.TestCase):
+    '''
+    Test RSYNC downloader
+    '''
+    def setUp(self):
+        self.utils = UtilsForTest()
+
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+        
+    def tearDown(self):
+        self.utils.clean()
+    
+    def test_rsync_list(self):
+        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd.set_credentials(None)
+        rsyncd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = rsyncd.list()
+        self.assertTrue(len(files_list) != 0)
+    
+    def test_rsync_match(self):
+        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd.set_credentials(None)
+        rsyncd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
+        self.assertTrue(len(rsyncd.files_to_download) != 0)
+    
+    def test_rsync_download(self):
+        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd.set_credentials(None)
+        rsyncd.set_offline_dir(self.utils.data_dir)
+        error = rsyncd.rsync_download(self.utils.data_dir, "test2.fasta")
+        self.assertTrue(error == 0)
+    
+    
+    def test_rsync_general_download(self):
+        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd.set_credentials(None)
+        rsyncd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
+        download_files=rsyncd.download(self.curdir)
+        self.assertTrue(len(download_files)==1)
+    
+    def test_rsync_download_or_copy(self):
+        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd.set_offline_dir(self.utils.data_dir)
+        (file_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
+        files_to_download_prev = rsyncd.files_to_download
+        rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
+        self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
+                
+    def test_rsync_download_in_subdir(self):
+        rsyncd = RSYNCDownload('rsync', self.curdir+'/', "")
+        rsyncd.set_offline_dir(self.curdir+'/')
+        (file_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
+        rsyncd.download(self.utils.data_dir)
+        self.assertTrue(len(rsyncd.files_to_download) == 3)

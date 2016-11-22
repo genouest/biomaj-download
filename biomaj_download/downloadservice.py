@@ -15,6 +15,7 @@ from biomaj_download.download.direct import DirectFTPDownload
 from biomaj_download.download.direct import DirectHttpDownload
 from biomaj_download.download.localcopy import LocalDownload
 from biomaj_download.message import message_pb2
+from biomaj_download.download.rsync import RSYNCDownload
 
 
 class DownloadService(object):
@@ -84,6 +85,8 @@ class DownloadService(object):
             downloader = DirectHttpDownload('http', server, '/')
         if protocol == 6:
             downloader = DirectHttpDownload('https', server, '/')
+        if protocol == 8:
+            downloader = RSYNCDownload('rsync', server, remote_dir)
         if downloader is None:
             return None
 

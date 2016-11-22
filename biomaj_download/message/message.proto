@@ -65,6 +65,7 @@ message DownloadFile {
         DIRECTHTTP = 5;
         DIRECTHTTPS = 6;
         LOCAL = 7;
+        RSYNC = 8;
     }
 
     message Param {
