@@ -361,8 +361,9 @@ class DownloadService(object):
         if downloaded_files is None:
             return
         for downloaded_file in downloaded_files:
-            file_dir = local_dir + '/' + os.path.dirname(downloaded_file['save_as'])
-            fstat = os.stat(file_dir)
+            # file_dir = local_dir + '/' + os.path.dirname(downloaded_file['save_as'])
+            file_path = local_dir + '/' + downloaded_file['save_as']
+            fstat = os.stat(file_path)
             downloaded_file['permissions'] = str(fstat.st_mode)
             downloaded_file['group'] = str(fstat.st_gid)
             downloaded_file['user'] = str(fstat.st_uid)
