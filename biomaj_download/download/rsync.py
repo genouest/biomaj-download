@@ -5,6 +5,8 @@ import logging
 import re
 import os
 import subprocess
+from datetime import datetime
+import time
 
 from biomaj_download.download.interface import DownloadInterface
 
@@ -128,10 +130,16 @@ class RSYNCDownload(DownloadInterface):
             logging.debug('RSYNC:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'])
             logging.debug('RSYNC:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' save as ' + rfile['save_as'])
             cur_files += 1
-
+            start_time = datetime.now()
+            start_time = time.mktime(start_time.timetuple())
             error = self.rsync_download(file_path, rfile['name'])
             if error:
+                rfile['download_time'] = 0
+                rfile['error'] = True
                 raise Exception("RSYNC:Download:Error:" + rfile['root'] + '/' + rfile['name'])
+            end_time = datetime.now()
+            end_time = time.mktime(end_time.timetuple())
+            rfile['download_time'] = end_time - start_time
             self.set_permissions(file_path, rfile)
         return(self.files_to_download)
 
