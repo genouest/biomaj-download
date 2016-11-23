@@ -33,6 +33,8 @@ class LocalDownload(DownloadInterface):
         '''
         self.logger.debug('Local:Download')
         Utils.copy_files(self.files_to_download, local_dir, lock=self.mkdir_lock)
+        for rfile in self.files_to_download:
+            rfile['download_time'] = 0
 
         return self.files_to_download
 
