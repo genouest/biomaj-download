@@ -42,6 +42,12 @@ message Operation {
     required OPERATION type = 1;
     optional DownloadFile download = 2;
     optional Process process = 3;
+    message Trace {
+        required string trace_id = 1;
+        required string span_id = 2;
+    }
+
+    optional Trace trace = 4;
 }
 
 message Process {

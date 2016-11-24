@@ -33,6 +33,8 @@ class DownloadService(object):
             self.config = yaml.load(ymlfile)
             Utils.service_config_override(self.config)
 
+        Zipkin.set_config(self.config)
+
         if 'log_config' in self.config:
             for handler in list(self.config['log_config']['handlers'].keys()):
                 self.config['log_config']['handlers'][handler] = dict(self.config['log_config']['handlers'][handler])
@@ -391,6 +393,13 @@ class DownloadService(object):
             operation = message_pb2.Operation()
             operation.ParseFromString(body)
             message = operation.download
+            span = None
+            if operation.trace and operation.trace.trace_id:
+                url = str(message.download.remotefile.protocol) + ':' + str(message.download.remotefile.server) + ':' + str(message.download.remotefile.remote_dir)
+                span = Zipkin('biomaj-download-executor', str(message.download.remotefile.server), trace_id=operation.trace.trace_id, parent_id=operation.trace.span_id)
+                span.add_binary_annotation('url', url)
+                span.add_binary_annotation('local_dir', str(message.download.local_dir))
+
             self.logger.debug('Received message: %s' % (message))
             if operation.type == 0:
                 message = operation.download
@@ -407,6 +416,8 @@ class DownloadService(object):
                     self.download_callback(message.bank, downloaded_files)
             else:
                 self.logger.warn('Wrong message type, skipping')
+            if span:
+                span.trace()
         except Exception as e:
             self.logger.error('Error with message: %s' % (str(e)))
             traceback.print_exc()
