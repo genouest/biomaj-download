@@ -17,6 +17,7 @@ from biomaj_download.download.localcopy import LocalDownload
 from biomaj_download.message import message_pb2
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_core.utils import Utils
+from biomaj_zipkin.zipkin import Zipkin
 
 
 class DownloadService(object):
