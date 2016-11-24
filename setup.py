@@ -43,6 +43,7 @@ config = {
     ],
     'install_requires': [
                          'biomaj_core',
+                         'biomaj_zipkin',
                          'pycurl',
                          'py-bcrypt',
                          'pika',
