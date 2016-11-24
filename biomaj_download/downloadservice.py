@@ -396,8 +396,8 @@ class DownloadService(object):
             message = operation.download
             span = None
             if operation.trace and operation.trace.trace_id:
-                url = str(message.remotefile.protocol) + ':' + str(message.remotefile.server) + ':' + str(message.remotefile.remote_dir)
-                span = Zipkin('biomaj-download-executor', str(message.remotefile.server), trace_id=operation.trace.trace_id, parent_id=operation.trace.span_id)
+                url = str(message.remote_file.protocol) + ':' + str(message.remote_file.server) + ':' + str(message.remote_file.remote_dir)
+                span = Zipkin('biomaj-download-executor', str(message.remote_file.server), trace_id=operation.trace.trace_id, parent_id=operation.trace.span_id)
                 span.add_binary_annotation('url', url)
                 span.add_binary_annotation('local_dir', str(message.local_dir))
 
