@@ -201,6 +201,7 @@ class DownloadInterface(object):
         test1_tuples = set((d['name'], d['year'], d['month'], d['day'], d['size']) for d in self.files_to_download)
         test2_tuples = set((d['name'], d['year'], d['month'], d['day'], d['size']) for d in available_files)
         new_or_modified_files = [t for t in test1_tuples if t not in test2_tuples]
+        new_or_modified_files.sort(key=lambda x: x[0])
         index = 0
 
         if len(new_or_modified_files) > 0:
