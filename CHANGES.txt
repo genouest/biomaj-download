@@ -1,4 +1,4 @@
-3.0.5:
+3.0.6:
   Fix download_or_copy to avoid downloading a file  existing in a previous production directory
 3.0.4:
   Fixes on messages
