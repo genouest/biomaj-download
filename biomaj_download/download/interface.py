@@ -198,7 +198,7 @@ class DownloadInterface(object):
 
         new_files_to_download = []
 
-        test1_tuples = ((d['name'], d['year'], d['month'], d['day'], d['size']) for d in self.files_to_download)
+        test1_tuples = set((d['name'], d['year'], d['month'], d['day'], d['size']) for d in self.files_to_download)
         test2_tuples = set((d['name'], d['year'], d['month'], d['day'], d['size']) for d in available_files)
         new_or_modified_files = [t for t in test1_tuples if t not in test2_tuples]
         index = 0
