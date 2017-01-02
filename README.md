@@ -15,10 +15,6 @@ To compile protobuf, in biomaj_download/message:
 
     flake8  biomaj_download/\*.py biomaj_download/download
 
-# Prometheus metrics
-
-Endpoint: /api/download/metrics
-
 
 # Run
 
