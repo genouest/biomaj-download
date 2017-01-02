@@ -9,7 +9,7 @@ Messages go through RabbitMQ (to be installed).
 
 To compile protobuf, in biomaj_download/message:
 
-protoc --python_out=. message.proto
+    protoc --python_out=. message.proto
 
 # Development
 
@@ -23,8 +23,9 @@ Endpoint: /api/download/metrics
 # Run
 
 ## Message consumer:
-export BIOMAJ_CONFIG=path_to_config.yml
-python bin/biomaj_download_consumer.py
+
+    export BIOMAJ_CONFIG=path_to_config.yml
+    python bin/biomaj_download_consumer.py
 
 ## Web server
 
@@ -36,10 +37,11 @@ If package is installed via pip, you need a file named *gunicorn_conf.py* contai
 
 If you cloned the repository and installed it via python setup.py install, just refer to the *gunicorn_conf.py* in the cloned repository.
 
-export BIOMAJ_CONFIG=path_to_config.yml
-rm -rf ..path_to/godocker-prometheus-multiproc
-mkdir -p ..path_to/godocker-prometheus-multiproc
-export prometheus_multiproc_dir=..path_to/godocker-prometheus-multiproc
-gunicorn biomaj_download.biomaj_download_web:app
+
+    export BIOMAJ_CONFIG=path_to_config.yml
+    rm -rf ..path_to/godocker-prometheus-multiproc
+    mkdir -p ..path_to/godocker-prometheus-multiproc
+    export prometheus_multiproc_dir=..path_to/godocker-prometheus-multiproc
+    gunicorn biomaj_download.biomaj_download_web:app
 
 Web processes should be behind a proxy/load balancer, API base url /api/download
