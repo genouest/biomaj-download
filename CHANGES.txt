@@ -1,3 +1,5 @@
+3.0.8:
+  Fix prometheus stats
 3.0.7:
   Change size type to int64
 3.0.6:

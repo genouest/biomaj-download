@@ -21,7 +21,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.0.7',
+    'version': '3.0.8',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -51,7 +51,7 @@ config = {
                          'PyYAML',
                          'flask',
                          'python-consul',
-                         'prometheus_client',
+                         'prometheus_client>=0.0.18',
                          'protobuf',
                          'requests',
                          'humanfriendly'

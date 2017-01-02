@@ -8,7 +8,7 @@ PyYAML
 protobuf
 flask
 python-consul
-prometheus_client
+prometheus_client>=0.0.18
 requests
 biomaj_core
 biomaj_zipkin
