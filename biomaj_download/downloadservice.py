@@ -8,6 +8,7 @@ import uuid
 import traceback
 import threading
 
+import consul
 import pika
 from flask import Flask
 from flask import jsonify
@@ -53,6 +54,7 @@ def consul_declare(config):
             config['consul']['id'] + '_check',
             check=check,
             service_id=config['consul']['id']
+        )
 
 
 class DownloadService(object):
