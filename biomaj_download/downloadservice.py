@@ -65,6 +65,11 @@ class DownloadService(object):
     channel = None
     redis_client = None
 
+    def supervise(self):
+        if consul_declare(self.config):
+            web_thread = threading.Thread(target=start_web, args=(self.config,))
+            web_thread.start()
+
     def __init__(self, config_file=None, rabbitmq=True):
         self.logger = logging
         self.session = None
@@ -73,10 +78,6 @@ class DownloadService(object):
         with open(config_file, 'r') as ymlfile:
             self.config = yaml.load(ymlfile)
             Utils.service_config_override(self.config)
-
-        if consul_declare(self.config):
-            web_thread = threading.Thread(target=start_web, args=(self.config,))
-            web_thread.start()
 
         Zipkin.set_config(self.config)
 

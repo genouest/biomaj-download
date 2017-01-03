@@ -41,4 +41,5 @@ def on_download(bank, downloaded_files):
 
 download = DownloadService(config_file)
 download.on_download_callback(on_download)
+download.supervise()
 download.wait_for_messages()
