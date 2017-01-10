@@ -12,7 +12,6 @@ from flask import jsonify
 from flask import request
 from prometheus_client import Counter
 from prometheus_client import Gauge
-from prometheus_client import Histogram
 from prometheus_client.exposition import generate_latest
 from prometheus_client import multiprocess
 from prometheus_client import CollectorRegistry
@@ -27,8 +26,8 @@ app = Flask(__name__)
 
 download_metric = Counter("biomaj_download_total", "Bank total download.", ['bank'])
 download_error_metric = Counter("biomaj_download_errors", "Bank total download errors.", ['bank'])
-download_size_metric = Histogram("biomaj_download_file_size", "Bank download file size in bytes.", ['bank', 'host'])
-download_time_metric = Histogram("biomaj_download_file_time", "Bank download file time in seconds.", ['bank', 'host'])
+download_size_metric = Counter("biomaj_download_file_size", "Bank download file size in bytes.", ['bank', 'host'])
+download_time_metric = Counter("biomaj_download_file_time", "Bank download file time in seconds.", ['bank', 'host'])
 
 config_file = 'config.yml'
 if 'BIOMAJ_CONFIG' in os.environ:
@@ -77,8 +76,8 @@ def add_metrics():
             download_error_metric.labels(downloaded_file['bank']).inc()
         else:
             download_metric.labels(downloaded_file['bank']).inc()
-            download_size_metric.labels(downloaded_file['bank'], host).observe(int(downloaded_file['size']))
-            download_time_metric.labels(downloaded_file['bank'], host).observe(int(downloaded_file['download_time']))
+            download_size_metric.labels(downloaded_file['bank'], host).inc(int(downloaded_file['size']))
+            download_time_metric.labels(downloaded_file['bank'], host).inc(int(downloaded_file['download_time']))
     return jsonify({'msg': 'OK'})
 
 
