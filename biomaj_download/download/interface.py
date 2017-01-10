@@ -205,6 +205,9 @@ class DownloadInterface(object):
         index = 0
 
         if len(new_or_modified_files) > 0:
+            self.logger.debug('Number of remote files: %d' % (len(self.files_to_download)))
+            self.logger.debug('Number of local files: %d' % (len(available_files)))
+            self.logger.debug('Number of files new or modified: %d' % (len(new_or_modified_files)))
             for dfile in self.files_to_download:
                 if index < len(new_or_modified_files) and \
                         dfile['name'] == new_or_modified_files[index][0]:
@@ -214,6 +217,7 @@ class DownloadInterface(object):
                 else:
                     if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
                         dfile['root'] = root_dir
+                        self.logger.debug('Copy file instead of downloading it: %s' % (os.path.join(root_dir, dfile['name'])))
                         self.files_to_copy.append(dfile)
                     else:
                         new_files_to_download.append(dfile)

@@ -26,8 +26,8 @@ app = Flask(__name__)
 
 download_metric = Counter("biomaj_download_total", "Bank total download.", ['bank'])
 download_error_metric = Counter("biomaj_download_errors", "Bank total download errors.", ['bank'])
-download_size_metric = Gauge("biomaj_download_file_size", "Bank download file size in bytes.", ['bank'])
-download_time_metric = Gauge("biomaj_download_file_time", "Bank download file time in seconds.", ['bank'])
+download_size_metric = Gauge("biomaj_download_file_size", "Bank download file size in bytes.", ['bank', 'host'])
+download_time_metric = Gauge("biomaj_download_file_time", "Bank download file time in seconds.", ['bank', 'host'])
 
 config_file = 'config.yml'
 if 'BIOMAJ_CONFIG' in os.environ:
@@ -65,16 +65,19 @@ def metrics():
 @app.route('/api/download/metrics', methods=['POST'])
 def add_metrics():
     '''
-    Expects a JSON request with an array of {'bank': 'bank_name', 'error': 'error_message', 'size': size_of_download, 'download_time': seconds_to_download}
+    Expects a JSON request with an array of {'bank': 'bank_name', 'host': 'hostname', 'error': 'error_message', 'size': size_of_download, 'download_time': seconds_to_download}
     '''
     downloaded_files = request.get_json()
     for downloaded_file in downloaded_files:
+        host = 'na'
+        if 'host' in downloaded_file:
+            host = downloaded_file['host']
         if 'error' in downloaded_file and downloaded_file['error']:
             download_error_metric.labels(downloaded_file['bank']).inc()
         else:
             download_metric.labels(downloaded_file['bank']).inc()
-            download_size_metric.labels(downloaded_file['bank']).set(downloaded_file['size'])
-            download_time_metric.labels(downloaded_file['bank']).set(downloaded_file['download_time'])
+            download_size_metric.labels(downloaded_file['bank'], host).set(downloaded_file['size'])
+            download_time_metric.labels(downloaded_file['bank'], host).set(downloaded_file['download_time'])
     return jsonify({'msg': 'OK'})
 
 

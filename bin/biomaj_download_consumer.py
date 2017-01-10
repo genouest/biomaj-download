@@ -35,6 +35,8 @@ def on_download(bank, downloaded_files):
             else:
                 metric['size'] = downloaded_file['size']
                 metric['download_time'] = downloaded_file['download_time']
+            if 'hostname' in config['web']:
+                metric['host'] = config['web']['hostname']
             metrics.append(metric)
         r = requests.post(config['web']['local_endpoint'] + '/api/download/metrics', json = metrics)
 

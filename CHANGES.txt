@@ -1,5 +1,8 @@
+3.0.9:
+  Add host in prometheus stats
 3.0.8:
   Fix prometheus stats
+  Add consul supervision
 3.0.7:
   Change size type to int64
 3.0.6:
