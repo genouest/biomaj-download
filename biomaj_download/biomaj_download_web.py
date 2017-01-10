@@ -11,7 +11,6 @@ from flask import Flask
 from flask import jsonify
 from flask import request
 from prometheus_client import Counter
-from prometheus_client import Gauge
 from prometheus_client.exposition import generate_latest
 from prometheus_client import multiprocess
 from prometheus_client import CollectorRegistry
