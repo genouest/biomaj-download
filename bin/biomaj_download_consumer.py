@@ -24,6 +24,8 @@ with open(config_file, 'r') as ymlfile:
 
 def on_download(bank, downloaded_files):
     metrics = []
+    if 'prometheus' in config and not config['prometheus']:
+        return
     if not downloaded_files:
         metric = {'bank': bank, 'error': 1}
         metrics.append(metrics)
