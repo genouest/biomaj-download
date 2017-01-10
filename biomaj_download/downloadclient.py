@@ -30,9 +30,9 @@ class DownloadClient(DownloadService):
             connection = None
             if rabbitmq_user:
                 credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
-                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials))
+                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials, heartbeat_interval=0))
             else:
-                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost))
+                connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host, rabbitmq_port, rabbitmq_vhost, heartbeat_interval=0))
             self.channel = connection.channel()
         else:
             self.remote = False
