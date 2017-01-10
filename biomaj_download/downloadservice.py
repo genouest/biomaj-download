@@ -101,9 +101,9 @@ class DownloadService(object):
             rabbitmq_vhost = self.config['rabbitmq']['virtual_host']
             if rabbitmq_user:
                 credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
-                connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host'], rabbitmq_port, rabbitmq_vhost, credentials))
+                connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host'], rabbitmq_port, rabbitmq_vhost, credentials, heartbeat_interval=0))
             else:
-                connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host']))
+                connection = pika.BlockingConnection(pika.ConnectionParameters(self.config['rabbitmq']['host'], heartbeat_interval=0))
             self.channel = connection.channel()
             self.logger.info('Download service started')
 
