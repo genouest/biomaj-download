@@ -134,20 +134,30 @@ class HTTPDownload(FTPDownload):
                 rfile['permissions'] = ''
                 rfile['group'] = ''
                 rfile['user'] = ''
-                rfile['size'] = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
-                date = foundfile[self.http_parse.file_date - 1]
-                if self.http_parse.file_date_format:
-                    date_object = datetime.datetime.strptime(date, self.http_parse.file_date_format.replace('%%', '%'))
-                    rfile['month'] = date_object.month
-                    rfile['day'] = date_object.day
-                    rfile['year'] = date_object.year
+                if self.http_parse.file_size != -1:
+                    rfile['size'] = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
                 else:
-                    dirdate = date.split()
-                    parts = dirdate[0].split('-')
-                    # 19-Jul-2014 13:02
-                    rfile['month'] = Utils.month_to_num(parts[1])
-                    rfile['day'] = int(parts[0])
-                    rfile['year'] = int(parts[2])
+                    rfile['size'] = 0
+                if self.http_parse.file_date != -1:
+                    date = foundfile[self.http_parse.file_date - 1]
+                    if self.http_parse.file_date_format:
+                        date_object = datetime.datetime.strptime(date, self.http_parse.file_date_format.replace('%%', '%'))
+                        rfile['month'] = date_object.month
+                        rfile['day'] = date_object.day
+                        rfile['year'] = date_object.year
+                    else:
+                        dirdate = date.split()
+                        parts = dirdate[0].split('-')
+                        # 19-Jul-2014 13:02
+                        rfile['month'] = Utils.month_to_num(parts[1])
+                        rfile['day'] = int(parts[0])
+                        rfile['year'] = int(parts[2])
+                else:
+                    today = datetime.datetime.now()
+                    date = '%s-%s-%s' % (today.year, today.month, today.day)
+                    rfile['month'] = today.month
+                    rfile['day'] = today.day
+                    rfile['year'] = today.year
                 rfile['name'] = foundfile[self.http_parse.file_name - 1]
                 filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                 rfile['hash'] = hashlib.md5(filehash).hexdigest()

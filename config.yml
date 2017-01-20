@@ -22,8 +22,8 @@ consul:
 
 web:
     debug: true
-    port: 5000
-    local_endpoint: 'http://127.0.0.1:5000'
+    port: 5003
+    local_endpoint: 'http://131.254.17.40:5003'
 
 tls:
     key: null

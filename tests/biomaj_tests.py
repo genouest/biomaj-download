@@ -247,6 +247,40 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.close()
     self.assertTrue(len(file_list) == 1)
 
+  def test_http_download_no_size(self):
+    self.http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
+        self.config.get('http.parse.file.line'),
+        int(self.config.get('http.group.dir.name')),
+        int(self.config.get('http.group.dir.date')),
+        int(self.config.get('http.group.file.name')),
+        int(self.config.get('http.group.file.date')),
+        self.config.get('http.group.file.date_format', None),
+        -1
+    )
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    (file_list, dir_list) = httpd.list()
+    httpd.match([r'^README$'], file_list, dir_list)
+    httpd.download(self.utils.data_dir)
+    httpd.close()
+    self.assertTrue(len(httpd.files_to_download) == 1)
+
+  def test_http_download_no_date(self):
+    self.http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
+        self.config.get('http.parse.file.line'),
+        int(self.config.get('http.group.dir.name')),
+        int(self.config.get('http.group.dir.date')),
+        int(self.config.get('http.group.file.name')),
+        -1,
+        self.config.get('http.group.file.date_format', None),
+        int(self.config.get('http.group.file.size'))
+    )
+    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    (file_list, dir_list) = httpd.list()
+    httpd.match([r'^README$'], file_list, dir_list)
+    httpd.download(self.utils.data_dir)
+    httpd.close()
+    self.assertTrue(len(httpd.files_to_download) == 1)
+
   def test_http_download(self):
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
@@ -448,7 +482,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['year']=='2013')
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
-    
+
 @attr('rsync')
 @attr('local')
 class TestBiomajRSYNCDownload(unittest.TestCase):
@@ -461,17 +495,17 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-        
+
     def tearDown(self):
         self.utils.clean()
-    
+
     def test_rsync_list(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
-    
+
     def test_rsync_match(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
@@ -479,15 +513,15 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
-    
+
     def test_rsync_download(self):
         rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         error = rsyncd.rsync_download(self.utils.data_dir, "test2.fasta")
         self.assertTrue(error == 0)
-    
-    
+
+
     def test_rsync_general_download(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
@@ -496,7 +530,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
         download_files=rsyncd.download(self.curdir)
         self.assertTrue(len(download_files)==1)
-    
+
     def test_rsync_download_or_copy(self):
         rsyncd =  RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_offline_dir(self.utils.data_dir)
@@ -505,7 +539,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
-                
+
     def test_rsync_download_in_subdir(self):
         rsyncd = RSYNCDownload('rsync', self.curdir+'/', "")
         rsyncd.set_offline_dir(self.curdir+'/')
