@@ -23,6 +23,7 @@ class DownloadClient(DownloadService):
         self.pool_size = pool_size
         self.proxy = None
         self.bank = None
+        self.rate_limiting = 0
         self.redis_client = redis_client
         self.redis_prefix = redis_prefix
         if rabbitmq_host:
@@ -42,6 +43,9 @@ class DownloadClient(DownloadService):
 
     def set_queue_size(self, size):
         self.pool_size = size
+
+    def set_rate_limiting(self, rate):
+        self.rate_limiting = rate
 
     def create_session(self, bank, proxy=None):
         self.bank = bank
@@ -133,7 +137,10 @@ class DownloadClient(DownloadService):
         # If biomaj_proxy
         self.files_to_download += 1
         if self.remote:
-            self.ask_download(operation)
+            if self.rate_limiting > 0:
+                self.download_pool.append(operation)
+            else:
+                self.ask_download(operation)
         else:
             self.download_pool.append(operation.download)
 
@@ -167,6 +174,7 @@ class DownloadClient(DownloadService):
     def wait_for_download(self):
         over = False
         nb_files_to_download = self.files_to_download
+        nb_submitted = 0
         logging.info("Workflow:wf_download:RemoteDownload:Waiting")
         if self.remote:
             download_error = False
@@ -176,8 +184,22 @@ class DownloadClient(DownloadService):
                     logging.warn('Cancel requested, stopping update')
                     self.redis_client.delete(self.redis_prefix + ':' + self.bank + ':action:cancel')
                     raise Exception('Cancel requested, stopping download')
-
                 (progress, error) = self.download_status()
+                logging.debug('Rate limiting: ' + str(self.rate_limiting))
+                if self.rate_limiting > 0:
+                    logging.debug('Workflow:wf_download:RemoteDownload:submitted: %d, current progress: %d' % (nb_submitted, progress))
+                    if self.download_pool:
+                        max_submit = self.rate_limiting
+                        if nb_submitted != 0:
+                            max_submit = self.rate_limiting - (progress - nb_submitted)
+                        logging.debug('Workflow:wf_download:RemoteDownload:RequestAvailable:%d' % (max_submit))
+                        for i in range(max_submit):
+                            if self.download_pool:
+                                logging.debug('Workflow:wf_download:RemoteDownload:RequestNewFile')
+                                operation = self.download_pool.pop()
+                                self.ask_download(operation)
+                                nb_submitted += 1
+
                 if progress == nb_files_to_download:
                     over = True
                     logging.info("Workflow:wf_download:RemoteDownload:Completed:" + str(progress))

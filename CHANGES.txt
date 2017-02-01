@@ -1,3 +1,5 @@
+3.0.10:
+  Feature #3: Add rate limiting option to limit number of parallel downloads for a client
 3.0.9:
   Add host in prometheus stats
   Fix #2: allow setting http.group.file.size or http.group.file.date to -1 if not avalaible in http(s) page for regexp
