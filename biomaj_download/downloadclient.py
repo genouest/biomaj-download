@@ -61,12 +61,21 @@ class DownloadClient(DownloadService):
         return result['session']
 
     def download_status(self):
-        # If biomaj_proxy
-        r = requests.get(self.proxy + '/api/download/status/download/' + self.bank + '/' + self.session)
-        if not r.status_code == 200:
-            raise Exception('Failed to connect to the download proxy')
-        result = r.json()
-        return (result['progress'], result['errors'])
+        '''
+        Get progress of downloads, try to contact up to 3 times
+        '''
+        for i in range(2):
+            try:
+                r = requests.get(self.proxy + '/api/download/status/download/' + self.bank + '/' + self.session)
+                if not r.status_code == 200:
+                    logging.error('Failed to connect to the download proxy: %d' % (r.status_code))
+                else:
+                    result = r.json()
+                    return (result['progress'], result['errors'])
+            except Exception as e:
+                logging.exception('Failed to connect to the download proxy')
+        raise Exception('Failed to connect to the download proxy')
+
 
     def download_remote_files(self, cf, downloaders, offline_dir):
         '''
@@ -178,6 +187,7 @@ class DownloadClient(DownloadService):
         logging.info("Workflow:wf_download:RemoteDownload:Waiting")
         if self.remote:
             download_error = False
+            last_progress = 0
             while not over:
                 # Check for cancel request
                 if self.redis_client and self.redis_client.get(self.redis_prefix + ':' + self.bank + ':action:cancel'):
@@ -205,8 +215,10 @@ class DownloadClient(DownloadService):
                     logging.info("Workflow:wf_download:RemoteDownload:Completed:" + str(progress))
                     logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
                 else:
-                    if progress % 10 == 0:
-                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download))
+                    progress_percent = (progress // nb_files_to_download) * 100
+                    if progress_percent > last_progress:
+                        last_progress = progress_percent
+                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download) + "(" + str(progress_percent)+ "%)")
                     time.sleep(10)
                 if error > 0:
                     download_error = True
