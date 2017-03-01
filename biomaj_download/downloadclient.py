@@ -72,10 +72,9 @@ class DownloadClient(DownloadService):
                 else:
                     result = r.json()
                     return (result['progress'], result['errors'])
-            except Exception as e:
+            except Exception:
                 logging.exception('Failed to connect to the download proxy')
         raise Exception('Failed to connect to the download proxy')
-
 
     def download_remote_files(self, cf, downloaders, offline_dir):
         '''
@@ -218,7 +217,7 @@ class DownloadClient(DownloadService):
                     progress_percent = (progress // nb_files_to_download) * 100
                     if progress_percent > last_progress:
                         last_progress = progress_percent
-                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download) + "(" + str(progress_percent)+ "%)")
+                        logging.info("Workflow:wf_download:RemoteDownload:InProgress:" + str(progress) + '/' + str(nb_files_to_download) + "(" + str(progress_percent) + "%)")
                     time.sleep(10)
                 if error > 0:
                     download_error = True
@@ -240,6 +239,11 @@ class DownloadClient(DownloadService):
 
     def clean(self):
         if self.remote:
-            r = requests.delete(self.proxy + '/api/download/session/' + self.bank + '/' + self.session)
-            if not r.status_code == 200:
-                raise Exception('Failed to connect to the download proxy')
+            for i in range(3):
+                try:
+                    r = requests.delete(self.proxy + '/api/download/session/' + self.bank + '/' + self.session)
+                    if r.status_code == 200:
+                        return
+                except Exception:
+                    logging.exception('Failed to send clean operation')
+            raise Exception('Failed to connect to the download proxy')
