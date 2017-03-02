@@ -52,13 +52,19 @@ class DownloadClient(DownloadService):
         if not self.remote:
             self.session = str(uuid.uuid4())
             return self.session
-        r = requests.post(proxy + '/api/download/session/' + bank)
-        if not r.status_code == 200:
-            raise Exception('Failed to connect to the download proxy')
-        result = r.json()
-        self.session = result['session']
-        self.proxy = proxy
-        return result['session']
+
+        for i in range(3):
+            try:
+                url = proxy + '/api/download/session/' + bank
+                r = requests.post(url)
+                if r.status_code == 200:
+                    result = r.json()
+                    self.session = result['session']
+                    self.proxy = proxy
+                    return result['session']
+            except Exception:
+                logging.exception('Failed to send create operation: %s' % (url))
+        raise Exception('Failed to connect to the download proxy')
 
     def download_status(self):
         '''
@@ -66,6 +72,7 @@ class DownloadClient(DownloadService):
         '''
         for i in range(2):
             try:
+                url = self.proxy + '/api/download/status/download/' + self.bank + '/' + self.session
                 r = requests.get(self.proxy + '/api/download/status/download/' + self.bank + '/' + self.session)
                 if not r.status_code == 200:
                     logging.error('Failed to connect to the download proxy: %d' % (r.status_code))
@@ -73,7 +80,7 @@ class DownloadClient(DownloadService):
                     result = r.json()
                     return (result['progress'], result['errors'])
             except Exception:
-                logging.exception('Failed to connect to the download proxy')
+                logging.exception('Failed to connect to the download proxy: %s' % (url))
         raise Exception('Failed to connect to the download proxy')
 
     def download_remote_files(self, cf, downloaders, offline_dir):
@@ -241,9 +248,10 @@ class DownloadClient(DownloadService):
         if self.remote:
             for i in range(3):
                 try:
+                    url = self.proxy + '/api/download/session/' + self.bank + '/' + self.session
                     r = requests.delete(self.proxy + '/api/download/session/' + self.bank + '/' + self.session)
                     if r.status_code == 200:
                         return
                 except Exception:
-                    logging.exception('Failed to send clean operation')
+                    logging.exception('Failed to send clean operation: %s' % (url))
             raise Exception('Failed to connect to the download proxy')
