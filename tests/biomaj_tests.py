@@ -23,6 +23,7 @@ from biomaj_download.download.http import HTTPDownload, HTTPParse
 from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
+from biomaj_download.download.protocolirods import IRODSDownload
 
 import unittest
 
@@ -547,3 +548,45 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 3)
+        
+        
+@attr('irods')
+@attr('roscoZone')
+class TestBiomajIRODSDownload(unittest.TestCase):
+    '''
+    Test IRODS downloader
+    '''
+    def setUp(self):
+        self.utils = UtilsForTest()
+
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+
+    def tearDown(self):
+        self.utils.clean()
+        
+    def test_irods_list(self):
+        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd.set_credentials(None)
+        irodsd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = irodsd.list()
+        self.assertTrue(len(files_list) != 0)
+        
+    def test_irods_irods_download(self):
+        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd.set_credentials(None)
+        irodsd.set_offline_dir(self.utils.data_dir)
+        irodsd.remote_dir = "/roskoZone/home/rods/"
+        error = irodsd.irods_download(self.utils.data_dir, "sample5G.txt")
+        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
+        self.assertTrue(error == False)
+    
+    def test_irods_general_download(self):
+        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd.set_credentials(None)
+        irodsd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = irodsd.list()
+        irodsd.match([r'^toto*'],files_list,dir_list, prefix='')
+        download_files=irodsd.download(self.curdir)
+        self.assertTrue(len(download_files)>0)
