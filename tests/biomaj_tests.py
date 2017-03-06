@@ -242,7 +242,8 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(file_list) == 1)
 
   def test_http_list_dateregexp(self):
-    self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
+    #self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
+    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
@@ -258,6 +259,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
         self.config.get('http.group.file.date_format', None),
         -1
     )
+    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^README$'], file_list, dir_list)
@@ -283,14 +285,17 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download(self):
+    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
+    print(str(file_list))
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download_in_subdir(self):
+    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^dists/README$'], file_list, dir_list)
