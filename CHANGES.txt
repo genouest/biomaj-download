@@ -1,5 +1,6 @@
 3.0.12:
   Add retry in case of session creation failure
+  disable web thread logging
 3.0.11:
   Display progress of download by percent of downloads
   In case of contact error in downloadclient, retry connection
