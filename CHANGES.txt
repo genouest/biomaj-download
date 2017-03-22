@@ -1,3 +1,5 @@
+3.0.13:
+  In rate limiting, add progress vs total of download
 3.0.12:
   Add retry in case of session creation failure
   disable web thread logging
