@@ -207,7 +207,7 @@ class DownloadClient(DownloadService):
                     if self.download_pool:
                         max_submit = self.rate_limiting
                         if nb_submitted != 0:
-                            max_submit = self.rate_limiting - (progress - nb_submitted)
+                            max_submit = self.rate_limiting - (nb_submitted - progress)
                         logging.debug('Workflow:wf_download:RemoteDownload:RequestAvailable:%d' % (max_submit))
                         for i in range(max_submit):
                             if self.download_pool:

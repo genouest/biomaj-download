@@ -1,5 +1,6 @@
 3.0.13:
   In rate limiting, add progress vs total of download
+  Fix rate limiting submission
 3.0.12:
   Add retry in case of session creation failure
   disable web thread logging
