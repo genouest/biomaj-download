@@ -35,9 +35,9 @@ If you cloned the repository and installed it via python setup.py install, just 
 
 
     export BIOMAJ_CONFIG=path_to_config.yml
-    rm -rf ..path_to/godocker-prometheus-multiproc
-    mkdir -p ..path_to/godocker-prometheus-multiproc
-    export prometheus_multiproc_dir=..path_to/godocker-prometheus-multiproc
-    gunicorn biomaj_download.biomaj_download_web:app
+    rm -rf ..path_to/prometheus-multiproc
+    mkdir -p ..path_to/prometheus-multiproc
+    export prometheus_multiproc_dir=..path_to/prometheus-multiproc
+    gunicorn -c gunicorn_conf.py biomaj_download.biomaj_download_web:app
 
 Web processes should be behind a proxy/load balancer, API base url /api/download

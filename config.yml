@@ -23,7 +23,7 @@ consul:
 web:
     debug: true
     port: 5003
-    local_endpoint: 'http://131.254.17.40:5003'
+    local_endpoint: 'http://localhost:5003'
 
 tls:
     key: null
@@ -41,7 +41,7 @@ log_config:
             'level': 'DEBUG'
     'loggers':
         'root':
-            'level': 'INFO'
+            'level': 'DEBUG'
             'handlers':
                 - 'console'
         'biomaj':
