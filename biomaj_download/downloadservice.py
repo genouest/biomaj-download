@@ -137,6 +137,8 @@ class DownloadService(object):
             downloader = DirectHttpDownload('https', server, '/')
         if protocol == 8:
             downloader = RSYNCDownload('rsync', server, remote_dir)
+        if protocol == 9:
+            downloader = IRODSDownload('irods', server, remote_dir)
         if downloader is None:
             return None
 

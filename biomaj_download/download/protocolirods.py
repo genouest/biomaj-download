@@ -19,6 +19,7 @@ class IRODSDownload(DownloadInterface):
     def __init__(self, protocol, server, remote_dir):
         DownloadInterface.__init__(self)
         logging.debug('Download')
+        logging.debug("IRODS_download: "+str(self.param))
         #self.protocol = protocol
         #self.port = server.split(":")[1]
         #self.server = server.split(":")[0]  # name of the remote server : host:port
@@ -26,20 +27,16 @@ class IRODSDownload(DownloadInterface):
         #self.user = self.credentials.split(":")[0]
         #self.password =  self.credentials.split(":")[1]
         #self.session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.remote_dir)
-        self.session = iRODSSession(host='bdr-roscoff.genouest.org', port=1247, user='rods', password='test', zone='roskoZone')
-        self.protocol = "irods"
-        self.port = 1247
-        self.server = 'bdr-roscoff.genouest.org'  # name of the remote server : host:port
-        self.remote_dir = 'roskoZone'  # directory on the remote server : zone
-        self.rootdir = '/roskoZone/home/rods/'
-        self.user = 'rods'
-        self.password = 'test'
 
     def list(self, directory=''):
         rfiles = []
         rdirs = []
+        rfile = {}
         for result in self.session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
             #if the user is biomaj : he will have access to all the irods data (biomaj ressource) : drwxr-xr-x
+            #Avoid duplication
+            if rfile != {} and rfile['name'] == str(result[DataObject.name]) and date == str(result[DataObject.modify_time]).split(" ")[0].split('-'):
+                continue
             rfile = {}
             date = str(result[DataObject.modify_time]).split(" ")[0].split('-')
             rfile['permissions'] = "-rwxr-xr-x"
@@ -48,7 +45,6 @@ class IRODSDownload(DownloadInterface):
             rfile['day'] = int(date[2])
             rfile['year'] = int(date[0])
             rfile['name'] = str(result[DataObject.name])
-            print("Debug list : "+str(str(result[DataObject.name])))
             rfile['download_path'] = str(result[Collection.name])
             rfiles.append(rfile)
         return (rfiles, rdirs)
@@ -63,11 +59,11 @@ class IRODSDownload(DownloadInterface):
         :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        logging.debug('RSYNC:Download')
-        try:
-            os.chdir(local_dir)
-        except TypeError:
-            logging.error("IRODS:list:Could not find offline_dir")
+        logging.debug('IRODS:Download')
+        #try:
+        #    os.chdir(local_dir)
+        #except TypeError:
+        #    logging.error("IRODS:list:Could not find offline_dir")
         nb_files = len(self.files_to_download)
         cur_files = 1
         # give a working directory to copy the file from irods
@@ -110,25 +106,24 @@ class IRODSDownload(DownloadInterface):
         path = os.path.dirname(file_path)
         name_file = os.path.basename(file_path)
         try:
-            os.chdir(path)
-        except TypeError:
-            logging.error("IRODS:list:Could not find file path")
-        try:
-            obj = self.session.data_objects.get(str(self.remote_dir)+"/"+str(file_to_download))
-            #obj = self.session.data_objects.get(str(file_path)+str(file_to_download))
-        except Exception as e:
-            self.logger.error('Could not get errcode:' + str(e))
-            raise Exception('Impossible to download the file on IRODS')
-        #file_out = open(name_file, 'w')
-        file_out = open(file_to_download, 'w')
-        with obj.open('r+') as f:
-            for line in f:
-                file_out.write(line)
-        file_out.close()
-        if err_code != 0:
-            logging.error('Error while downloading ' + file_to_download + ' - ' + str(err_code))
+            cmd =str(self.protocol) + " " +str(file_to_download)
+            logging.error("cmd : "+str(cmd))
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            stdout, stderr = p.communicate()
+            err_code = p.returncode
+        except ExceptionRsync as e:
+            logging.error("IRODSError:" + str(e))
+        if str(err_code) == '3':
+            logging.error('Error while downloading: the file already exists. Error with: ' + file_to_download + ' - ' + str(err_code))
+            error = True
+        elif str(err_code) == '7':
+            logging.error('Error while downloading: connection problem. Error with: ' + file_to_download + ' - ' + str(err_code))
+            error = True
+        elif str(err_code) != '0':
+            logging.error('Error while downloading. Error with: ' + file_to_download + ' - ' + str(err_code))
             error = True
         return(error)
+        
 
 class ExceptionRsync(Exception):
     def __init__(self, exception_reason):
