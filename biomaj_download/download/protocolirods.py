@@ -19,20 +19,24 @@ class IRODSDownload(DownloadInterface):
     def __init__(self, protocol, server, remote_dir):
         DownloadInterface.__init__(self)
         logging.debug('Download')
-        logging.debug("IRODS_download: "+str(self.param))
-        #self.protocol = protocol
-        #self.port = server.split(":")[1]
-        #self.server = server.split(":")[0]  # name of the remote server : host:port
-        #self.remote_dir = remote_dir  # directory on the remote server : zone
-        #self.user = self.credentials.split(":")[0]
-        #self.password =  self.credentials.split(":")[1]
-        #self.session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.remote_dir)
-
+        if param:
+            #self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
+            logging.debug("IRODS_download: "+str(self.protocol))
+            self.port = param['port']
+            self.remote_dir = remote_dir  # directory on the remote server : zone
+            self.user = str(param['user'])
+            self.password =  str(param['password'])
+            self.server = server
+            self.zone = str(param['zone'])
+        else:
+            raise Exception("IRODDS:Download:Error: Impossible to initialize IRODS session")
+                 
     def list(self, directory=''):
+        session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
         rfiles = []
         rdirs = []
         rfile = {}
-        for result in self.session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
+        for result in session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
             #if the user is biomaj : he will have access to all the irods data (biomaj ressource) : drwxr-xr-x
             #Avoid duplication
             if rfile != {} and rfile['name'] == str(result[DataObject.name]) and date == str(result[DataObject.modify_time]).split(" ")[0].split('-'):
@@ -47,6 +51,7 @@ class IRODSDownload(DownloadInterface):
             rfile['name'] = str(result[DataObject.name])
             rfile['download_path'] = str(result[Collection.name])
             rfiles.append(rfile)
+        session.cleanup()
         return (rfiles, rdirs)
 
     def download(self, local_dir, keep_dirs=True):
@@ -102,30 +107,29 @@ class IRODSDownload(DownloadInterface):
     def irods_download(self, file_path, file_to_download):
         error = False
         err_code = 0
-        logging.debug('IRODS:IRODS DOwNLOAD')
-        path = os.path.dirname(file_path)
-        name_file = os.path.basename(file_path)
+        logging.debug('IRODS:IRODS DOWNLOAD')
+        session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
         try:
-            cmd =str(self.protocol) + " " +str(file_to_download)
-            logging.error("cmd : "+str(cmd))
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-            stdout, stderr = p.communicate()
-            err_code = p.returncode
-        except ExceptionRsync as e:
-            logging.error("IRODSError:" + str(e))
-        if str(err_code) == '3':
-            logging.error('Error while downloading: the file already exists. Error with: ' + file_to_download + ' - ' + str(err_code))
-            error = True
-        elif str(err_code) == '7':
-            logging.error('Error while downloading: connection problem. Error with: ' + file_to_download + ' - ' + str(err_code))
-            error = True
-        elif str(err_code) != '0':
-            logging.error('Error while downloading. Error with: ' + file_to_download + ' - ' + str(err_code))
-            error = True
+            file_to_write=str(file_to_download)+'.md'
+            obj = sess.data_objects.get(str(file_path)+'/'+str(file_to_download))
+            with obj.open('r+') as f1:
+                with open(file_to_write,'wb') as f2:
+                    while True:
+                        buf=f1.read(1024)
+                        if buf:
+                            for byte in buf:
+                                pass    # process the bytes if this is what you want
+                                        # make sure your changes are in buf
+                            n=f2.write(buf)
+                        else:
+                            break                     
+        except ExceptionIRODS as e:
+            logging.error("RsyncError:" + str(e))
+        session.cleanup()
         return(error)
-        
+                    
 
-class ExceptionRsync(Exception):
+class ExceptionIRODS(Exception):
     def __init__(self, exception_reason):
         self.exception_reason = exception_reason
 
