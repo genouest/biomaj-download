@@ -14,3 +14,4 @@ biomaj_core
 biomaj_zipkin
 flake8
 humanfriendly
+python-irodsclient

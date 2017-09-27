@@ -18,19 +18,24 @@ class IRODSDownload(DownloadInterface):
     # password : self.credentials
     def __init__(self, protocol, server, remote_dir):
         DownloadInterface.__init__(self)
-        logging.debug('Download')
-        if param:
-            #self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
-            logging.debug("IRODS_download: "+str(self.protocol))
-            self.port = param['port']
-            self.remote_dir = remote_dir  # directory on the remote server : zone
-            self.user = str(param['user'])
-            self.password =  str(param['password'])
-            self.server = server
-            self.zone = str(param['zone'])
-        else:
-            raise Exception("IRODDS:Download:Error: Impossible to initialize IRODS session")
+        self.port = None
+        self.remote_dir = remote_dir  # directory on the remote server : zone
+        self.rootdir= remote_dir
+        self.user = None
+        self.password = None
+        self.server = server
+        self.zone = None
                  
+    
+    def set_param(self, param):
+        #self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
+        self.param = param
+        self.port = param['port']
+        self.user = str(param['user'])
+        self.password =  str(param['password'])
+        self.zone = str(param['zone'])
+
+    
     def list(self, directory=''):
         session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
         rfiles = []
@@ -65,10 +70,10 @@ class IRODSDownload(DownloadInterface):
         :return: list of downloaded files
         '''
         logging.debug('IRODS:Download')
-        #try:
-        #    os.chdir(local_dir)
-        #except TypeError:
-        #    logging.error("IRODS:list:Could not find offline_dir")
+        try:
+            os.chdir(local_dir)
+        except TypeError:
+            logging.error("IRODS:list:Could not find offline_dir")
         nb_files = len(self.files_to_download)
         cur_files = 1
         # give a working directory to copy the file from irods
@@ -91,8 +96,8 @@ class IRODSDownload(DownloadInterface):
             cur_files += 1
             start_time = datetime.now()
             start_time = time.mktime(start_time.timetuple())
-            self.remote_dir=rfile['download_path']
-            error = self.irods_download(file_path, rfile['name'])
+            self.remote_dir=rfile['root']
+            error = self.irods_download(file_dir, str(self.remote_dir), str(rfile['name']))
             if error:
                 rfile['download_time'] = 0
                 rfile['error'] = True
@@ -104,14 +109,18 @@ class IRODSDownload(DownloadInterface):
         self.remote_dir = remote_dir
         return(self.files_to_download)
 
-    def irods_download(self, file_path, file_to_download):
+    def irods_download(self, file_dir, file_path, file_to_download):
         error = False
         err_code = 0
         logging.debug('IRODS:IRODS DOWNLOAD')
         session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
+        #try:
+        #    os.chdir(self.offline_dir)
+        #except TypeError:
+        #    logging.error("IRODS:list:Could not find offline_dir")        
         try:
-            file_to_write=str(file_to_download)+'.md'
-            obj = sess.data_objects.get(str(file_path)+'/'+str(file_to_download))
+            file_to_write=str(file_dir)+'/'+str(file_to_download)
+            obj = session.data_objects.get(str(file_path)+str(file_to_download))
             with obj.open('r+') as f1:
                 with open(file_to_write,'wb') as f2:
                     while True:

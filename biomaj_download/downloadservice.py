@@ -122,7 +122,6 @@ class DownloadService(object):
                     proxy=None, proxy_auth='',
                     save_as=None, timeout_download=None, offline_dir=None):
         protocol = message_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
-        logging.error("DEBUG downloadservice.py get_handler")
         downloader = None
         if protocol in [0, 1]:
             downloader = FTPDownload(protocol_name, server, remote_dir)
@@ -146,7 +145,6 @@ class DownloadService(object):
         for remote_file in remote_files:
             if remote_file['save_as']:
                 save_as = remote_file['save_as']
-        logging.error("#####DEBUG downloadservice.py get_handler #####2")
         # For direct protocol, we only keep base name
         if protocol in [4, 5, 6]:
             tmp_remote = []
@@ -171,9 +169,7 @@ class DownloadService(object):
 
         if save_as:
             downloader.set_save_as(save_as)
-        logging.error("DEBUG downloadservice.py if param: "+str(param))
         if param:
-            logging.error("DEBUG downloadservice.py if param: "+str(param))
             downloader.set_param(param)
 
         downloader.set_server(server)
