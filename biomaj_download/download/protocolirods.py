@@ -1,16 +1,11 @@
 import logging
-import re
 import os
-import subprocess
 from datetime import datetime
 import time
 
-from mock.mock import PropertyMock
 from biomaj_download.download.interface import DownloadInterface
-#import irods
 from irods.session import iRODSSession
-from irods.models import Collection, DataObject, DataAccess, User
-
+from irods.models import Collection, DataObject, User
 
 
 class IRODSDownload(DownloadInterface):
@@ -20,30 +15,29 @@ class IRODSDownload(DownloadInterface):
         DownloadInterface.__init__(self)
         self.port = None
         self.remote_dir = remote_dir  # directory on the remote server : zone
-        self.rootdir= remote_dir
+        self.rootdir = remote_dir
         self.user = None
         self.password = None
         self.server = server
         self.zone = None
-                 
-    
+
     def set_param(self, param):
-        #self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
+        # self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
         self.param = param
         self.port = param['port']
         self.user = str(param['user'])
-        self.password =  str(param['password'])
+        self.password = str(param['password'])
         self.zone = str(param['zone'])
 
-    
     def list(self, directory=''):
-        session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
+        session = iRODSSession(host=self.server, port=self.port, user=self.user, password=self.password, zone=self.zone)
         rfiles = []
         rdirs = []
         rfile = {}
+        date = None
         for result in session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
-            #if the user is biomaj : he will have access to all the irods data (biomaj ressource) : drwxr-xr-x
-            #Avoid duplication
+            # if the user is biomaj : he will have access to all the irods data (biomaj ressource) : drwxr-xr-x
+            # Avoid duplication
             if rfile != {} and rfile['name'] == str(result[DataObject.name]) and date == str(result[DataObject.modify_time]).split(" ")[0].split('-'):
                 continue
             rfile = {}
@@ -96,7 +90,7 @@ class IRODSDownload(DownloadInterface):
             cur_files += 1
             start_time = datetime.now()
             start_time = time.mktime(start_time.timetuple())
-            self.remote_dir=rfile['root']
+            self.remote_dir = rfile['root']
             error = self.irods_download(file_dir, str(self.remote_dir), str(rfile['name']))
             if error:
                 rfile['download_time'] = 0
@@ -111,38 +105,34 @@ class IRODSDownload(DownloadInterface):
 
     def irods_download(self, file_dir, file_path, file_to_download):
         error = False
-        err_code = 0
         logging.debug('IRODS:IRODS DOWNLOAD')
-        session = iRODSSession(host = self.server, port = self.port, user = self.user, password = self.password, zone = self.zone)
-        #try:
-        #    os.chdir(self.offline_dir)
-        #except TypeError:
-        #    logging.error("IRODS:list:Could not find offline_dir")        
+        session = iRODSSession(host=self.server, port=self.port, user=self.user, password=self.password, zone=self.zone)
+        # try:
+        #     os.chdir(self.offline_dir)
+        # except TypeError:
+        #     logging.error("IRODS:list:Could not find offline_dir")
         try:
-            file_to_write=str(file_dir)+'/'+str(file_to_download)
-            obj = session.data_objects.get(str(file_path)+str(file_to_download))
+            file_to_write = str(file_dir) + '/' + str(file_to_download)
+            obj = session.data_objects.get(str(file_path) + str(file_to_download))
             with obj.open('r+') as f1:
-                with open(file_to_write,'wb') as f2:
+                with open(file_to_write, 'wb') as f2:
                     while True:
-                        buf=f1.read(1024)
+                        buf = f1.read(1024)
                         if buf:
                             for byte in buf:
-                                pass    # process the bytes if this is what you want
-                                        # make sure your changes are in buf
-                            n=f2.write(buf)
+                                pass    # process the bytes if this is what you want make sure your changes are in buf
+                            n = f2.write(buf)
                         else:
-                            break                     
+                            break
         except ExceptionIRODS as e:
             logging.error("RsyncError:" + str(e))
         session.cleanup()
         return(error)
-                    
+
 
 class ExceptionIRODS(Exception):
     def __init__(self, exception_reason):
         self.exception_reason = exception_reason
 
     def __str__(self):
-        return self.exception_reason        
-        
-        
+        return self.exception_reason
