@@ -25,6 +25,8 @@ from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
+from irods.session import iRODSSession
+
 import unittest
 
 class UtilsForTest():
@@ -555,6 +557,42 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(rsyncd.files_to_download) == 3)
         
         
+class MockiRODSSession(object):
+    '''
+    Simulation of python irods client
+    for result in session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
+    '''
+    
+    def __init__(self):
+       self.Collname="1"
+       self.Dataname="2"
+       self.Datasize="3"
+       self.Dataowner_name="4"
+       self.Datamodify_time="5"
+    
+    @staticmethod
+    def configure(self):
+        return MockiRODSSession()
+
+    @staticmethod    
+    def query(self, Collname, Dataname, Datasize, Dataowner_name, Datamodify_time):
+        self.Collname=Collname
+        self.Dataname=Dataname
+        self.Datasize=Datasize
+        self.Dataowner_name=Dataowner_name
+        self.Datamodify_time=Datamodify_time
+        return self
+
+    @staticmethod    
+    def filter(self,boo):
+        return self 
+               
+    @staticmethod
+    def get_results(self):
+        get_result_dict={self.Collname: 'plop', self.Dataname: 'plip', self.Datasize: 14, self.Dataowner_name : 'biomaj', self.Datamodify_time : 2017-04-10}
+        return(get_result_dict)
+
+
 @attr('irods')
 @attr('roscoZone')
 class TestBiomajIRODSDownload(unittest.TestCase):
@@ -563,35 +601,43 @@ class TestBiomajIRODSDownload(unittest.TestCase):
     '''
     def setUp(self):
         self.utils = UtilsForTest()
-
+     
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-
     def tearDown(self):
         self.utils.clean()
-        
-    def test_irods_list(self):
+    
+    
+    @patch('irods.session.iRODSSession.configure')
+    def test_irods_list(self,initialize_mock):
+        mock_session=MockiRODSSession()
+        initialize_mock.return_value=MockiRODSSession.configure()
         irodsd =  IRODSDownload('irods', self.examples, "")
         irodsd.set_credentials(None)
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
+#        
+#    def test_irods_irods_download(self):
+#        irodsd =  IRODSDownload('irods', self.examples, "")
+#        irodsd.set_credentials(None)
+#        irodsd.set_offline_dir(self.utils.data_dir)
+#        irodsd.remote_dir = "/roskoZone/home/rods/"
+#        error = irodsd.irods_download(self.utils.data_dir, "sample5G.txt")
+#        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
+#        self.assertTrue(error == False)
+#    
+#    def test_irods_general_download(self):
+#        irodsd =  IRODSDownload('irods', self.examples, "")
+#        irodsd.set_credentials(None)
+#        irodsd.set_offline_dir(self.utils.data_dir)
+#        (files_list, dir_list) = irodsd.list()
+#        irodsd.match([r'^toto*'],files_list,dir_list, prefix='')
+#        download_files=irodsd.download(self.curdir)
+#        self.assertTrue(len(download_files)>0)
+#        
+#       
         
-    def test_irods_irods_download(self):
-        irodsd =  IRODSDownload('irods', self.examples, "")
-        irodsd.set_credentials(None)
-        irodsd.set_offline_dir(self.utils.data_dir)
-        irodsd.remote_dir = "/roskoZone/home/rods/"
-        error = irodsd.irods_download(self.utils.data_dir, "sample5G.txt")
-        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
-        self.assertTrue(error == False)
-    
-    def test_irods_general_download(self):
-        irodsd =  IRODSDownload('irods', self.examples, "")
-        irodsd.set_credentials(None)
-        irodsd.set_offline_dir(self.utils.data_dir)
-        (files_list, dir_list) = irodsd.list()
-        irodsd.match([r'^toto*'],files_list,dir_list, prefix='')
-        download_files=irodsd.download(self.curdir)
-        self.assertTrue(len(download_files)>0)
+
+
