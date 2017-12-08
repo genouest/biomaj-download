@@ -40,7 +40,8 @@ def on_download(bank, downloaded_files):
             if 'hostname' in config['web']:
                 metric['host'] = config['web']['hostname']
             metrics.append(metric)
-        r = requests.post(config['web']['local_endpoint'] + '/api/download/metrics', json = metrics)
+        proxy = Utils.get_service_endpoint(config, 'download')
+        r = requests.post(proxy + '/api/download/metrics', json = metrics)
 
 
 download = DownloadService(config_file)
