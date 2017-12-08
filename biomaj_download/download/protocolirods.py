@@ -121,7 +121,7 @@ class IRODSDownload(DownloadInterface):
                         if buf:
                             for byte in buf:
                                 pass    # process the bytes if this is what you want make sure your changes are in buf
-                            n = f2.write(buf)
+                            f2.write(buf)
                         else:
                             break
         except ExceptionIRODS as e:
