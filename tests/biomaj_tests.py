@@ -609,7 +609,7 @@ class MockiRODSSession(object):
 
 
     def get_results(self):
-        get_result_dict= iRodsResult('plop', 'plip', 14, 'biomaj', 2017-04-10)
+        get_result_dict= iRodsResult('plop', 'plip', 14, 'biomaj', '2017-04-10 00:00:00')
         return [get_result_dict]
 
     def cleanup(self):
