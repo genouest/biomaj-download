@@ -25,7 +25,6 @@ from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
-from irods.session import iRODSSession
 
 import unittest
 
@@ -570,11 +569,9 @@ class MockiRODSSession(object):
        self.Dataowner_name="4"
        self.Datamodify_time="5"
     
-    @staticmethod
     def configure(self):
         return MockiRODSSession()
-
-    @staticmethod    
+    
     def query(self, Collname, Dataname, Datasize, Dataowner_name, Datamodify_time):
         self.Collname=Collname
         self.Dataname=Dataname
@@ -583,11 +580,9 @@ class MockiRODSSession(object):
         self.Datamodify_time=Datamodify_time
         return self
 
-    @staticmethod    
     def filter(self,boo):
         return self 
                
-    @staticmethod
     def get_results(self):
         get_result_dict={self.Collname: 'plop', self.Dataname: 'plip', self.Datasize: 14, self.Dataowner_name : 'biomaj', self.Datamodify_time : 2017-04-10}
         return(get_result_dict)
@@ -609,10 +604,11 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         self.utils.clean()
     
     
-    @patch('irods.session.iRODSSession.configure')
-    def test_irods_list(self,initialize_mock):
+    #@patch('irods.session.iRODSSession')
+    @patch('biomaj_download.download.protocolirods.iRODSSession')
+    def test_irods_list(self, mock_class):
         mock_session=MockiRODSSession()
-        initialize_mock.return_value=MockiRODSSession.configure()
+        mock_class.return_value= mock_session.configure()
         irodsd =  IRODSDownload('irods', self.examples, "")
         irodsd.set_credentials(None)
         irodsd.set_offline_dir(self.utils.data_dir)
