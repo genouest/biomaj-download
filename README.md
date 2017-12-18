@@ -41,3 +41,5 @@ If you cloned the repository and installed it via python setup.py install, just 
     gunicorn -c gunicorn_conf.py biomaj_download.biomaj_download_web:app
 
 Web processes should be behind a proxy/load balancer, API base url /api/download
+
+Prometheus endpoint metrics are exposed via /metrics on web server
