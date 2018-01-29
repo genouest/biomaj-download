@@ -25,6 +25,7 @@ from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
+import pprint
 
 import unittest
 
@@ -559,22 +560,33 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 class iRodsResult(object):
 
     def __init__(self, collname, dataname, datasize, owner, modify):
-        self.Collnam =  'plop'
-        self.Dataname = 'plip'
-        self.Datasize = 14
+        self.Collname =  'tests/'
+        self.Dataname = 'test.fasta.gz'
+        self.Datasize = 45
         self.Dataowner_name = 'biomaj'
         self.Datamodify_time = '2017-04-10 00:00:00'
 
     def __getitem__(self, index):
-        from irods.models import Collection, DataObject
+        from irods.models import Collection, DataObject, User
         if index.icat_id == DataObject.modify_time.icat_id:
             return self.Datamodify_time
-        elif index == DataObject.size:
+        elif "DATA_SIZE" in str(index):
             return self.Datasize
-        elif index == DataObject.name:
-            return self.Dataname
-        elif index == Collection.name:
-            return self.Collnam
+        elif "DATA_NAME" in str(index):
+            return 'test.fasta.gz'
+        elif "COLL_NAME" in str(index):
+            return self.Collname
+        elif "D_OWNER_NAME" in str(index):
+            return self.Dataowner_name    
+
+class iRodsDataObjectManager(object):
+    def __init__(self, parent, result):
+        self.parent='tests/'
+        self.result=['tests/']
+    
+    def get(self):
+        return(self.parent, self.result)
+
 
 class MockiRODSSession(object):
     '''
@@ -588,31 +600,50 @@ class MockiRODSSession(object):
        self.Datasize="3"
        self.Dataowner_name="4"
        self.Datamodify_time="5"
+       self.Collid=""
+       self.data_objects=iRodsDataObjectManager(None, None)
 
+    def __getitem__(self, index):
+        from irods.data_object import iRODSDataObject
+        from irods.models import Collection, DataObject, User
+        print(index)
+        if "COLL_ID" in str(index):
+            return self.Collid
+        if "COLL_NAME" in str(index):
+            return self.Collname
+    
     def configure(self):
         return MockiRODSSession()
 
-
     def query(self,Collname, Dataname, Datasize, Dataowner_name, Datamodify_time):
-        #self.Collname=Collname
-        #self.Dataname=Dataname
-        #self.Datasize=Datasize
-        #self.Dataowner_name=Dataowner_name
-        #self.Datamodify_time=Datamodify_time
+        return self
+    
+    def all(self):
         return self
 
+    def one(self):
+        return self
+    
+    def get(self):
+        results=data_object.get(None,None)    
+        return(results)
 
+    def data_objects(self):
+        return self
+    
     def filter(self,boo):
         return self
 
-
     def get_results(self):
-        get_result_dict= iRodsResult('plop', 'plip', 14, 'biomaj', '2017-04-10 00:00:00')
+        get_result_dict= iRodsResult('tests/', 'test.fasta.gz', 45, 'biomaj', '2017-04-10 00:00:00')
         return [get_result_dict]
 
     def cleanup(self):
         return self
 
+    def open(self,r):
+        my_test_file = open("tests/test.fasta.gz", "r+")
+        return(my_test_file)
 
 @attr('irods')
 @attr('roscoZone')
@@ -628,6 +659,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+        
     def tearDown(self):
         self.utils.clean()
 
@@ -644,17 +676,36 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
-#
-#    def test_irods_irods_download(self):
-#        irodsd =  IRODSDownload('irods', self.examples, "")
-#        irodsd.set_credentials(None)
-#        irodsd.set_offline_dir(self.utils.data_dir)
-#        irodsd.remote_dir = "/roskoZone/home/rods/"
-#        error = irodsd.irods_download(self.utils.data_dir, "sample5G.txt")
-#        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
-#        self.assertTrue(error == False)
-#
-#    def test_irods_general_download(self):
+
+
+    @patch('irods.session.iRODSSession.configure')
+    @patch('irods.session.iRODSSession.query')
+    @patch('irods.session.iRODSSession.cleanup')
+    #@patch('irods.data_object.iRODSDataObject')
+    @patch('irods.manager.data_object_manager.DataObjectManager')
+    @patch('irods.manager.data_object_manager.DataObjectManager.get')
+    def test_irods_irods_download(self,initialize_mock, query_mock,cleanup_mock, data_object_manager_mock, get_data_object_manager_mock):
+        mock_session=MockiRODSSession()
+        initialize_mock.return_value=mock_session.configure()
+        query_mock.return_value = mock_session.query(None,None,None,None,None)
+        data_object_manager_mock=iRodsDataObjectManager(None,None)
+        get_data_object_manager_mock=data_object_manager_mock.get()
+        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd.set_credentials(None)
+        irodsd.set_offline_dir(self.utils.data_dir)
+        irodsd.remote_dir = "/roskoZone/home/rods/"
+        print( self.examples)
+        error = irodsd.irods_download(self.examples, None, "test.fasta.gz")
+        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
+        self.assertTrue(error == False)
+
+#    @patch('irods.session.iRODSSession.configure')
+#    @patch('irods.session.iRODSSession.query')
+#    @patch('irods.session.iRODSSession.cleanup')
+#    def test_irods_general_download(self,initialize_mock, query_mock,cleanup_mock):
+#        mock_session=MockiRODSSession()
+#        initialize_mock.return_value=mock_session.configure()
+#        query_mock.return_value = mock_session.query(None,None,None,None,None)        
 #        irodsd =  IRODSDownload('irods', self.examples, "")
 #        irodsd.set_credentials(None)
 #        irodsd.set_offline_dir(self.utils.data_dir)
@@ -662,5 +713,5 @@ class TestBiomajIRODSDownload(unittest.TestCase):
 #        irodsd.match([r'^toto*'],files_list,dir_list, prefix='')
 #        download_files=irodsd.download(self.curdir)
 #        self.assertTrue(len(download_files)>0)
-#
+
 #
