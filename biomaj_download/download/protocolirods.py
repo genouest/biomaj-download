@@ -24,7 +24,7 @@ class IRODSDownload(DownloadInterface):
     def set_param(self, param):
         # self.param is a dictionnary which has the following form :{'password': u'biomaj', 'protocol': u'iget', 'user': u'biomaj', 'port': u'port'}
         self.param = param
-        self.port = param['port']
+        self.port = int(param['port'])
         self.user = str(param['user'])
         self.password = str(param['password'])
         self.zone = str(param['zone'])

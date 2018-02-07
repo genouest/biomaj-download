@@ -579,21 +579,12 @@ class iRodsResult(object):
         elif "D_OWNER_NAME" in str(index):
             return self.Dataowner_name    
 
-class iRodsDataObjectManager(object):
-    def __init__(self, parent, result):
-        self.parent='tests/'
-        self.result=['tests/']
-    
-    def get(self):
-        return(self.parent, self.result)
-
 
 class MockiRODSSession(object):
     '''
     Simulation of python irods client
     for result in session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
     '''
-
     def __init__(self):
        self.Collname="1"
        self.Dataname="2"
@@ -601,7 +592,6 @@ class MockiRODSSession(object):
        self.Dataowner_name="4"
        self.Datamodify_time="5"
        self.Collid=""
-       self.data_objects=iRodsDataObjectManager(None, None)
 
     def __getitem__(self, index):
         from irods.data_object import iRODSDataObject
@@ -622,13 +612,6 @@ class MockiRODSSession(object):
         return self
 
     def one(self):
-        return self
-    
-    def get(self):
-        results=data_object.get(None,None)    
-        return(results)
-
-    def data_objects(self):
         return self
     
     def filter(self,boo):
@@ -653,9 +636,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
     Test IRODS downloader
     '''
     def setUp(self):
-
         self.utils = UtilsForTest()
-
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
@@ -677,41 +658,3 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
 
-
-    @patch('irods.session.iRODSSession.configure')
-    @patch('irods.session.iRODSSession.query')
-    @patch('irods.session.iRODSSession.cleanup')
-    #@patch('irods.data_object.iRODSDataObject')
-    @patch('irods.manager.data_object_manager.DataObjectManager')
-    @patch('irods.manager.data_object_manager.DataObjectManager.get')
-    def test_irods_irods_download(self,initialize_mock, query_mock,cleanup_mock, data_object_manager_mock, get_data_object_manager_mock):
-        mock_session=MockiRODSSession()
-        initialize_mock.return_value=mock_session.configure()
-        query_mock.return_value = mock_session.query(None,None,None,None,None)
-        data_object_manager_mock=iRodsDataObjectManager(None,None)
-        get_data_object_manager_mock=data_object_manager_mock.get()
-        irodsd =  IRODSDownload('irods', self.examples, "")
-        irodsd.set_credentials(None)
-        irodsd.set_offline_dir(self.utils.data_dir)
-        irodsd.remote_dir = "/roskoZone/home/rods/"
-        print( self.examples)
-        error = irodsd.irods_download(self.examples, None, "test.fasta.gz")
-        #error = irodsd.irods_download(self.utils.data_dir, "toto.txt")
-        self.assertTrue(error == False)
-
-#    @patch('irods.session.iRODSSession.configure')
-#    @patch('irods.session.iRODSSession.query')
-#    @patch('irods.session.iRODSSession.cleanup')
-#    def test_irods_general_download(self,initialize_mock, query_mock,cleanup_mock):
-#        mock_session=MockiRODSSession()
-#        initialize_mock.return_value=mock_session.configure()
-#        query_mock.return_value = mock_session.query(None,None,None,None,None)        
-#        irodsd =  IRODSDownload('irods', self.examples, "")
-#        irodsd.set_credentials(None)
-#        irodsd.set_offline_dir(self.utils.data_dir)
-#        (files_list, dir_list) = irodsd.list()
-#        irodsd.match([r'^toto*'],files_list,dir_list, prefix='')
-#        download_files=irodsd.download(self.curdir)
-#        self.assertTrue(len(download_files)>0)
-
-#
