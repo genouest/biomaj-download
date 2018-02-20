@@ -108,10 +108,9 @@ class IRODSDownload(DownloadInterface):
         logging.debug('IRODS:IRODS DOWNLOAD')
         session = iRODSSession(host=self.server, port=self.port, user=self.user, password=self.password, zone=self.zone)
         try:
-            file_to_write = str(file_dir) + '/' + str(file_to_download)
-            file_to_get=str(file_path) + str(file_to_download)
-            #Write the file to download in the wanted file_dir : with the python-irods iget
-            obj = session.data_objects.get(file_to_get, file_dir)
+            file_to_get = str(file_path) + str(file_to_download)
+            # Write the file to download in the wanted file_dir : with the python-irods iget
+            session.data_objects.get(file_to_get, file_dir)
         except ExceptionIRODS as e:
             logging.error("RsyncError:" + str(e))
         session.cleanup()
