@@ -107,23 +107,11 @@ class IRODSDownload(DownloadInterface):
         error = False
         logging.debug('IRODS:IRODS DOWNLOAD')
         session = iRODSSession(host=self.server, port=self.port, user=self.user, password=self.password, zone=self.zone)
-        # try:
-        #     os.chdir(self.offline_dir)
-        # except TypeError:
-        #     logging.error("IRODS:list:Could not find offline_dir")
         try:
             file_to_write = str(file_dir) + '/' + str(file_to_download)
-            obj = session.data_objects.get(str(file_path) + str(file_to_download))
-            with obj.open('r+') as f1:
-                with open(file_to_write, 'wb') as f2:
-                    while True:
-                        buf = f1.read(1024)
-                        if buf:
-                            for byte in buf:
-                                pass    # process the bytes if this is what you want make sure your changes are in buf
-                            f2.write(buf)
-                        else:
-                            break
+            file_to_get=str(file_path) + str(file_to_download)
+            #Write the file to download in the wanted file_dir : with the python-irods iget
+            obj = session.data_objects.get(file_to_get, file_dir)
         except ExceptionIRODS as e:
             logging.error("RsyncError:" + str(e))
         session.cleanup()
