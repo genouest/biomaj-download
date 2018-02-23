@@ -1,3 +1,6 @@
+3.0.15:
+  Fix progress download control where could have infinite loop
+
 3.0.14:
   Allow setup of local_endpoint per service, else use default local_endpoint
 

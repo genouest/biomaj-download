@@ -216,7 +216,7 @@ class DownloadClient(DownloadService):
                                 self.ask_download(operation)
                                 nb_submitted += 1
 
-                if progress == nb_files_to_download:
+                if progress >= nb_files_to_download:
                     over = True
                     logging.info("Workflow:wf_download:RemoteDownload:Completed:" + str(progress))
                     logging.info("Workflow:wf_download:RemoteDownload:Errors:" + str(error))
