@@ -22,7 +22,7 @@ from biomaj_download.message import message_pb2
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_core.utils import Utils
 from biomaj_zipkin.zipkin import Zipkin
-
+from biomaj_download.download.protocolirods import IRODSDownload
 
 app = Flask(__name__)
 app_log = logging.getLogger('werkzeug')
@@ -139,13 +139,14 @@ class DownloadService(object):
             downloader = DirectHttpDownload('https', server, '/')
         if protocol == 8:
             downloader = RSYNCDownload('rsync', server, remote_dir)
+        if protocol == 9:
+            downloader = IRODSDownload('irods', server, remote_dir)
         if downloader is None:
             return None
 
         for remote_file in remote_files:
             if remote_file['save_as']:
                 save_as = remote_file['save_as']
-
         # For direct protocol, we only keep base name
         if protocol in [4, 5, 6]:
             tmp_remote = []
@@ -170,7 +171,6 @@ class DownloadService(object):
 
         if save_as:
             downloader.set_save_as(save_as)
-
         if param:
             downloader.set_param(param)
 

@@ -23,6 +23,9 @@ from biomaj_download.download.http import HTTPDownload, HTTPParse
 from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
+from biomaj_download.download.protocolirods import IRODSDownload
+
+import pprint
 
 import unittest
 
@@ -552,3 +555,106 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 3)
+
+
+class iRodsResult(object):
+
+    def __init__(self, collname, dataname, datasize, owner, modify):
+        self.Collname =  'tests/'
+        self.Dataname = 'test.fasta.gz'
+        self.Datasize = 45
+        self.Dataowner_name = 'biomaj'
+        self.Datamodify_time = '2017-04-10 00:00:00'
+
+    def __getitem__(self, index):
+        from irods.models import Collection, DataObject, User
+        if index.icat_id == DataObject.modify_time.icat_id:
+            return self.Datamodify_time
+        elif "DATA_SIZE" in str(index):
+            return self.Datasize
+        elif "DATA_NAME" in str(index):
+            return 'test.fasta.gz'
+        elif "COLL_NAME" in str(index):
+            return self.Collname
+        elif "D_OWNER_NAME" in str(index):
+            return self.Dataowner_name    
+
+
+class MockiRODSSession(object):
+    '''
+    Simulation of python irods client
+    for result in session.query(Collection.name, DataObject.name, DataObject.size, DataObject.owner_name, DataObject.modify_time).filter(User.name == self.user).get_results():
+    '''
+    def __init__(self):
+       self.Collname="1"
+       self.Dataname="2"
+       self.Datasize="3"
+       self.Dataowner_name="4"
+       self.Datamodify_time="5"
+       self.Collid=""
+
+    def __getitem__(self, index):
+        from irods.data_object import iRODSDataObject
+        from irods.models import Collection, DataObject, User
+        print(index)
+        if "COLL_ID" in str(index):
+            return self.Collid
+        if "COLL_NAME" in str(index):
+            return self.Collname
+    
+    def configure(self):
+        return MockiRODSSession()
+
+    def query(self,Collname, Dataname, Datasize, Dataowner_name, Datamodify_time):
+        return self
+    
+    def all(self):
+        return self
+
+    def one(self):
+        return self
+    
+    def filter(self,boo):
+        return self
+
+    def get_results(self):
+        get_result_dict= iRodsResult('tests/', 'test.fasta.gz', 45, 'biomaj', '2017-04-10 00:00:00')
+        return [get_result_dict]
+
+    def cleanup(self):
+        return self
+
+    def open(self,r):
+        my_test_file = open("tests/test.fasta.gz", "r+")
+        return(my_test_file)
+
+@attr('irods')
+@attr('roscoZone')
+@attr('network')
+class TestBiomajIRODSDownload(unittest.TestCase):
+    '''
+    Test IRODS downloader
+    '''
+    def setUp(self):
+        self.utils = UtilsForTest()
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+        
+    def tearDown(self):
+        self.utils.clean()
+
+    @patch('irods.session.iRODSSession.configure')
+    @patch('irods.session.iRODSSession.query')
+    @patch('irods.session.iRODSSession.cleanup')
+    def test_irods_list(self,initialize_mock, query_mock,cleanup_mock):
+        mock_session=MockiRODSSession()
+        initialize_mock.return_value=mock_session.configure()
+        query_mock.return_value = mock_session.query(None,None,None,None,None)
+        cleanup_mock.return_value = mock_session.cleanup()
+        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd.set_credentials(None)
+        irodsd.set_offline_dir(self.utils.data_dir)
+        (files_list, dir_list) = irodsd.list()
+        self.assertTrue(len(files_list) != 0)
+
