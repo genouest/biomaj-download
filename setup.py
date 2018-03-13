@@ -54,7 +54,8 @@ config = {
                          'prometheus_client>=0.0.18',
                          'protobuf',
                          'requests',
-                         'humanfriendly'
+                         'humanfriendly',
+                         'python-irodsclient'
                         ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',
