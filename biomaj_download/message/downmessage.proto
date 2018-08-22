@@ -1,4 +1,4 @@
-package biomaj;
+package biomaj.download;
 
 message File {
     // Name of the file

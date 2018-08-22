@@ -1,3 +1,5 @@
+3.0.18:
+  Rename protobuf and use specific package to avoid conflicts
 3.0.17:
   Regenerate protobuf message desc, failing on python3
 3.0.16:

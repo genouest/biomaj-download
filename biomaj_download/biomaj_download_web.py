@@ -16,7 +16,7 @@ from prometheus_client import multiprocess
 from prometheus_client import CollectorRegistry
 import consul
 
-from biomaj_download.message import message_pb2
+from biomaj_download.message import downmessage_pb2
 from biomaj_download.downloadservice import DownloadService
 
 from biomaj_core.utils import Utils
@@ -86,7 +86,7 @@ def list_status(bank, session):
     Check if listing request is over
     '''
     dserv = DownloadService(config_file, rabbitmq=False)
-    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info = downmessage_pb2.DownloadFile()
     biomaj_file_info.bank = bank
     biomaj_file_info.session = session
     biomaj_file_info.local_dir = '/tmp'
@@ -100,7 +100,7 @@ def download_status(bank, session):
     Get number of downloads and errors for bank and session. Progress includes successful download and errored downloads.
     '''
     dserv = DownloadService(config_file, rabbitmq=False)
-    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info = downmessage_pb2.DownloadFile()
     biomaj_file_info.bank = bank
     biomaj_file_info.session = session
     biomaj_file_info.local_dir = '/tmp'
@@ -114,7 +114,7 @@ def download_error(bank, session):
     Get errors info for bank and session
     '''
     dserv = DownloadService(config_file, rabbitmq=False)
-    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info = downmessage_pb2.DownloadFile()
     biomaj_file_info.bank = bank
     biomaj_file_info.session = session
     biomaj_file_info.local_dir = '/tmp'
@@ -128,7 +128,7 @@ def list_result(bank, session):
     Get file listing for bank and session, using FileList protobuf serialized string
     '''
     dserv = DownloadService(config_file, rabbitmq=False)
-    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info = downmessage_pb2.DownloadFile()
     biomaj_file_info.bank = bank
     biomaj_file_info.session = session
     biomaj_file_info.local_dir = '/tmp'
@@ -146,7 +146,7 @@ def create_session(bank):
 @app.route('/api/download/session/<bank>/<session>', methods=['DELETE'])
 def clean_session(bank, session):
     dserv = DownloadService(config_file, rabbitmq=False)
-    biomaj_file_info = message_pb2.DownloadFile()
+    biomaj_file_info = downmessage_pb2.DownloadFile()
     biomaj_file_info.bank = bank
     biomaj_file_info.session = session
     dserv.clean(biomaj_file_info)

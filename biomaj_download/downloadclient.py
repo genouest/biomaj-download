@@ -7,7 +7,7 @@ import sys
 import pika
 
 from biomaj_download.download.downloadthreads import DownloadThread
-from biomaj_download.message import message_pb2
+from biomaj_download.message import downmessage_pb2
 
 if sys.version_info[0] < 3:
     from Queue import Queue
@@ -92,15 +92,15 @@ class DownloadClient(DownloadService):
         '''
         for downloader in downloaders:
             for file_to_download in downloader.files_to_download:
-                operation = message_pb2.Operation()
+                operation = downmessage_pb2.Operation()
                 operation.type = 1
-                message = message_pb2.DownloadFile()
+                message = downmessage_pb2.DownloadFile()
                 message.bank = self.bank
                 message.session = self.session
                 message.local_dir = offline_dir
-                remote_file = message_pb2.DownloadFile.RemoteFile()
+                remote_file = downmessage_pb2.DownloadFile.RemoteFile()
                 protocol = downloader.protocol
-                remote_file.protocol = message_pb2.DownloadFile.Protocol.Value(protocol.upper())
+                remote_file.protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol.upper())
                 remote_file.server = downloader.server
                 if cf.get('remote.dir'):
                     remote_file.remote_dir = cf.get('remote.dir')
@@ -135,7 +135,7 @@ class DownloadClient(DownloadService):
                 if 'md5' in file_to_download and file_to_download['md5']:
                     biomaj_file.metadata.md5 = file_to_download['md5']
 
-                message.http_method = message_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
+                message.http_method = downmessage_pb2.DownloadFile.HTTP_METHOD.Value(downloader.method.upper())
 
                 timeout_download = cf.get('timeout.download', None)
                 if timeout_download:

@@ -18,7 +18,7 @@ from biomaj_download.download.http import HTTPDownload
 from biomaj_download.download.direct import DirectFTPDownload
 from biomaj_download.download.direct import DirectHttpDownload
 from biomaj_download.download.localcopy import LocalDownload
-from biomaj_download.message import message_pb2
+from biomaj_download.message import downmessage_pb2
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_core.utils import Utils
 from biomaj_zipkin.zipkin import Zipkin
@@ -123,7 +123,7 @@ class DownloadService(object):
                     credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
                     save_as=None, timeout_download=None, offline_dir=None):
-        protocol = message_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
+        protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:
             downloader = FTPDownload(protocol_name, server, remote_dir)
@@ -191,7 +191,7 @@ class DownloadService(object):
         server = biomaj_file_info.remote_file.server
         remote_dir = biomaj_file_info.remote_file.remote_dir
 
-        protocol_name = message_pb2.DownloadFile.Protocol.Name(protocol).lower()
+        protocol_name = downmessage_pb2.DownloadFile.Protocol.Name(protocol).lower()
         self.logger.debug('%s request to download from %s://%s' % (biomaj_file_info.bank, protocol_name, server))
 
         remote_files = []
@@ -220,7 +220,7 @@ class DownloadService(object):
                                 remote_files=remote_files,
                                 credentials=biomaj_file_info.remote_file.credentials,
                                 http_parse=biomaj_file_info.remote_file.http_parse,
-                                http_method=message_pb2.DownloadFile.HTTP_METHOD.Name(biomaj_file_info.http_method),
+                                http_method=downmessage_pb2.DownloadFile.HTTP_METHOD.Name(biomaj_file_info.http_method),
                                 param=params,
                                 proxy=proxy,
                                 proxy_auth=proxy_auth,
@@ -294,7 +294,7 @@ class DownloadService(object):
 
         file_list = self.redis_client.get(self.config['redis']['prefix'] + ':' + biomaj_file_info.bank + ':session:' + biomaj_file_info.session + ':files')
         if protobuf_decode:
-            file_list_pb2 = message_pb2.FileList()
+            file_list_pb2 = downmessage_pb2.FileList()
             file_list_pb2.ParseFromString(file_list_pb2)
             return file_list_pb2
 
@@ -306,7 +306,7 @@ class DownloadService(object):
         '''
         file_list = []
         dir_list = []
-        file_list_pb2 = message_pb2.FileList()
+        file_list_pb2 = downmessage_pb2.FileList()
 
         try:
             (file_list, dir_list) = download_handler.list()
@@ -318,7 +318,6 @@ class DownloadService(object):
         else:
             self.logger.debug('End of download for %s session %s' % (biomaj_file_info.bank, biomaj_file_info.session))
             for file_elt in download_handler.files_to_download:
-                # file_pb2 = message_pb2.File()
                 file_pb2 = file_list_pb2.files.add()
                 file_pb2.name = file_elt['name']
                 file_pb2.root = file_elt['root']
@@ -331,7 +330,7 @@ class DownloadService(object):
                         param = file_list_pb2.param.add()
                         param.name = key
                         param.value = file_elt['param'][key]
-                metadata = message_pb2.File.MetaData()
+                metadata = downmessage_pb2.File.MetaData()
                 metadata.permissions = file_elt['permissions']
                 metadata.group = file_elt['group']
                 metadata.size = int(file_elt['size'])
@@ -438,7 +437,7 @@ class DownloadService(object):
         Manage download and send ACK message
         '''
         try:
-            operation = message_pb2.Operation()
+            operation = downmessage_pb2.Operation()
             operation.ParseFromString(body)
             message = operation.download
             span = None
