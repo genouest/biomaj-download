@@ -129,9 +129,18 @@ class FTPDownload(DownloadInterface):
                     error = False
             except Exception as e:
                 self.logger.error('Could not get errcode:' + str(e))
+
             nbtry += 1
             curl.close()
             fp.close()
+            skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
+            if not error and skip_check_uncompress is None:
+                archive_status = Utils.archive_check(file_path)
+                if not archive_status:
+                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
+                    error = True
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
         return error
 
     def download(self, local_dir, keep_dirs=True):

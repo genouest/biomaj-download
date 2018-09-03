@@ -443,9 +443,26 @@ class TestBiomajFTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     # ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
+    try:
+        ftpd.download(self.utils.data_dir)
+    except Exception:
+        self.assertTrue(1==1)
+    else:
+        self.assertTrue(1==0)
+    ftpd.close()
+    # self.assertTrue(len(ftpd.files_to_download) == 2)
+
+  def test_download_skip_uncompress_checks(self):
+    # ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
+    os.environ['UNCOMPRESS_SKIP_CHECK'] = "1"
+    ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
+    (file_list, dir_list) = ftpd.list()
+    # ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
+    ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 2)
+    del os.environ['UNCOMPRESS_SKIP_CHECK']
 
   def test_download_in_subdir(self):
     ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
@@ -577,7 +594,7 @@ class iRodsResult(object):
         elif "COLL_NAME" in str(index):
             return self.Collname
         elif "D_OWNER_NAME" in str(index):
-            return self.Dataowner_name    
+            return self.Dataowner_name
 
 
 class MockiRODSSession(object):
@@ -601,19 +618,19 @@ class MockiRODSSession(object):
             return self.Collid
         if "COLL_NAME" in str(index):
             return self.Collname
-    
+
     def configure(self):
         return MockiRODSSession()
 
     def query(self,Collname, Dataname, Datasize, Dataowner_name, Datamodify_time):
         return self
-    
+
     def all(self):
         return self
 
     def one(self):
         return self
-    
+
     def filter(self,boo):
         return self
 
@@ -640,7 +657,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
-        
+
     def tearDown(self):
         self.utils.clean()
 
@@ -657,4 +674,3 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
-

@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import time
 
+from biomaj_core.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
 from irods.session import iRODSSession
 from irods.models import Collection, DataObject, User
@@ -96,6 +97,15 @@ class IRODSDownload(DownloadInterface):
                 rfile['download_time'] = 0
                 rfile['error'] = True
                 raise Exception("IRODS:Download:Error:" + rfile['root'] + '/' + rfile['name'])
+            else:
+                archive_status = Utils.archive_check(file_path)
+                if not archive_status:
+                    self.logger.error('Archive is invalid or corrupted, deleting file')
+                    rfile['error'] = True
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    raise Exception("IRODS:Download:Error:" + rfile['root'] + '/' + rfile['name'])
+
             end_time = datetime.now()
             end_time = time.mktime(end_time.timetuple())
             rfile['download_time'] = end_time - start_time
