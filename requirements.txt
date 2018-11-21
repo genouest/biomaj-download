@@ -2,7 +2,7 @@ mock
 nose
 pycurl
 py-bcrypt
-pika
+pika==0.11.2
 redis
 PyYAML
 protobuf
