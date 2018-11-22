@@ -46,7 +46,7 @@ config = {
                          'biomaj_zipkin',
                          'pycurl',
                          'py-bcrypt',
-                         'pika',
+                         'pika==0.11.2',
                          'redis',
                          'PyYAML',
                          'flask',
