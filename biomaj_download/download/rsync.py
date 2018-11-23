@@ -119,7 +119,7 @@ class RSYNCDownload(DownloadInterface):
                 rfile['save_as'] = rfile['name']
             if keep_dirs:
                 file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
-            if re.match('\S*\/$', file_dir):
+            if re.match(r'\S*\/$', file_dir):
                 file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
             else:
                 file_path = file_dir + os.path.basename(rfile['save_as'])

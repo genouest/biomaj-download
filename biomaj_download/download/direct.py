@@ -238,7 +238,7 @@ class DirectHttpDownload(DirectFTPDownload):
             encoding = None
             if 'content-type' in self.headers:
                 content_type = self.headers['content-type'].lower()
-                match = re.search('charset=(\S+)', content_type)
+                match = re.search(r'charset=(\S+)', content_type)
                 if match:
                     encoding = match.group(1)
             if encoding is None:
@@ -257,7 +257,7 @@ class DirectHttpDownload(DirectFTPDownload):
                     rfile['size'] = int(parts[1].strip())
                 if parts[0].strip() == 'Last-Modified':
                     # Sun, 06 Nov 1994
-                    res = re.match('(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())
+                    res = re.match(r'(\w+),\s+(\d+)\s+(\w+)\s+(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         rfile['day'] = int(res.group(2))
@@ -265,7 +265,7 @@ class DirectHttpDownload(DirectFTPDownload):
                         rfile['year'] = int(res.group(4))
                         continue
                     # Sunday, 06-Nov-94
-                    res = re.match('(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
+                    res = re.match(r'(\w+),\s+(\d+)-(\w+)-(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         rfile['day'] = int(res.group(2))
@@ -273,7 +273,7 @@ class DirectHttpDownload(DirectFTPDownload):
                         rfile['year'] = 2000 + int(res.group(4))
                         continue
                     # Sun Nov  6 08:49:37 1994
-                    res = re.match('(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
+                    res = re.match(r'(\w+)\s+(\w+)\s+(\d+)\s+\d{2}:\d{2}:\d{2}\s+(\d+)', parts[1].strip())
                     if res:
                         rfile['hash'] = hashlib.md5(str(res.group(0)).encode('utf-8')).hexdigest()
                         rfile['day'] = int(res.group(3))

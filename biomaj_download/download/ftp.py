@@ -262,7 +262,7 @@ class FTPDownload(DownloadInterface):
         encoding = None
         if 'content-type' in self.headers:
             content_type = self.headers['content-type'].lower()
-            match = re.search('charset=(\S+)', content_type)
+            match = re.search(r'charset=(\S+)', content_type)
             if match:
                 encoding = match.group(1)
         if encoding is None:
@@ -297,7 +297,7 @@ class FTPDownload(DownloadInterface):
             rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
             try:
                 rfile['year'] = int(parts[7])
-            except Exception as e:
+            except Exception:
                 # specific ftp case issues at getting date info
                 curdate = datetime.now()
                 rfile['year'] = curdate.year

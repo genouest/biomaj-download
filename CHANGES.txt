@@ -1,5 +1,6 @@
 3.0.19:
   Check archives after download
+  Fix python regexps syntax (deprecation)
 3.0.18:
   Rename protobuf and use specific package to avoid conflicts
 3.0.17:

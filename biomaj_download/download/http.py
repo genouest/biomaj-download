@@ -17,7 +17,7 @@ except ImportError:
 class HTTPParse(object):
 
     def __init__(self, dir_line, file_line, dir_name=1, dir_date=2, file_name=1, file_date=2, file_date_format=None, file_size=3):
-        """
+        r'''
         http.parse.dir.line: <img[\s]+src="[\S]+"[\s]+alt="\[DIR\]"[\s]*/?>[\s]*<a[\s]+href="([\S]+)/"[\s]*>.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})
         http.parse.file.line: <img[\s]+src="[\S]+"[\s]+alt="\[[\s]+\]"[\s]*/?>[\s]<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})
         http.group.dir.name: 1
@@ -25,7 +25,7 @@ class HTTPParse(object):
         http.group.file.name: 1
         http.group.file.date: 2
         http.group.file.size: 3
-        """
+        '''
         self.dir_line = dir_line
         self.file_line = file_line
         self.dir_name = dir_name
@@ -85,7 +85,7 @@ class HTTPDownload(FTPDownload):
         encoding = None
         if 'content-type' in self.headers:
             content_type = self.headers['content-type'].lower()
-            match = re.search('charset=(\S+)', content_type)
+            match = re.search(r'charset=(\S+)', content_type)
             if match:
                 encoding = match.group(1)
         if encoding is None:
@@ -96,14 +96,14 @@ class HTTPDownload(FTPDownload):
 
         # lets get the output in a string
         result = output.getvalue().decode(encoding)
-        '''
-        'http.parse.dir.line': r'<a[\s]+href="([\S]+)/".*alt="\[DIR\]">.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
-        'http.parse.file.line': r'<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})',
-        'http.group.dir.name': 1,
-        'http.group.dir.date': 2,
-        'http.group.file.name': 1,
-        'http.group.file.date': 2,
-        'http.group.file.size': 3,
+        r'''
+        http.parse.dir.line': r'<a[\s]+href="([\S]+)/".*alt="\[DIR\]">.*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})',
+        http.parse.file.line': r'<a[\s]+href="([\S]+)".*([\d]{2}-[\w\d]{2,5}-[\d]{4}\s[\d]{2}:[\d]{2})[\s]+([\d\.]+[MKG]{0,1})',
+        http.group.dir.name': 1,
+        http.group.dir.date': 2,
+        http.group.file.name': 1,
+        http.group.file.date': 2,
+        http.group.file.size': 3,
         '''
 
         rfiles = []
