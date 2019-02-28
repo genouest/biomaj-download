@@ -30,7 +30,7 @@ download_time_metric = Counter("biomaj_download_file_time", "Bank download file 
 
 config_file = 'config.yml'
 if 'BIOMAJ_CONFIG' in os.environ:
-        config_file = os.environ['BIOMAJ_CONFIG']
+    config_file = os.environ['BIOMAJ_CONFIG']
 
 config = None
 with open(config_file, 'r') as ymlfile:
@@ -41,7 +41,19 @@ with open(config_file, 'r') as ymlfile:
 def consul_declare(config):
     if config['consul']['host']:
         consul_agent = consul.Consul(host=config['consul']['host'])
-        consul_agent.agent.service.register('biomaj-download', service_id=config['consul']['id'], address=config['web']['hostname'], port=config['web']['port'], tags=['biomaj'])
+        consul_agent.agent.service.register(
+            'biomaj-download',
+            service_id=config['consul']['id'],
+            address=config['web']['hostname'],
+            port=config['web']['port'],
+            tags=[
+                'biomaj',
+                'api',
+                'traefik.backend=biomaj-download',
+                'traefik.frontend.rule=PathPrefix:/api/download',
+                'traefik.enable=true'
+            ]
+        )
         check = consul.Check.http(url='http://' + config['web']['hostname'] + ':' + str(config['web']['port']) + '/api/download', interval=20)
         consul_agent.agent.check.register(config['consul']['id'] + '_check', check=check, service_id=config['consul']['id'])
 

@@ -1,3 +1,6 @@
+3.0.20:
+  Update pika dependency release
+  Add tags for traefik support
 3.0.19:
   Check archives after download
   Fix python regexps syntax (deprecation)

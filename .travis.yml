@@ -26,4 +26,12 @@ script:
    - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 #after_success:
 #  - coveralls
-
+deploy:
+  provider: pypi
+  skip_existing: true
+  user: osallou
+  password:
+    secure: OA4CxuI5Mcnk+hB9XoJK0W3i5EFv0cuZINr0TLDIiwxpt2446hHnJdxjVDnnZGanQnztgeFwOlIWZWbsytKsTWjd0rv6WtWXWxbJ8qgp+wE0IGaDV4Iceks9wogEiCjAs2URS8Kc2OdokhjWVcOZN8z9bABNPwSBaf5QBc++v96DGCTFF2JaOZlE6DL+AAKPldyXPYfRDcaTMw8CFnQ+TeJYJMX5Jm/U2RKLU37iZaDd2PV6IA1kHf5ZDaRkvsqR1Ycu67GjaUWYxLO3/GJsK9vMJLZeOi1/bBp2rwW8TYlbdFkGII0g+hGLCTwySrVPpWsv+zLaA9GgTIt8w2N6aOALob+Kgk64TRM/C0m01ABqnOyc6wfC+EbaaFMZYMjcJxexOlpM9HY3BPUPBUzdxP2M/g9hIBcLfYQeScM4a42wRFmCAN3CUUvhXvDXFrUQFrfrM/1jjMv/EnBIy1TEmDNa6aGfMh4/bEWW7Vyg+n72Zs1RrgFofE4MhVSWRq640e4DtFBtbJOp0f44AfSdMtUmOz3MulUTgE79XOvPZS0KIvQfVBv9G0XV3+iO4NXwGaxvbazuUicEdEit2EU26EypTMQI9NijIMeEzFzYAtwafL06oyTtL9D7ygu2VQHhbh7mz9ncZcx/hgl3MAvbQ/AEs08b060Jc15vDw8dko0=
+  distributions: sdist bdist_wheel
+  on:
+    tags: true
