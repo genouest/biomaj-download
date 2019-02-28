@@ -320,21 +320,21 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     self.utils.clean()
 
   def test_ftp_list(self):
-    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
-    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '')
+    file_list = ['/debian/doc/mailing-lists.txt']
+    ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) == 1)
 
   def test_download(self):
-    file_list = ['/blast/db/FASTA/alu.n.gz.md5']
-    ftpd = DirectFTPDownload('ftp', 'ftp.ncbi.nih.gov', '')
+    file_list = ['/debian/doc/mailing-lists.txt']
+    ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'alu.n.gz.md5')))
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
 
 
 @attr('directhttp')
@@ -431,17 +431,14 @@ class TestBiomajFTPDownload(unittest.TestCase):
 
   def test_ftp_list(self):
     ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
-    # ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
   @attr('test')
   def test_download(self):
-    # ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
     ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
-    # ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     try:
         ftpd.download(self.utils.data_dir)
@@ -453,11 +450,9 @@ class TestBiomajFTPDownload(unittest.TestCase):
     # self.assertTrue(len(ftpd.files_to_download) == 2)
 
   def test_download_skip_uncompress_checks(self):
-    # ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/db/FASTA/')
     os.environ['UNCOMPRESS_SKIP_CHECK'] = "1"
     ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
-    # ftpd.match([r'^alu.*\.gz$'], file_list, dir_list)
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
@@ -465,19 +460,19 @@ class TestBiomajFTPDownload(unittest.TestCase):
     del os.environ['UNCOMPRESS_SKIP_CHECK']
 
   def test_download_in_subdir(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
+    ftpd = FTPDownload('ftp', 'ftp.fr.debian.org', '/debian/')
     (file_list, dir_list) = ftpd.list()
     try:
-        ftpd.match([r'^db/FASTA/alu.*\.gz$'], file_list, dir_list)
+        ftpd.match([r'^doc/mailing-lists.txt$'], file_list, dir_list)
     except Exception as e:
         print("Error: " + str(e))
         self.skipTest("Skipping test due to remote server error")
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 2)
+    self.assertTrue(len(ftpd.files_to_download) == 1)
 
   def test_download_or_copy(self):
-    ftpd = FTPDownload('ftp', 'ftp.ncbi.nih.gov', '/blast/')
+    ftpd = FTPDownload('ftp', 'ftp.fr.debian.org', '/debian/')
     ftpd.files_to_download = [
           {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test2', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
