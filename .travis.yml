@@ -1,38 +1,29 @@
 language: python
 sudo: false
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 services:
-  - redis
-# Apply only on main branches
+- redis
 branches:
   except:
-    - /^feature.*$/
-# command to install dependencies
-#before_install:
-#  - "sudo apt-get update -qq"
-#  - "sudo apt-get install -qq libldap2-dev libsasl2-dev"
+  - "/^feature.*$/"
 install:
-  - "pip install -r requirements.txt"
-  - "pip install coverage nose"
-  - "pip install python-coveralls"
-  - "python setup.py -q install"
-#  - "echo data_file=$TRAVIS_BUILD_DIR/.coverage >> .coveragerc"
-# command to run tests
+- pip install -r requirements.txt
+- pip install coverage nose
+- pip install python-coveralls
+- python setup.py -q install
 script:
-   - nosetests -a '!network'
-   - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
-#after_success:
-#  - coveralls
+- nosetests -a '!network'
+- flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 deploy:
   provider: pypi
   skip_existing: true
   user: osallou
   password:
-    secure: OA4CxuI5Mcnk+hB9XoJK0W3i5EFv0cuZINr0TLDIiwxpt2446hHnJdxjVDnnZGanQnztgeFwOlIWZWbsytKsTWjd0rv6WtWXWxbJ8qgp+wE0IGaDV4Iceks9wogEiCjAs2URS8Kc2OdokhjWVcOZN8z9bABNPwSBaf5QBc++v96DGCTFF2JaOZlE6DL+AAKPldyXPYfRDcaTMw8CFnQ+TeJYJMX5Jm/U2RKLU37iZaDd2PV6IA1kHf5ZDaRkvsqR1Ycu67GjaUWYxLO3/GJsK9vMJLZeOi1/bBp2rwW8TYlbdFkGII0g+hGLCTwySrVPpWsv+zLaA9GgTIt8w2N6aOALob+Kgk64TRM/C0m01ABqnOyc6wfC+EbaaFMZYMjcJxexOlpM9HY3BPUPBUzdxP2M/g9hIBcLfYQeScM4a42wRFmCAN3CUUvhXvDXFrUQFrfrM/1jjMv/EnBIy1TEmDNa6aGfMh4/bEWW7Vyg+n72Zs1RrgFofE4MhVSWRq640e4DtFBtbJOp0f44AfSdMtUmOz3MulUTgE79XOvPZS0KIvQfVBv9G0XV3+iO4NXwGaxvbazuUicEdEit2EU26EypTMQI9NijIMeEzFzYAtwafL06oyTtL9D7ygu2VQHhbh7mz9ncZcx/hgl3MAvbQ/AEs08b060Jc15vDw8dko0=
+    secure: fMEDYld7N2uRbICa++b7dTUXxt6VxSD1ZE+ZaTHQWxHHSK5fxbdwvsVHicdgKH3erMOXb7foumQ6uxBAtQTVmY+ZJbidydT/BEeoLjIH0NxVoTLCOllWKHOKm8LzgigVjbSVqXi7ZZ6rzigpQbg7NCdiD4wQr6xLO+gB3LrWovIgcPIlWDLWiMIp0P3b9nmoOdiSBBpLXI7i9W7ksL25Mopx/p4OoeWFEbg7aSkRVKufWLCoyLnYnWCnmC0MK7PF7V7mgiw+Gutv3XcOgfaZ/MU088+OrpvnLxfKplkwukcMBc4cuMV8mtWmDaQ9u2X9MLoeyRoQ6jHyIvftW+fn4Ck3wzyKZA3Pbz5+UVUG6GVpnwm3NIYvPl0m62brVVqs/wVaI8HB/7u5qn60ER9u9l9/YGIG5rsPrb2w12QFmcjwrge2T9h+aDW3+fQuzbjVGJMBCLqu9hUoiz9WHWqa74Ka8OfP+fTA3vpASGfuYhzdlJ5tDO6M1kjIe23ga5DhUMKHyl4j7uA/YVxc5numYU9naD/PyZw1qqms8zhJdVmIsBMtBP/MeH0YVrhmQS7p4ni7BB545JBYv8UyUfVXt2DcQHG9EAkMT69QfJhSl9KICe4SmlHVYy2Uldw/LE/FwYmngfDzZUYtndsn2xS+NVi3FwMNa1+6q0Sqqmzfmqc=
   distributions: sdist bdist_wheel
   on:
     tags: true
