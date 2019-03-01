@@ -1,3 +1,5 @@
+3.0.21:
+  Fix traefik labels
 3.0.20:
   Update pika dependency release
   Add tags for traefik support

@@ -49,9 +49,9 @@ def consul_declare(config):
             tags=[
                 'biomaj',
                 'api',
-                'traefik.backend=biomaj-download',
-                'traefik.frontend.rule=PathPrefix:/api/download',
-                'traefik.enable=true'
+                'traefik-int.backend=biomaj-download',
+                'traefik-int.frontend.rule=PathPrefix:/api/download',
+                'traefik-int.enable=true'
             ]
         )
         check = consul.Check.http(url='http://' + config['web']['hostname'] + ':' + str(config['web']['port']) + '/api/download', interval=20)
