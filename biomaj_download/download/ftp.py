@@ -63,19 +63,21 @@ class FTPDownload(DownloadInterface):
                 if subdir == '^':
                     subdirs_pattern = subdirs_pattern[1:]
                     subdir = subdirs_pattern[0]
+                # If getting all, get all files
+                if pattern == '**/*':
+                    for rfile in file_list:
+                        rfile['root'] = self.rootdir
+                        if prefix != '':
+                            rfile['name'] = prefix + '/' + rfile['name']
+                        self.files_to_download.append(rfile)
+                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                 for direlt in dir_list:
                     subdir = direlt['name']
                     self.logger.debug('Download:File:Subdir:Check:' + subdir)
                     if pattern == '**/*':
                         (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
                         self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
-                        for rfile in file_list:
-                            if pattern == '**/*' or re.match(pattern, rfile['name']):
-                                rfile['root'] = self.rootdir
-                                if prefix != '':
-                                    rfile['name'] = prefix + '/' + rfile['name']
-                                self.files_to_download.append(rfile)
-                                self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
+
                     else:
                         if re.match(subdirs_pattern[0], subdir):
                             self.logger.debug('Download:File:Subdir:Match:' + subdir)
