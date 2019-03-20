@@ -1,3 +1,5 @@
+3.0.23:
+  Support spaces in remote file names
 3.0.22:
   Fix **/* remote.files parsing
 3.0.21:

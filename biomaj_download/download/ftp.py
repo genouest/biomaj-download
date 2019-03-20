@@ -286,7 +286,9 @@ class FTPDownload(DownloadInterface):
         for line in lines:
             rfile = {}
             # lets print each part separately
+            self.logger.error("OSALLOU LIST FILE %s" % (str(line)))
             parts = line.split()
+            self.logger.error("OSALLOU LIST PARTS %s" % (str(parts)))
             # the individual fields in this list of parts
             if not parts:
                 continue
@@ -310,9 +312,13 @@ class FTPDownload(DownloadInterface):
                 if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
                     rfile['year'] = curdate.year - 1
             rfile['name'] = parts[8]
-            if len(parts) >= 10 and parts[9] == '->':
-                # Symlink, add to files AND dirs as we don't know the type of the link
-                rdirs.append(rfile)
+            for i in range(9, len(parts)):
+                if parts[i] == '->':
+                    # Symlink, add to files AND dirs as we don't know the type of the link
+                    rdirs.append(rfile)
+                    break
+                else:
+                    rfile['name'] += ' ' + parts[i]
 
             is_dir = False
             if re.match('^d', rfile['permissions']):
