@@ -286,9 +286,7 @@ class FTPDownload(DownloadInterface):
         for line in lines:
             rfile = {}
             # lets print each part separately
-            self.logger.error("OSALLOU LIST FILE %s" % (str(line)))
             parts = line.split()
-            self.logger.error("OSALLOU LIST PARTS %s" % (str(parts)))
             # the individual fields in this list of parts
             if not parts:
                 continue

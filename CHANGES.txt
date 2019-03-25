@@ -1,3 +1,5 @@
+3.0.24:
+  Remove debug logs
 3.0.23:
   Support spaces in remote file names
 3.0.22:
