@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from nose.tools import *
 from nose.plugins.attrib import attr
 
@@ -239,7 +237,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
       )
     except Exception:
       msg = "In %s: copy worked but hardlinks were not used." % self.id()
-      print(msg, file=sys.stderr)
+      logging.info(msg)
       
 @attr('network')
 @attr('http')
