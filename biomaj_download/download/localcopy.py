@@ -18,10 +18,11 @@ class LocalDownload(DownloadInterface):
 
     '''
 
-    def __init__(self, rootdir):
+    def __init__(self, rootdir, use_hardlinks=False):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.rootdir = rootdir
+        self.use_hardlinks = use_hardlinks
 
     def download(self, local_dir):
         '''
@@ -32,7 +33,9 @@ class LocalDownload(DownloadInterface):
         :return: list of downloaded files
         '''
         self.logger.debug('Local:Download')
-        Utils.copy_files(self.files_to_download, local_dir, lock=self.mkdir_lock)
+        Utils.copy_files(self.files_to_download, local_dir,
+                         use_hardlinks=self.use_hardlinks,
+                         lock=self.mkdir_lock)
         for rfile in self.files_to_download:
             rfile['download_time'] = 0
 

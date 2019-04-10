@@ -4,6 +4,7 @@ from nose.plugins.attrib import attr
 import json
 import shutil
 import os
+import sys
 import tempfile
 import logging
 import copy
@@ -213,7 +214,31 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.close()
     self.assertTrue(len(locald.files_to_download) == 1)
 
-
+  def test_local_download_hardlinks(self):
+    """
+    Test download with hardlinks: we download a file from conf/ to data_dir.
+    This should work unless /tmp don't accept hardlinks so the last assert is
+    optional.
+    """
+    test_file = "conf/global.properties"
+    locald = LocalDownload(self.utils.test_dir, use_hardlinks=True)
+    (file_list, dir_list) = locald.list()
+    locald.match([r'^/' + test_file + '$'], file_list, dir_list)
+    locald.download(self.utils.data_dir)
+    locald.close()
+    self.assertTrue(len(locald.files_to_download) == 1)
+    # Test if data/conf/global.properties is a hard link to
+    # conf/global.properties
+    local_global_properties = os.path.join(self.utils.test_dir, test_file)
+    copy_global_properties = os.path.join(self.utils.data_dir, test_file)
+    try:
+      self.assertTrue(
+        os.path.samefile(local_global_properties, copy_global_properties)
+      )
+    except Exception:
+      msg = "In %s: copy worked but hardlinks were not used." % self.id()
+      print(msg, file=sys.stderr)
+      
 @attr('network')
 @attr('http')
 class TestBiomajHTTPDownload(unittest.TestCase):
