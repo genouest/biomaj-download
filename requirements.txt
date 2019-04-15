@@ -10,7 +10,7 @@ flask
 python-consul
 prometheus_client>=0.0.18
 requests
-biomaj_core>=3.0.16
+biomaj_core>=3.0.18
 biomaj_zipkin
 flake8
 humanfriendly
