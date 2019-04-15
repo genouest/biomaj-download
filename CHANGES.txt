@@ -1,3 +1,5 @@
+3.0.25:
+  Allow to use hardlinks in LocalDownload
 3.0.24:
   Remove debug logs
 3.0.23:
