@@ -80,7 +80,8 @@ class DownloadClient(DownloadService):
                     result = r.json()
                     return (result['progress'], result['errors'])
             except Exception:
-                logging.exception('Failed to connect to the download proxy: %s' % (url))
+                logging.exception('Failed to connect to the download proxy: %s, retrying in 2 seconds' % (url))
+                time.sleep(2)
         raise Exception('Failed to connect to the download proxy')
 
     def download_remote_files(self, cf, downloaders, offline_dir):
