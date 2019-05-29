@@ -465,14 +465,9 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
-    try:
-        ftpd.download(self.utils.data_dir)
-    except Exception:
-        self.assertTrue(1==1)
-    else:
-        self.assertTrue(1==0)
+    ftpd.download(self.utils.data_dir)
     ftpd.close()
-    # self.assertTrue(len(ftpd.files_to_download) == 2)
+    self.assertTrue(len(ftpd.files_to_download) == 2)
 
   def test_download_skip_uncompress_checks(self):
     os.environ['UNCOMPRESS_SKIP_CHECK'] = "1"

@@ -39,7 +39,7 @@ class DownloadInterface(object):
         self.kill_received = False
         self.proxy = None
         # 24h timeout
-        self.timeout = 3600 * 24
+        self.timeout = 3600
         # Optional save target for single file downloaders
         self.save_as = None
         self.logger = logging.getLogger('biomaj')
