@@ -545,14 +545,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
 
     def test_rsync_list(self):
-        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
 
     def test_rsync_match(self):
-        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
@@ -568,7 +568,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 
 
     def test_rsync_general_download(self):
-        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
@@ -577,7 +577,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(download_files)==1)
 
     def test_rsync_download_or_copy(self):
-        rsyncd =  RSYNCDownload('rsync', self.examples, "")
+        rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_offline_dir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
