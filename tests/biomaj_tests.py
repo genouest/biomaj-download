@@ -498,14 +498,14 @@ class TestBiomajFTPDownload(unittest.TestCase):
           {'name':'/test2', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
-          ]
+    ]
     available_files = [
           {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test12', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test3', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 20},
           {'name':'/test/test11', 'year': '2013', 'month': '11', 'day': '10', 'size': 10}
-          ]
+    ]
     ftpd.download_or_copy(available_files, '/biomaj', False)
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download)==2)
@@ -532,7 +532,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def setUp(self):
         self.utils = UtilsForTest()
 
-        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.curdir = os.path.dirname(os.path.realpath(__file__)) + '/'
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
@@ -581,8 +581,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
 
     def test_rsync_download_in_subdir(self):
-        rsyncd = RSYNCDownload('rsync', self.curdir+'/', "")
-        rsyncd.set_offline_dir(self.curdir+'/')
+        rsyncd = RSYNCDownload('rsync', self.curdir, "")
+        rsyncd.set_offline_dir(self.curdir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
@@ -684,7 +684,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         initialize_mock.return_value=mock_session.configure()
         query_mock.return_value = mock_session.query(None,None,None,None,None)
         cleanup_mock.return_value = mock_session.cleanup()
-        irodsd =  IRODSDownload('irods', self.examples, "")
+        irodsd = IRODSDownload('irods', self.examples, "")
         irodsd.set_credentials(None)
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
