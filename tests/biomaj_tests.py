@@ -4,12 +4,9 @@ from nose.plugins.attrib import attr
 import json
 import shutil
 import os
-import sys
 import tempfile
 import logging
-import copy
 import stat
-import time
 
 from mock import patch
 
@@ -25,8 +22,6 @@ from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
-
-import pprint
 
 import unittest
 
@@ -558,9 +553,12 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd = RSYNCDownload('rsync', self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
-        error = rsyncd.rsync_download(self.utils.data_dir, "test2.fasta")
-        self.assertTrue(error == 0)
-
+        rfile = {
+            "name": "test2.fasta",
+            "root": self.examples
+        }
+        error = rsyncd._download(self.utils.data_dir, rfile)
+        self.assertFalse(error)
 
     def test_rsync_general_download(self):
         rsyncd = RSYNCDownload('rsync', self.examples, "")

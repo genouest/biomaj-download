@@ -1,12 +1,16 @@
 import pycurl
 import re
-import os
+import sys
 from datetime import datetime
-import time
 import hashlib
 
 from biomaj_core.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
+
+if sys.version_info[0] < 3:
+    from urllib import urlencode
+else:
+    from urllib.parse import urlencode
 
 try:
     from io import BytesIO
@@ -30,9 +34,9 @@ class FTPDownload(DownloadInterface):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.crl = pycurl.Curl()
-        url = protocol + '://' + host
+        self.protocol = protocol
         self.rootdir = rootdir
-        self.url = url
+        self.url = protocol + '://' + host
         self.headers = {}
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
@@ -97,16 +101,26 @@ class FTPDownload(DownloadInterface):
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
 
-    def curl_download(self, file_path, file_to_download):
+    def _file_url(self, rfile):
+        # rfile['root'] is set to self.rootdir if needed but may be different.
+        # We don't use os.path.join because rfile['name'] may starts with /
+        return self.url + '/' + rfile['root'] + rfile['name']
+
+    def _download(self, file_path, rfile):
+        """
+        This method is designed to work for FTP and HTTP.
+        """
         error = True
         nbtry = 1
+        # Forge URL of remote file
+        file_url = self._file_url(rfile)
         while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
             try:
-                curl.setopt(pycurl.URL, file_to_download)
+                curl.setopt(pycurl.URL, file_url)
             except Exception:
-                curl.setopt(pycurl.URL, file_to_download.encode('ascii', 'ignore'))
+                curl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
             if self.proxy is not None:
                 curl.setopt(pycurl.PROXY, self.proxy)
                 if self.proxy_auth is not None:
@@ -121,12 +135,22 @@ class FTPDownload(DownloadInterface):
             curl.setopt(pycurl.NOSIGNAL, 1)
             curl.setopt(pycurl.WRITEDATA, fp)
 
+            # This is specific to HTTP
+            if self.method == 'POST':
+                # Form data must be provided already urlencoded.
+                postfields = urlencode(self.param)
+                # Sets request method to POST,
+                # Content-Type header to application/x-www-form-urlencoded
+                # and data to send in request body.
+                curl.setopt(pycurl.POSTFIELDS, postfields)
+
             try:
                 curl.perform()
-                errcode = curl.getinfo(pycurl.HTTP_CODE)
+                errcode = curl.getinfo(pycurl.RESPONSE_CODE)
+                # 226 if for FTP and 200 is for HTTP
                 if int(errcode) != 226 and int(errcode) != 200:
                     error = True
-                    self.logger.error('Error while downloading ' + file_to_download + ' - ' + str(errcode))
+                    self.logger.error('Error while downloading ' + file_url + ' - ' + str(errcode))
                 else:
                     error = False
             except Exception as e:
@@ -135,67 +159,7 @@ class FTPDownload(DownloadInterface):
             nbtry += 1
             curl.close()
             fp.close()
-            skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
-            if not error and skip_check_uncompress is None:
-                archive_status = Utils.archive_check(file_path)
-                if not archive_status:
-                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
-                    error = True
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
         return error
-
-    def download(self, local_dir, keep_dirs=True):
-        '''
-        Download remote files to local_dir
-
-        :param local_dir: Directory where files should be downloaded
-        :type local_dir: str
-        :param keep_dirs: keep file name directory structure or copy file in local_dir directly
-        :param keep_dirs: bool
-        :return: list of downloaded files
-        '''
-        self.logger.debug('FTP:Download')
-
-        nb_files = len(self.files_to_download)
-        cur_files = 1
-
-        for rfile in self.files_to_download:
-            if self.kill_received:
-                raise Exception('Kill request received, exiting')
-            file_dir = local_dir
-            if 'save_as' not in rfile or not rfile['save_as']:
-                rfile['save_as'] = rfile['name']
-            if keep_dirs:
-                file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
-            file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
-
-            # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
-            if not os.path.exists(file_dir):
-                os.makedirs(file_dir)
-
-            self.logger.debug('FTP:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'])
-            self.logger.debug('FTP:Download:Progress:' + str(cur_files) + '/' + str(nb_files) + ' save as ' + rfile['save_as'])
-            cur_files += 1
-            if 'url' not in rfile or not rfile['url']:
-                rfile['url'] = self.url
-            if 'root' not in rfile or not rfile['root']:
-                rfile['root'] = self.rootdir
-            start_time = datetime.now()
-            start_time = time.mktime(start_time.timetuple())
-            error = self.curl_download(file_path, rfile['url'] + rfile['root'] + '/' + rfile['name'])
-            if error:
-                rfile['download_time'] = 0
-                rfile['error'] = True
-                raise Exception("FTP:Download:Error:" + rfile['url'] + rfile['root'] + '/' + rfile['name'])
-            else:
-                end_time = datetime.now()
-                end_time = time.mktime(end_time.timetuple())
-                rfile['download_time'] = end_time - start_time
-
-            self.set_permissions(file_path, rfile)
-
-        return self.files_to_download
 
     def header_function(self, header_line):
         # HTTP standard specifies that headers are encoded in iso-8859-1.
@@ -231,12 +195,13 @@ class FTPDownload(DownloadInterface):
 
         :return: tuple of file and dirs in current directory with details
         '''
-        self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
+        dir_url = self.url + self.rootdir + directory
+        self.logger.debug('Download:List:' + dir_url)
 
         try:
-            self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
+            self.crl.setopt(pycurl.URL, dir_url)
         except Exception:
-            self.crl.setopt(pycurl.URL, (self.url + self.rootdir + directory).encode('ascii', 'ignore'))
+            self.crl.setopt(pycurl.URL, dir_url.encode('ascii', 'ignore'))
 
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)

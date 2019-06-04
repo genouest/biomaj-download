@@ -1,7 +1,5 @@
 import datetime
-import time
 import pycurl
-import os
 import re
 import hashlib
 import sys
@@ -26,22 +24,20 @@ class DirectFTPDownload(FTPDownload):
     '''
 
     def __init__(self, protocol, host, rootdir=''):
-        '''
-
-        Initialize the files in list with today as last-modification date.
-        Size is also preset to zero, size will be set after download
-
-        '''
         FTPDownload.__init__(self, protocol, host, rootdir)
         self.save_as = None
         self.headers = {}
 
     def set_files_to_download(self, files):
+        '''
+        Initialize the files in list with today as last-modification date.
+        Size is also preset to zero, size will be set after download
+        '''
         today = datetime.date.today()
         self.files_to_download = []
         for file_to_download in files:
             rfile = {}
-            rfile['root'] = ''
+            rfile['root'] = self.rootdir
             rfile['permissions'] = ''
             rfile['group'] = ''
             rfile['user'] = ''
@@ -53,6 +49,7 @@ class DirectFTPDownload(FTPDownload):
                 rfile['name'] = file_to_download[:-1]
             else:
                 rfile['name'] = file_to_download
+            rfile['save_as'] = rfile['name']
             rfile['hash'] = None
             if self.param:
                 if 'param' not in file_to_download or not file_to_download['param']:
@@ -63,10 +60,7 @@ class DirectFTPDownload(FTPDownload):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
         '''
-        for rfile in self.files_to_download:
-            if self.save_as is None:
-                self.save_as = rfile['name']
-            rfile['save_as'] = self.save_as
+        # TODO: are we sure about this implementation ?
         return (self.files_to_download, [])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
@@ -90,6 +84,12 @@ class DirectHttpDownload(DirectFTPDownload):
         self.method = 'GET'
         self.param = {}
 
+    def _file_url(self, file_to_download):
+        url = super(DirectHttpDownload, self)._file_url(file_to_download)
+        if self.method == "GET":
+            url += '?' + urlencode(self.param)
+        return url
+
     def download(self, local_dir, keep_dirs=True):
         '''
         Download remote files to local_dir
@@ -100,79 +100,11 @@ class DirectHttpDownload(DirectFTPDownload):
         :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        self.logger.debug('DirectHTTP:Download')
-        nb_files = len(self.files_to_download)
-
-        if nb_files > 1:
+        if len(self.files_to_download) > 1:
             self.files_to_download = []
             self.logger.error('DirectHTTP accepts only 1 file')
-
-        cur_files = 1
-
-        for rfile in self.files_to_download:
-            if self.kill_received:
-                raise Exception('Kill request received, exiting')
-
-            if not self.save_as:
-                self.save_as = rfile['name']
-            else:
-                rfile['save_as'] = self.save_as
-            file_dir = local_dir
-            if keep_dirs:
-                file_dir = local_dir + os.path.dirname(self.save_as)
-            file_path = file_dir + '/' + os.path.basename(self.save_as)
-
-            # For unit tests only, workflow will take in charge directory creation before to avoid thread multi access
-            if not os.path.exists(file_dir):
-                os.makedirs(file_dir)
-            self.logger.debug('DirectHTTP:Download:Progress' + str(cur_files) + '/' + str(nb_files) + ' downloading file ' + rfile['name'] + ', save as ' + self.save_as)
-            cur_files += 1
-            if 'url' not in rfile:
-                rfile['url'] = self.url
-            fp = open(file_path, "wb")
-            curl = pycurl.Curl()
-
-            if self.proxy is not None:
-                curl.setopt(pycurl.PROXY, self.proxy)
-                if self.proxy_auth is not None:
-                    curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
-
-            if self.method == 'POST':
-                # Form data must be provided already urlencoded.
-                postfields = urlencode(self.param)
-                # Sets request method to POST,
-                # Content-Type header to application/x-www-form-urlencoded
-                # and data to send in request body.
-                if self.credentials is not None:
-                    curl.setopt(pycurl.USERPWD, self.credentials)
-
-                curl.setopt(pycurl.POSTFIELDS, postfields)
-                try:
-                    curl.setopt(pycurl.URL, rfile['url'] + rfile['root'] + '/' + rfile['name'])
-                except Exception:
-                    curl.setopt(pycurl.URL, (rfile['url'] + rfile['root'] + '/' + rfile['name']).encode('ascii', 'ignore'))
-
-            else:
-                url = rfile['url'] + rfile['root'] + '/' + rfile['name'] + '?' + urlencode(self.param)
-                try:
-                    curl.setopt(pycurl.URL, url)
-                except Exception:
-                    curl.setopt(pycurl.URL, url.encode('ascii', 'ignore'))
-
-            curl.setopt(pycurl.WRITEDATA, fp)
-            start_time = datetime.datetime.now()
-            start_time = time.mktime(start_time.timetuple())
-            curl.perform()
-            end_time = datetime.datetime.now()
-            end_time = time.mktime(end_time.timetuple())
-            rfile['download_time'] = end_time - start_time
-
-            curl.close()
-            fp.close()
-            self.logger.debug('downloaded!')
-            rfile['name'] = self.save_as
-            self.set_permissions(file_path, rfile)
-        return self.files_to_download
+            # TODO: raise exception ?
+        return super(DirectHttpDownload, self).download(local_dir, keep_dirs)
 
     def header_function(self, header_line):
         # HTTP standard specifies that headers are encoded in iso-8859-1.

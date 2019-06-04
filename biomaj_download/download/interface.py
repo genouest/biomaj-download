@@ -4,6 +4,8 @@ import datetime
 import time
 import re
 
+from biomaj_core.utils import Utils
+
 
 class _FakeLock(object):
     '''
@@ -22,7 +24,21 @@ class _FakeLock(object):
 
 class DownloadInterface(object):
     '''
-    Main interface that all downloaders must extend
+    Main interface that all downloaders must extend.
+
+    Usually, it is enough to overload _download, list, chroot and close.
+
+    TODO:
+      - protocol should be a class constant
+      - we use self.rootdir and self.url if present; maybe this could be done
+        better
+      - we modify the propertes of files at several places; we could use a
+        method add_file_to_download (called by match and list) to centralize
+        such modifications (set_files_to_download should call it or be removed)
+      - some setters (set_server, set_protocol) are not used and their purpose
+        is not clear since those parameters are set when constructing the
+        object
+      - chroot is not used in BioMaJ
     '''
 
     files_num_threads = 4
@@ -221,7 +237,6 @@ class DownloadInterface(object):
                         self.files_to_copy.append(dfile)
                     else:
                         new_files_to_download.append(dfile)
-
         else:
             # Copy everything
             for dfile in self.files_to_download:
@@ -233,15 +248,92 @@ class DownloadInterface(object):
 
         self.files_to_download = new_files_to_download
 
-    def download(self, local_dir):
+    def _download(self, file_path, rfile):
+        '''
+        Download one file and return False in case of success and True
+        otherwise. This must be implemented in subclasses.
+        '''
+        raise NotImplementedError()
+
+    def download(self, local_dir, keep_dirs=True):
         '''
         Download remote files to local_dir
 
         :param local_dir: Directory where files should be downloaded
         :type local_dir: str
+        :param keep_dirs: keep file name directory structure or copy file in local_dir directly
+        :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        pass
+        self.logger.debug(self.protocol.upper() + ':Download')
+        nb_files = len(self.files_to_download)
+        cur_files = 1
+        # Change working directory (needed to run commands)
+        try:
+            os.chdir(self.offline_dir)
+        except TypeError:
+            self.logger.error(self.protocol.upper() + ":Download:Could not find offline_dir")
+        # Most downloaders have the concept of rootdir. In that case, we append
+        # it to the file properties for safety
+        append_rootdir = getattr(self, 'rootdir', False)
+        # Some downloaders have the concept of url. In that case, we append it
+        # to the file properties for safety
+        append_url = getattr(self, 'url', False)
+        # Should we skip test of archives
+        skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
+        for rfile in self.files_to_download:
+            if self.kill_received:
+                raise Exception('Kill request received, exiting')
+            # Add properties to the file if needed (for safety)
+            if append_url and ('url' not in rfile or not rfile['url']):
+                rfile['url'] = self.url
+            if append_rootdir and ('root' not in rfile or not rfile['root']):
+                rfile['root'] = self.rootdir
+            if 'save_as' not in rfile or rfile['save_as'] is None:
+                rfile['save_as'] = rfile['name']
+            # Determine where to store file (directory and name)
+            file_dir = local_dir
+            if keep_dirs:
+                file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
+            if file_dir[-1] == "/":
+                file_path = file_dir + os.path.basename(rfile['save_as'])
+            else:
+                file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
+
+            # For unit tests only, workflow will take in charge directory
+            # creation before to avoid thread multi access
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
+
+            self.logger.debug(self.protocol.upper() + ':Download:Progress:' +
+                              str(cur_files) + '/' + str(nb_files) +
+                              ' downloading file ' + rfile['name'] +
+                              ' save as ' + rfile['save_as'])
+            cur_files += 1
+            start_time = datetime.datetime.now()
+            start_time = time.mktime(start_time.timetuple())
+            error = self._download(file_path, rfile)
+            if error:
+                rfile['download_time'] = 0
+                rfile['error'] = True
+                raise Exception(self.protocol.upper() + ":Download:Error:" +
+                                rfile["name"])
+            else:
+                end_time = datetime.datetime.now()
+                end_time = time.mktime(end_time.timetuple())
+                rfile['download_time'] = end_time - start_time
+            # This was moved from FTPDownload
+            if not error and skip_check_uncompress is None:
+                archive_status = Utils.archive_check(file_path)
+                if not archive_status:
+                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
+                    error = True
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+
+            self.set_permissions(file_path, rfile)
+
+        return self.files_to_download
 
     def list(self):
         '''

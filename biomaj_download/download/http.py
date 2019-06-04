@@ -60,12 +60,13 @@ class HTTPDownload(FTPDownload):
 
         :return: tuple of file and dirs in current directory with details
         '''
-        self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
+        dir_url = self.url + '/' + self.rootdir + directory
+        self.logger.debug('Download:List:' + dir_url)
 
         try:
-            self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
+            self.crl.setopt(pycurl.URL, dir_url)
         except Exception:
-            self.crl.setopt(pycurl.URL, (self.url + self.rootdir + directory).encode('ascii', 'ignore'))
+            self.crl.setopt(pycurl.URL, dir_url.encode('ascii', 'ignore'))
 
         if self.proxy is not None:
             self.crl.setopt(pycurl.PROXY, self.proxy)
