@@ -153,8 +153,8 @@ class DownloadInterface(object):
                 if subdir == '^':
                     subdirs_pattern = subdirs_pattern[1:]
                     subdir = subdirs_pattern[0]
-                if not dir_list and pattern == '**/*':
-                    # Take all and no more dirs, take all files
+                # If getting all, get all files
+                if pattern == '**/*':
                     for rfile in file_list:
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
