@@ -64,7 +64,7 @@ class DirectFTPDownload(FTPDownload):
         '''
         if dir_list is None:
             dir_list = []
-        self.files_to_download = file_list
+        self.set_files_to_download(file_list)
 
 
 class DirectHttpDownload(DirectFTPDownload):
