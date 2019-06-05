@@ -39,6 +39,14 @@ class FTPDownload(DownloadInterface):
         self.url = protocol + '://' + host
         self.headers = {}
 
+    def _append_file_to_download(self, rfile):
+        # Add url and root to the file if needed (for safety)
+        if 'url' not in rfile or not rfile['url']:
+            rfile['url'] = self.url
+        if 'root' not in rfile or not rfile['root']:
+            rfile['root'] = self.rootdir
+        super(FTPDownload, self)._append_file_to_download(rfile)
+
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.
@@ -70,10 +78,9 @@ class FTPDownload(DownloadInterface):
                 # If getting all, get all files
                 if pattern == '**/*':
                     for rfile in file_list:
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                 for direlt in dir_list:
                     subdir = direlt['name']
@@ -93,10 +100,9 @@ class FTPDownload(DownloadInterface):
             else:
                 for rfile in file_list:
                     if re.match(pattern, rfile['name']):
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')

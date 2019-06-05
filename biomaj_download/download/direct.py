@@ -28,33 +28,28 @@ class DirectFTPDownload(FTPDownload):
         self.save_as = None
         self.headers = {}
 
-    def set_files_to_download(self, files):
+    def _append_file_to_download(self, file):
         '''
         Initialize the files in list with today as last-modification date.
         Size is also preset to zero, size will be set after download
         '''
         today = datetime.date.today()
-        self.files_to_download = []
-        for file_to_download in files:
-            rfile = {}
-            rfile['root'] = self.rootdir
-            rfile['permissions'] = ''
-            rfile['group'] = ''
-            rfile['user'] = ''
-            rfile['size'] = 0
-            rfile['month'] = today.month
-            rfile['day'] = today.day
-            rfile['year'] = today.year
-            if file_to_download.endswith('/'):
-                rfile['name'] = file_to_download[:-1]
-            else:
-                rfile['name'] = file_to_download
-            rfile['save_as'] = rfile['name']
-            rfile['hash'] = None
-            if self.param:
-                if 'param' not in file_to_download or not file_to_download['param']:
-                    rfile['param'] = self.param
-            self.files_to_download.append(rfile)
+        rfile = {}
+        rfile['root'] = self.rootdir
+        rfile['permissions'] = ''
+        rfile['group'] = ''
+        rfile['user'] = ''
+        rfile['size'] = 0
+        rfile['month'] = today.month
+        rfile['day'] = today.day
+        rfile['year'] = today.year
+        if file.endswith('/'):
+            rfile['name'] = file[:-1]
+        else:
+            rfile['name'] = file
+        rfile['save_as'] = rfile['name']
+        rfile['hash'] = None
+        super(DirectFTPDownload, self)._append_file_to_download(rfile)
 
     def list(self, directory=''):
         '''

@@ -30,11 +30,6 @@ class DownloadInterface(object):
 
     TODO:
       - protocol should be a class constant
-      - we use self.rootdir and self.url if present; maybe this could be done
-        better
-      - we modify the propertes of files at several places; we could use a
-        method add_file_to_download (called by match and list) to centralize
-        such modifications (set_files_to_download should call it or be removed)
       - some setters (set_server, set_protocol) are not used and their purpose
         is not clear since those parameters are set when constructing the
         object
@@ -74,12 +69,29 @@ class DownloadInterface(object):
     def set_protocol(self, protocol):
         self.protocol = protocol
 
+    def _append_file_to_download(self, rfile):
+        """
+        Add a file to the download list and check its properties (this method
+        is called in `match` and `list`).
+
+        Downloaders can override this to add some properties to the file (for
+        instance, most of them will add "root").
+        """
+        # Add properties to the file if needed (for safety)
+        if 'save_as' not in rfile or rfile['save_as'] is None:
+            rfile['save_as'] = rfile['name']
+        if self.param:
+            if 'param' not in rfile or not rfile['param']:
+                rfile['param'] = self.param
+        self.files_to_download.append(rfile)
+
     def set_files_to_download(self, files):
-        self.files_to_download = files
-        for file_to_download in self.files_to_download:
-            if self.param:
-                if 'param' not in file_to_download or not file_to_download['param']:
-                    file_to_download['param'] = self.param
+        """
+        Convenience method to set the list of files to download.
+        """
+        self.files_to_download = []
+        for file_to_download in files:
+            self._append_file_to_download(file_to_download)
 
     def set_param(self, param):
         self.param = param
@@ -144,10 +156,9 @@ class DownloadInterface(object):
                 if not dir_list and pattern == '**/*':
                     # Take all and no more dirs, take all files
                     for rfile in file_list:
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     return
                 for direlt in dir_list:
@@ -158,10 +169,9 @@ class DownloadInterface(object):
                         self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
                         for rfile in file_list:
                             if pattern == '**/*' or re.match(pattern, rfile['name']):
-                                rfile['root'] = self.rootdir
                                 if prefix != '':
                                     rfile['name'] = prefix + '/' + rfile['name']
-                                self.files_to_download.append(rfile)
+                                self._append_file_to_download(rfile)
                                 self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     else:
                         if re.match(subdirs_pattern[0], subdir):
@@ -174,10 +184,9 @@ class DownloadInterface(object):
             else:
                 for rfile in file_list:
                     if re.match(pattern, rfile['name']):
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
@@ -246,7 +255,7 @@ class DownloadInterface(object):
                 else:
                     new_files_to_download.append(dfile)
 
-        self.files_to_download = new_files_to_download
+        self.set_files_to_download(new_files_to_download)
 
     def _download(self, file_path, rfile):
         '''
@@ -273,24 +282,11 @@ class DownloadInterface(object):
             os.chdir(self.offline_dir)
         except TypeError:
             self.logger.error(self.protocol.upper() + ":Download:Could not find offline_dir")
-        # Most downloaders have the concept of rootdir. In that case, we append
-        # it to the file properties for safety
-        append_rootdir = getattr(self, 'rootdir', False)
-        # Some downloaders have the concept of url. In that case, we append it
-        # to the file properties for safety
-        append_url = getattr(self, 'url', False)
         # Should we skip test of archives
         skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
-            # Add properties to the file if needed (for safety)
-            if append_url and ('url' not in rfile or not rfile['url']):
-                rfile['url'] = self.url
-            if append_rootdir and ('root' not in rfile or not rfile['root']):
-                rfile['root'] = self.rootdir
-            if 'save_as' not in rfile or rfile['save_as'] is None:
-                rfile['save_as'] = rfile['name']
             # Determine where to store file (directory and name)
             file_dir = local_dir
             if keep_dirs:

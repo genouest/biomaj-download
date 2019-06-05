@@ -33,6 +33,11 @@ class RSYNCDownload(DownloadInterface):
             self.server = None
             self.rootdir = server
 
+    def _append_file_to_download(self, rfile):
+        if 'root' not in rfile or not rfile['root']:
+            rfile['root'] = self.rootdir
+        super(RSYNCDownload, self)._append_file_to_download(rfile)
+
     def _remote_file_name(self, rfile):
         # rfile['root'] is set to self.rootdir. We don't use os.path.join
         # because rfile['name'] may starts with /

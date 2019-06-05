@@ -24,6 +24,11 @@ class LocalDownload(DownloadInterface):
         self.rootdir = rootdir
         self.use_hardlinks = use_hardlinks
 
+    def _append_file_to_download(self, rfile):
+        if 'root' not in rfile or not rfile['root']:
+            rfile['root'] = self.rootdir
+        super(LocalDownload, self)._append_file_to_download(rfile)
+
     def download(self, local_dir):
         '''
         Copy local files to local_dir
