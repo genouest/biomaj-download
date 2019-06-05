@@ -47,66 +47,6 @@ class FTPDownload(DownloadInterface):
             rfile['root'] = self.rootdir
         super(FTPDownload, self)._append_file_to_download(rfile)
 
-    def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
-        '''
-        Find files matching patterns. Sets instance variable files_to_download.
-
-        :param patterns: regexps to match
-        :type patterns: list
-        :param file_list: list of files to match
-        :type file_list: list
-        :param dir_list: sub directories in current dir
-        :type dir_list: list
-        :param prefix: directory prefix
-        :type prefix: str
-        :param submatch: first call to match, or called from match
-        :type submatch: bool
-        '''
-        self.logger.debug('Download:File:RegExp:' + str(patterns))
-        if dir_list is None:
-            dir_list = []
-        if not submatch:
-            self.files_to_download = []
-        for pattern in patterns:
-            subdirs_pattern = pattern.split('/')
-            if len(subdirs_pattern) > 1:
-                # Pattern contains sub directories
-                subdir = subdirs_pattern[0]
-                if subdir == '^':
-                    subdirs_pattern = subdirs_pattern[1:]
-                    subdir = subdirs_pattern[0]
-                # If getting all, get all files
-                if pattern == '**/*':
-                    for rfile in file_list:
-                        if prefix != '':
-                            rfile['name'] = prefix + '/' + rfile['name']
-                        self._append_file_to_download(rfile)
-                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
-                for direlt in dir_list:
-                    subdir = direlt['name']
-                    self.logger.debug('Download:File:Subdir:Check:' + subdir)
-                    if pattern == '**/*':
-                        (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
-                        self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
-
-                    else:
-                        if re.match(subdirs_pattern[0], subdir):
-                            self.logger.debug('Download:File:Subdir:Match:' + subdir)
-                            # subdir match the beginning of the pattern
-                            # check match in subdir
-                            (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
-                            self.match(['/'.join(subdirs_pattern[1:])], subfile_list, subdirs_list, prefix + '/' + subdir, True)
-
-            else:
-                for rfile in file_list:
-                    if re.match(pattern, rfile['name']):
-                        if prefix != '':
-                            rfile['name'] = prefix + '/' + rfile['name']
-                        self._append_file_to_download(rfile)
-                        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
-        if not submatch and len(self.files_to_download) == 0:
-            raise Exception('no file found matching expressions')
-
     def _file_url(self, rfile):
         # rfile['root'] is set to self.rootdir if needed but may be different.
         # We don't use os.path.join because rfile['name'] may starts with /
