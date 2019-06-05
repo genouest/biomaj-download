@@ -72,7 +72,7 @@ class DownloadInterface(object):
     def _append_file_to_download(self, rfile):
         """
         Add a file to the download list and check its properties (this method
-        is called in `match` and `list`).
+        is called in `match` and `set_files_to_download`).
 
         Downloaders can override this to add some properties to the file (for
         instance, most of them will add "root").
