@@ -140,6 +140,9 @@ class FTPDownload(DownloadInterface):
         List FTP directory
 
         :return: tuple of file and dirs in current directory with details
+
+        This is a generic method for HTTP and FTP. The protocol-specific parts
+        are done in _parse_result.
         '''
         dir_url = self.url + self.rootdir + directory
         self.logger.debug('Download:List:' + dir_url)
@@ -187,6 +190,9 @@ class FTPDownload(DownloadInterface):
         # lets get the output in a string
         result = output.getvalue().decode(encoding)
 
+        return self._parse_result(result)
+
+    def _parse_result(self, result):
         # FTP LIST output is separated by \r\n
         # lets split the output in lines
         lines = re.split(r'[\n\r]+', result)
