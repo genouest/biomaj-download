@@ -4,7 +4,6 @@
 import re
 import os
 import subprocess
-from datetime import datetime
 
 from biomaj_download.download.interface import DownloadInterface
 
