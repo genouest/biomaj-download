@@ -1,3 +1,6 @@
+"""
+Note that attributes 'network' and 'local_irods' are ignored for CI.
+"""
 from nose.tools import *
 from nose.plugins.attrib import attr
 
@@ -687,3 +690,20 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
+
+    @attr('local_irods')
+    def test_irods_download(self):
+        # To run this test, you need an iRODS server on localhost (default
+        # port, user 'rods', password 'rods'), and populate a zone
+        # /tempZone/home/rods with a file that matches r'^test.*\.gz$' (for
+        # instance, by copying tests/bank/test/test.fasta.gz).
+        irodsd = IRODSDownload('irods', "localhost", "/tempZone/home/rods")
+        irodsd.set_param(dict(
+            user='rods',
+            password='rods',
+        ))
+        irodsd.set_offline_dir(self.curdir)
+        (file_list, dir_list) = irodsd.list()
+        irodsd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
+        irodsd.download(self.utils.data_dir)
+        self.assertTrue(len(irodsd.files_to_download) == 1)
