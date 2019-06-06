@@ -1,7 +1,6 @@
 """
 Note that attributes 'network' and 'local_irods' are ignored for CI.
 """
-from nose.tools import *
 from nose.plugins.attrib import attr
 
 import json
@@ -13,16 +12,12 @@ import stat
 
 from mock import patch
 
-from optparse import OptionParser
-
-
 from biomaj_core.config import BiomajConfig
 from biomaj_core.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
 from biomaj_download.download.direct import DirectFTPDownload, DirectHttpDownload
 from biomaj_download.download.http import HTTPDownload, HTTPParse
 from biomaj_download.download.localcopy  import LocalDownload
-from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
