@@ -1,4 +1,3 @@
-import pycurl
 import re
 import hashlib
 import datetime
@@ -7,11 +6,6 @@ import humanfriendly
 
 from biomaj_core.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
 
 
 class HTTPParse(object):
