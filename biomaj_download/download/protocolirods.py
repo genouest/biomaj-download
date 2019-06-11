@@ -73,8 +73,8 @@ class IRODSDownload(DownloadInterface):
             # python-irods iget
             obj = session.data_objects.get(file_to_get, file_dir)
         except ExceptionIRODS as e:
-            self.logger.error(self.protocol.upper() + ":Download:Error:Can't get irods object " + str(obj))
-            self.logger.error(self.protocol.upper() + ":Download:Error:" + str(e))
+            self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + str(obj))
+            self.logger.error(self.__class__.__name__ + ":Download:Error:" + str(e))
         session.cleanup()
         return(error)
 

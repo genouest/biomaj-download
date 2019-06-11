@@ -274,14 +274,14 @@ class DownloadInterface(object):
         :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        self.logger.debug(self.protocol.upper() + ':Download')
+        self.logger.debug(self.__class__.__name__ + ':Download')
         nb_files = len(self.files_to_download)
         cur_files = 1
         # Change working directory (needed to run commands)
         try:
             os.chdir(self.offline_dir)
         except TypeError:
-            self.logger.error(self.protocol.upper() + ":Download:Could not find offline_dir")
+            self.logger.error(self.__class__.__name__ + ":Download:Could not find offline_dir")
         # Should we skip test of archives
         skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
         for rfile in self.files_to_download:
@@ -301,7 +301,7 @@ class DownloadInterface(object):
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
 
-            self.logger.debug(self.protocol.upper() + ':Download:Progress:' +
+            self.logger.debug(self.__class__.__name__ + ':Download:Progress:' +
                               str(cur_files) + '/' + str(nb_files) +
                               ' downloading file ' + rfile['name'] +
                               ' save as ' + rfile['save_as'])
@@ -312,7 +312,7 @@ class DownloadInterface(object):
             if error:
                 rfile['download_time'] = 0
                 rfile['error'] = True
-                raise Exception(self.protocol.upper() + ":Download:Error:" +
+                raise Exception(self.__class__.__name__ + ":Download:Error:" +
                                 rfile["name"])
             else:
                 end_time = datetime.datetime.now()
