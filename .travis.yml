@@ -16,7 +16,7 @@ install:
 - pip install python-coveralls
 - python setup.py -q install
 script:
-- nosetests -a '!network' -a '!local_irods'
+- nosetests -a '!network,!local_irods'
 - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 deploy:
   provider: pypi
