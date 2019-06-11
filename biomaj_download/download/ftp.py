@@ -30,13 +30,15 @@ class FTPDownload(DownloadInterface):
 
     '''
 
-    def __init__(self, protocol, host, rootdir):
+    # This is used to forge URL so be careful in subclasses
+    protocol = "ftp"
+
+    def __init__(self, host, rootdir):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.crl = pycurl.Curl()
-        self.protocol = protocol
         self.rootdir = rootdir
-        self.url = protocol + '://' + host
+        self.url = self.protocol + '://' + host
         self.headers = {}
 
     def _append_file_to_download(self, rfile):

@@ -18,10 +18,12 @@ class RSYNCDownload(DownloadInterface):
     remote.files =
     '''
 
-    def __init__(self, protocol, server, rootdir):
+    # This is used to forge the command
+    protocol = "rsync"
+
+    def __init__(self, server, rootdir):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
-        self.protocol = protocol
         # If rootdir is not given, we are in local mode. In this case, server
         # is interpreted as rootdir
         self.local_mode = not rootdir

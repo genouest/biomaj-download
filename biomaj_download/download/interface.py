@@ -26,17 +26,20 @@ class DownloadInterface(object):
     '''
     Main interface that all downloaders must extend.
 
-    Usually, it is enough to overload _download, list, chroot and close.
+    Usually, it is enough to overload _download, list, chroot, close and the
+    protocol class variable.
 
     TODO:
-      - protocol should be a class constant
-      - some setters (set_server, set_protocol) are not used and their purpose
-        is not clear since those parameters are set when constructing the
-        object
+      - some setters (set_server) are not used and their purpose is not clear
+        since those parameters are set when constructing the object
       - chroot is not used in BioMaJ
     '''
 
     files_num_threads = 4
+
+    # Protocol represented by the class. This may be used in messages and for
+    # inner purpose so choose a real protocol name.
+    protocol = None
 
     def __init__(self):
         self.config = None
@@ -56,7 +59,6 @@ class DownloadInterface(object):
         self.logger = logging.getLogger('biomaj')
         self.param = None
         self.method = None
-        self.protocol = None
         self.server = None
         self.offline_dir = None
 
@@ -65,9 +67,6 @@ class DownloadInterface(object):
 
     def set_server(self, server):
         self.server = server
-
-    def set_protocol(self, protocol):
-        self.protocol = protocol
 
     def _append_file_to_download(self, rfile):
         """

@@ -44,8 +44,10 @@ class HTTPDownload(FTPDownload):
 
     '''
 
-    def __init__(self, protocol, host, rootdir, http_parse=None):
-        FTPDownload.__init__(self, protocol, host, rootdir)
+    protocol = "http"
+
+    def __init__(self, host, rootdir, http_parse=None):
+        FTPDownload.__init__(self, host, rootdir)
         self.http_parse = http_parse
 
     def _parse_result(self, result):

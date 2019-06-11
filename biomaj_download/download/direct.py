@@ -23,8 +23,8 @@ class DirectFTPDownload(FTPDownload):
     download a list of files from FTP, no regexp
     '''
 
-    def __init__(self, protocol, host, rootdir=''):
-        FTPDownload.__init__(self, protocol, host, rootdir)
+    def __init__(self, host, rootdir=''):
+        FTPDownload.__init__(self, host, rootdir)
         self.save_as = None
         self.headers = {}
 
@@ -69,12 +69,15 @@ class DirectFTPDownload(FTPDownload):
 
 class DirectHttpDownload(DirectFTPDownload):
 
-    def __init__(self, protocol, host, rootdir=''):
+    # Set protocol to http since we inherit from DirectFTPDownload
+    protocol = "http"
+    
+    def __init__(self, host, rootdir=''):
         '''
         :param file_list: list of files to download on server
         :type file_list: list
         '''
-        DirectFTPDownload.__init__(self, protocol, host, rootdir)
+        DirectFTPDownload.__init__(self, host, rootdir)
         self.save_as = None
         self.method = 'GET'
         self.param = {}

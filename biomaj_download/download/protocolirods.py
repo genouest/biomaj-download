@@ -2,12 +2,13 @@ from biomaj_download.download.interface import DownloadInterface
 from irods.session import iRODSSession
 from irods.models import DataObject, User
 
-
 class IRODSDownload(DownloadInterface):
 
-    def __init__(self, protocol, server, remote_dir):
+    # This is used only for messages
+    protocol = "irods"
+
+    def __init__(self, server, remote_dir):
         DownloadInterface.__init__(self)
-        self.set_protocol(protocol)
         self.port = 1247
         self.remote_dir = remote_dir  # directory on the remote server including zone
         self.rootdir = remote_dir

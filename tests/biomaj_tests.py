@@ -256,7 +256,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.utils.clean()
 
   def test_http_list(self):
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
     self.assertTrue(len(file_list) == 1)
@@ -264,7 +264,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
   def test_http_list_dateregexp(self):
     #self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
     self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
     self.assertTrue(len(file_list) == 1)
@@ -280,7 +280,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
         -1
     )
     self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
@@ -297,7 +297,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
         self.config.get('http.group.file.date_format', None),
         int(self.config.get('http.group.file.size'))
     )
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
@@ -306,7 +306,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
 
   def test_http_download(self):
     self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     print(str(file_list))
     httpd.match([r'^README$'], file_list, dir_list)
@@ -316,7 +316,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
 
   def test_http_download_in_subdir(self):
     self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
-    httpd = HTTPDownload('http', 'ftp2.fr.debian.org', '/debian/', self.http_parse)
+    httpd = HTTPDownload('ftp2.fr.debian.org', '/debian/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^dists/README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
@@ -339,7 +339,7 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
 
   def test_ftp_list(self):
     file_list = ['/debian/doc/mailing-lists.txt']
-    ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
+    ftpd = DirectFTPDownload('ftp.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
@@ -347,7 +347,7 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
 
   def test_download(self):
     file_list = ['/debian/doc/mailing-lists.txt']
-    ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
+    ftpd = DirectFTPDownload('ftp.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
@@ -370,7 +370,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_http_list(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '')
+    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     fday = ftpd.files_to_download[0]['day']
     fmonth = ftpd.files_to_download[0]['month']
@@ -383,7 +383,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_download(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '')
+    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
@@ -392,7 +392,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_download_get_params_save_as(self):
     file_list = ['/get']
-    ftpd = DirectHttpDownload('http', 'httpbin.org', '')
+    ftpd = DirectHttpDownload('httpbin.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
     ftpd.save_as = 'test.json'
@@ -408,7 +408,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   @attr('test')
   def test_download_save_as(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('http', 'ftp2.fr.debian.org', '')
+    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.save_as = 'test.html'
     (file_list, dir_list) = ftpd.list()
@@ -419,7 +419,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   def test_download_post_params(self):
     #file_list = ['/debian/README.html']
     file_list = ['/post']
-    ftpd = DirectHttpDownload('http', 'httpbin.org', '')
+    ftpd = DirectHttpDownload('httpbin.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
     ftpd.save_as = 'test.json'
@@ -448,14 +448,14 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.utils.clean()
 
   def test_ftp_list(self):
-    ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
+    ftpd = FTPDownload('speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
   @attr('test')
   def test_download(self):
-    ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
+    ftpd = FTPDownload('speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
@@ -464,7 +464,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
 
   def test_download_skip_uncompress_checks(self):
     os.environ['UNCOMPRESS_SKIP_CHECK'] = "1"
-    ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
+    ftpd = FTPDownload('speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
@@ -473,7 +473,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     del os.environ['UNCOMPRESS_SKIP_CHECK']
 
   def test_download_in_subdir(self):
-    ftpd = FTPDownload('ftp', 'ftp.fr.debian.org', '/debian/')
+    ftpd = FTPDownload('ftp.fr.debian.org', '/debian/')
     (file_list, dir_list) = ftpd.list()
     try:
         ftpd.match([r'^doc/mailing-lists.txt$'], file_list, dir_list)
@@ -485,7 +485,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(len(ftpd.files_to_download) == 1)
 
   def test_download_or_copy(self):
-    ftpd = FTPDownload('ftp', 'ftp.fr.debian.org', '/debian/')
+    ftpd = FTPDownload('ftp.fr.debian.org', '/debian/')
     ftpd.files_to_download = [
           {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
           {'name':'/test2', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
@@ -533,14 +533,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
 
     def test_rsync_list(self):
-        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd =  RSYNCDownload(self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
 
     def test_rsync_match(self):
-        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd =  RSYNCDownload(self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
@@ -548,7 +548,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(rsyncd.files_to_download) != 0)
 
     def test_rsync_download(self):
-        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd =  RSYNCDownload(self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         rfile = {
@@ -559,7 +559,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertFalse(error)
 
     def test_rsync_general_download(self):
-        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd =  RSYNCDownload(self.examples, "")
         rsyncd.set_credentials(None)
         rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
@@ -568,7 +568,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(len(download_files)==1)
 
     def test_rsync_download_or_copy(self):
-        rsyncd = RSYNCDownload('rsync', self.examples, "")
+        rsyncd =  RSYNCDownload(self.examples, "")
         rsyncd.set_offline_dir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
@@ -577,7 +577,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
 
     def test_rsync_download_in_subdir(self):
-        rsyncd = RSYNCDownload('rsync', self.curdir, "")
+        rsyncd =  RSYNCDownload(self.curdir, "")
         rsyncd.set_offline_dir(self.curdir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
@@ -680,7 +680,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         initialize_mock.return_value=mock_session.configure()
         query_mock.return_value = mock_session.query(None,None,None,None,None)
         cleanup_mock.return_value = mock_session.cleanup()
-        irodsd = IRODSDownload('irods', self.examples, "")
+        irodsd = IRODSDownload(self.examples, "")
         irodsd.set_credentials(None)
         irodsd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = irodsd.list()
@@ -692,7 +692,7 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         # port, user 'rods', password 'rods'), and populate a zone
         # /tempZone/home/rods with a file that matches r'^test.*\.gz$' (for
         # instance, by copying tests/bank/test/test.fasta.gz).
-        irodsd = IRODSDownload('irods', "localhost", "/tempZone/home/rods")
+        irodsd = IRODSDownload("localhost", "/tempZone/home/rods")
         irodsd.set_param(dict(
             user='rods',
             password='rods',

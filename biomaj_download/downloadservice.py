@@ -126,21 +126,21 @@ class DownloadService(object):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:
-            downloader = FTPDownload(protocol_name, server, remote_dir)
+            downloader = FTPDownload(server, remote_dir)
         if protocol in [2, 3]:
-            downloader = HTTPDownload(protocol_name, server, remote_dir, http_parse)
+            downloader = HTTPDownload(server, remote_dir, http_parse)
         if protocol == 7:
             downloader = LocalDownload(remote_dir)
         if protocol == 4:
-            downloader = DirectFTPDownload('ftp', server, '/')
+            downloader = DirectFTPDownload(server, '/')
         if protocol == 5:
-            downloader = DirectHttpDownload('http', server, '/')
+            downloader = DirectHttpDownload(server, '/')
         if protocol == 6:
-            downloader = DirectHttpDownload('https', server, '/')
+            downloader = DirectHttpDownload(server, '/')
         if protocol == 8:
-            downloader = RSYNCDownload('rsync', server, remote_dir)
+            downloader = RSYNCDownload(server, remote_dir)
         if protocol == 9:
-            downloader = IRODSDownload('irods', server, remote_dir)
+            downloader = IRODSDownload(server, remote_dir)
         if downloader is None:
             return None
 
@@ -171,6 +171,7 @@ class DownloadService(object):
 
         if save_as:
             downloader.set_save_as(save_as)
+        
         if param:
             downloader.set_param(param)
 
