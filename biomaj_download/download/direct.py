@@ -1,3 +1,8 @@
+"""
+Subclasses for direct download (i.e. downloading without regexp).
+
+Methods match and list mut be adapted.
+"""
 import datetime
 import pycurl
 import re
@@ -26,7 +31,6 @@ class DirectFTPDownload(FTPDownload):
     def __init__(self, host, rootdir=''):
         FTPDownload.__init__(self, host, rootdir)
         self.save_as = None
-        self.headers = {}
 
     def _append_file_to_download(self, file):
         '''
@@ -78,7 +82,6 @@ class DirectHttpDownload(DirectFTPDownload):
         :type file_list: list
         '''
         DirectFTPDownload.__init__(self, host, rootdir)
-        self.save_as = None
         self.method = 'GET'
         self.param = {}
 
