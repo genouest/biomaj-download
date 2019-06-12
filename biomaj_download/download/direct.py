@@ -75,7 +75,7 @@ class DirectHttpDownload(DirectFTPDownload):
 
     # Set protocol to http since we inherit from DirectFTPDownload
     protocol = "http"
-    
+
     def __init__(self, host, rootdir=''):
         '''
         :param file_list: list of files to download on server

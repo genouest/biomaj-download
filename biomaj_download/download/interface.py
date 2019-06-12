@@ -300,10 +300,10 @@ class DownloadInterface(object):
             if not os.path.exists(file_dir):
                 os.makedirs(file_dir)
 
-            self.logger.debug(self.__class__.__name__ + ':Download:Progress:' +
-                              str(cur_files) + '/' + str(nb_files) +
-                              ' downloading file ' + rfile['name'] +
-                              ' save as ' + rfile['save_as'])
+            self.logger.debug(self.__class__.__name__ + ':Download:Progress:'
+                              + str(cur_files) + '/' + str(nb_files)
+                              + ' downloading file ' + rfile['name']
+                              + ' save as ' + rfile['save_as'])
             cur_files += 1
             start_time = datetime.datetime.now()
             start_time = time.mktime(start_time.timetuple())
@@ -311,8 +311,8 @@ class DownloadInterface(object):
             if error:
                 rfile['download_time'] = 0
                 rfile['error'] = True
-                raise Exception(self.__class__.__name__ + ":Download:Error:" +
-                                rfile["name"])
+                raise Exception(self.__class__.__name__ + ":Download:Error:"
+                                + rfile["name"])
             else:
                 end_time = datetime.datetime.now()
                 end_time = time.mktime(end_time.timetuple())

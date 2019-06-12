@@ -171,7 +171,7 @@ class DownloadService(object):
 
         if save_as:
             downloader.set_save_as(save_as)
-        
+
         if param:
             downloader.set_param(param)
 

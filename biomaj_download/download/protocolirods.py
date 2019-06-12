@@ -2,6 +2,7 @@ from biomaj_download.download.interface import DownloadInterface
 from irods.session import iRODSSession
 from irods.models import DataObject, User
 
+
 class IRODSDownload(DownloadInterface):
 
     # This is used only for messages
