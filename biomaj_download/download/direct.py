@@ -1,7 +1,7 @@
 """
 Subclasses for direct download (i.e. downloading without regexp).
 
-Methods match and list mut be adapted.
+Methods match and list must be adapted.
 """
 import datetime
 import pycurl
