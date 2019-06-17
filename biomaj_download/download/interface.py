@@ -321,7 +321,7 @@ class DownloadInterface(object):
                 archive_status = Utils.archive_check(file_path)
                 if not archive_status:
                     self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
-                    error = True
+                    raise Exception(self.__class__.__name__ + ":Download:Error: can't uncompress " + rfile["name"])
                     if os.path.exists(file_path):
                         os.remove(file_path)
 
