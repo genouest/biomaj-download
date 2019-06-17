@@ -4,8 +4,6 @@ import datetime
 import time
 import re
 
-from biomaj_core.utils import Utils
-
 
 class _FakeLock(object):
     '''
