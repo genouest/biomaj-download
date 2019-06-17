@@ -314,7 +314,7 @@ class DownloadInterface(object):
                 end_time = datetime.datetime.now()
                 end_time = time.mktime(end_time.timetuple())
                 rfile['download_time'] = end_time - start_time
-
+            # Set permissions
             self.set_permissions(file_path, rfile)
 
         return self.files_to_download
