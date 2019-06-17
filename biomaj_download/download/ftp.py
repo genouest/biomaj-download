@@ -1,3 +1,4 @@
+import os
 import pycurl
 import re
 import sys
@@ -60,6 +61,8 @@ class FTPDownload(DownloadInterface):
         """
         error = True
         nbtry = 1
+        # Should we skip test of archives
+        uncompress_skip_check = os.environ.get('UNCOMPRESS_SKIP_CHECK', False)
         # Forge URL of remote file
         file_url = self._file_url(rfile)
         while(error is True and nbtry < 3):
@@ -103,6 +106,15 @@ class FTPDownload(DownloadInterface):
                     error = False
             except Exception as e:
                 self.logger.error('Could not get errcode:' + str(e))
+
+            # Check that the archive is correct
+            if (not error) and (not uncompress_skip_check):
+                archive_status = Utils.archive_check(file_path)
+                if not archive_status:
+                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
+                    error = True
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
 
             nbtry += 1
             curl.close()

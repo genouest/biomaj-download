@@ -281,8 +281,6 @@ class DownloadInterface(object):
             os.chdir(self.offline_dir)
         except TypeError:
             self.logger.error(self.__class__.__name__ + ":Download:Could not find offline_dir")
-        # Should we skip test of archives
-        skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')
@@ -316,14 +314,6 @@ class DownloadInterface(object):
                 end_time = datetime.datetime.now()
                 end_time = time.mktime(end_time.timetuple())
                 rfile['download_time'] = end_time - start_time
-            # This was moved from FTPDownload
-            if not error and skip_check_uncompress is None:
-                archive_status = Utils.archive_check(file_path)
-                if not archive_status:
-                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
-                    raise Exception(self.__class__.__name__ + ":Download:Error: can't uncompress " + rfile["name"])
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
 
             self.set_permissions(file_path, rfile)
 
