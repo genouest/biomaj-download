@@ -10,7 +10,7 @@ from biomaj_download.download.interface import DownloadInterface
 
 class RSYNCDownload(DownloadInterface):
     '''
-    Base class to download files from rsyncc
+    Base class to download files from rsync
     protocol = rsync
     server =
     remote.dir =
