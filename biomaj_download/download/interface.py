@@ -35,10 +35,6 @@ class DownloadInterface(object):
 
     files_num_threads = 4
 
-    # Protocol represented by the class. This may be used in messages and for
-    # inner purpose so choose a real protocol name.
-    protocol = None
-
     def __init__(self):
         self.config = None
         self.files_to_download = []

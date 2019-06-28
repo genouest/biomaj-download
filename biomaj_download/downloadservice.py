@@ -13,8 +13,7 @@ import pika
 from flask import Flask
 from flask import jsonify
 
-from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.http import HTTPDownload
+from biomaj_download.download.curl import CurlDownload
 from biomaj_download.download.direct import DirectFTPDownload
 from biomaj_download.download.direct import DirectHTTPDownload
 from biomaj_download.download.localcopy import LocalDownload
@@ -125,21 +124,21 @@ class DownloadService(object):
                     save_as=None, timeout_download=None, offline_dir=None):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
-        if protocol in [0, 1]:
-            downloader = FTPDownload(server, remote_dir)
-        if protocol in [2, 3]:
-            downloader = HTTPDownload(server, remote_dir, http_parse)
-        if protocol == 7:
+        if protocol in [0, 1]:  # FTP, SFTP
+            downloader = CurlDownload(protocol, server, remote_dir)
+        if protocol in [2, 3]:  # HTTP, HTTPS (could be factored with previous case)
+            downloader = CurlDownload(protocol, server, remote_dir, http_parse)
+        if protocol == 4:  # DirectFTP
+            downloader = DirectFTPDownload("ftp", server, '/')
+        if protocol == 5:  # DirectHTTP
+            downloader = DirectHTTPDownload("http", server, '/')
+        if protocol == 6:  # DirectHTTPS
+            downloader = DirectHTTPDownload("https", server, '/')
+        if protocol == 7:  # Local
             downloader = LocalDownload(remote_dir)
-        if protocol == 4:
-            downloader = DirectFTPDownload(server, '/')
-        if protocol == 5:
-            downloader = DirectHTTPDownload(server, '/')
-        if protocol == 6:
-            downloader = DirectHTTPDownload(server, '/')
-        if protocol == 8:
+        if protocol == 8:  # RSYNC
             downloader = RSYNCDownload(server, remote_dir)
-        if protocol == 9:
+        if protocol == 9:  # iRods
             downloader = IRODSDownload(server, remote_dir)
         if downloader is None:
             return None

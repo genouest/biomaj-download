@@ -9,7 +9,7 @@ import re
 import hashlib
 import sys
 
-from biomaj_download.download.ftp import FTPDownload
+from biomaj_download.download.curl import CurlDownload
 from biomaj_core.utils import Utils
 
 if sys.version_info[0] < 3:
@@ -23,13 +23,15 @@ except ImportError:
     from StringIO import StringIO as BytesIO
 
 
-class DirectFTPDownload(FTPDownload):
+class DirectFTPDownload(CurlDownload):
     '''
     download a list of files from FTP, no regexp
     '''
 
-    def __init__(self, host, rootdir=''):
-        FTPDownload.__init__(self, host, rootdir)
+    ALL_PROTOCOLS = ["ftp", "ftps"]
+
+    def __init__(self, protocol, host, rootdir=''):
+        CurlDownload.__init__(self, protocol, host, rootdir)
         self.save_as = None
 
     def _append_file_to_download(self, file):
@@ -73,15 +75,14 @@ class DirectFTPDownload(FTPDownload):
 
 class DirectHTTPDownload(DirectFTPDownload):
 
-    # Set protocol to http since we inherit from DirectFTPDownload
-    protocol = "http"
+    ALL_PROTOCOLS = ["http", "https"]
 
-    def __init__(self, host, rootdir=''):
+    def __init__(self, protocol, host, rootdir=''):
         '''
         :param file_list: list of files to download on server
         :type file_list: list
         '''
-        DirectFTPDownload.__init__(self, host, rootdir)
+        DirectFTPDownload.__init__(self, protocol, host, rootdir)
         self.method = 'GET'
         self.param = {}
 
