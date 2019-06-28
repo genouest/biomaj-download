@@ -465,7 +465,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
   def test_download_skip_uncompress_checks(self):
     if 'UNCOMPRESS_SKIP_CHECK' not in os.environ: 
         os.environ['UNCOMPRESS_SKIP_CHECK'] = "1"
-    ftpd = FTPDownload('ftp', 'speedtest.tele2.net', '/')
+    ftpd = FTPDownload('speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
