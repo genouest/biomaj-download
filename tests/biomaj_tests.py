@@ -534,23 +534,17 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 
     def test_rsync_list(self):
         rsyncd =  RSYNCDownload(self.examples, "")
-        rsyncd.set_credentials(None)
-        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
 
     def test_rsync_match(self):
         rsyncd =  RSYNCDownload(self.examples, "")
-        rsyncd.set_credentials(None)
-        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
 
     def test_rsync_download(self):
         rsyncd =  RSYNCDownload(self.examples, "")
-        rsyncd.set_credentials(None)
-        rsyncd.set_offline_dir(self.utils.data_dir)
         rfile = {
             "name": "test2.fasta",
             "root": self.examples
@@ -560,8 +554,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 
     def test_rsync_general_download(self):
         rsyncd =  RSYNCDownload(self.examples, "")
-        rsyncd.set_credentials(None)
-        rsyncd.set_offline_dir(self.utils.data_dir)
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
         download_files=rsyncd.download(self.curdir)
@@ -569,7 +561,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 
     def test_rsync_download_or_copy(self):
         rsyncd =  RSYNCDownload(self.examples, "")
-        rsyncd.set_offline_dir(self.utils.data_dir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         files_to_download_prev = rsyncd.files_to_download
@@ -578,7 +569,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 
     def test_rsync_download_in_subdir(self):
         rsyncd =  RSYNCDownload(self.curdir, "")
-        rsyncd.set_offline_dir(self.curdir)
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)

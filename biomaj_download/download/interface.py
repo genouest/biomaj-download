@@ -274,11 +274,7 @@ class DownloadInterface(object):
         self.logger.debug(self.__class__.__name__ + ':Download')
         nb_files = len(self.files_to_download)
         cur_files = 1
-        # Change working directory (needed to run commands)
-        try:
-            os.chdir(self.offline_dir)
-        except TypeError:
-            self.logger.error(self.__class__.__name__ + ":Download:Could not find offline_dir")
+        self.offline_dir = local_dir
         for rfile in self.files_to_download:
             if self.kill_received:
                 raise Exception('Kill request received, exiting')

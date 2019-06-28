@@ -33,6 +33,12 @@ class RSYNCDownload(DownloadInterface):
         else:
             self.server = None
             self.rootdir = server
+        # give a working directory to run rsync
+        if self.local_mode:
+            try:
+                os.chdir(self.rootdir)
+            except TypeError:
+                self.logger.error("RSYNC:Could not find local dir " + self.rootdir)
 
     def _append_file_to_download(self, rfile):
         if 'root' not in rfile or not rfile['root']:
@@ -93,11 +99,6 @@ class RSYNCDownload(DownloadInterface):
         rfiles = []
         rdirs = []
         self.logger.debug('RSYNC:List')
-        # give a working directory to run rsync
-        try:
-            os.chdir(self.offline_dir)
-        except TypeError:
-            self.logger.error("RSYNC:list:Could not find offline_dir")
         if self.local_mode:
             remote = str(self.rootdir) + str(directory)
         else:
