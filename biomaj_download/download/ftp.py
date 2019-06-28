@@ -1,9 +1,10 @@
-import os
-import pycurl
-import re
 import sys
+import os
+import re
 from datetime import datetime
 import hashlib
+
+import pycurl
 
 from biomaj_core.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
