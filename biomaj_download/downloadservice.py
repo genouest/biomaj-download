@@ -16,7 +16,7 @@ from flask import jsonify
 from biomaj_download.download.ftp import FTPDownload
 from biomaj_download.download.http import HTTPDownload
 from biomaj_download.download.direct import DirectFTPDownload
-from biomaj_download.download.direct import DirectHttpDownload
+from biomaj_download.download.direct import DirectHTTPDownload
 from biomaj_download.download.localcopy import LocalDownload
 from biomaj_download.message import downmessage_pb2
 from biomaj_download.download.rsync import RSYNCDownload
@@ -134,9 +134,9 @@ class DownloadService(object):
         if protocol == 4:
             downloader = DirectFTPDownload(server, '/')
         if protocol == 5:
-            downloader = DirectHttpDownload(server, '/')
+            downloader = DirectHTTPDownload(server, '/')
         if protocol == 6:
-            downloader = DirectHttpDownload(server, '/')
+            downloader = DirectHTTPDownload(server, '/')
         if protocol == 8:
             downloader = RSYNCDownload(server, remote_dir)
         if protocol == 9:

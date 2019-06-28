@@ -71,7 +71,7 @@ class DirectFTPDownload(FTPDownload):
         self.set_files_to_download(file_list)
 
 
-class DirectHttpDownload(DirectFTPDownload):
+class DirectHTTPDownload(DirectFTPDownload):
 
     # Set protocol to http since we inherit from DirectFTPDownload
     protocol = "http"
@@ -86,7 +86,7 @@ class DirectHttpDownload(DirectFTPDownload):
         self.param = {}
 
     def _file_url(self, file_to_download):
-        url = super(DirectHttpDownload, self)._file_url(file_to_download)
+        url = super(DirectHTTPDownload, self)._file_url(file_to_download)
         if self.method == "GET":
             url += '?' + urlencode(self.param)
         return url
@@ -105,7 +105,7 @@ class DirectHttpDownload(DirectFTPDownload):
             self.files_to_download = []
             self.logger.error('DirectHTTP accepts only 1 file')
             # TODO: raise exception ?
-        return super(DirectHttpDownload, self).download(local_dir, keep_dirs)
+        return super(DirectHTTPDownload, self).download(local_dir, keep_dirs)
 
     def list(self, directory=''):
         '''

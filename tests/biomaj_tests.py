@@ -15,7 +15,7 @@ from mock import patch
 from biomaj_core.config import BiomajConfig
 from biomaj_core.utils import Utils
 from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.direct import DirectFTPDownload, DirectHttpDownload
+from biomaj_download.download.direct import DirectFTPDownload, DirectHTTPDownload
 from biomaj_download.download.http import HTTPDownload, HTTPParse
 from biomaj_download.download.localcopy  import LocalDownload
 from biomaj_download.download.rsync import RSYNCDownload
@@ -370,7 +370,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_http_list(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
+    ftpd = DirectHTTPDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     fday = ftpd.files_to_download[0]['day']
     fmonth = ftpd.files_to_download[0]['month']
@@ -383,7 +383,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_download(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
+    ftpd = DirectHTTPDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
@@ -392,7 +392,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
 
   def test_download_get_params_save_as(self):
     file_list = ['/get']
-    ftpd = DirectHttpDownload('httpbin.org', '')
+    ftpd = DirectHTTPDownload('httpbin.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
     ftpd.save_as = 'test.json'
@@ -408,7 +408,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   @attr('test')
   def test_download_save_as(self):
     file_list = ['/debian/README.html']
-    ftpd = DirectHttpDownload('ftp2.fr.debian.org', '')
+    ftpd = DirectHTTPDownload('ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.save_as = 'test.html'
     (file_list, dir_list) = ftpd.list()
@@ -419,7 +419,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
   def test_download_post_params(self):
     #file_list = ['/debian/README.html']
     file_list = ['/post']
-    ftpd = DirectHttpDownload('httpbin.org', '')
+    ftpd = DirectHTTPDownload('httpbin.org', '')
     ftpd.set_files_to_download(file_list)
     ftpd.param = { 'key1': 'value1', 'key2': 'value2'}
     ftpd.save_as = 'test.json'
