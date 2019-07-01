@@ -109,8 +109,6 @@ class CurlDownload(DownloadInterface):
         """
         error = True
         nbtry = 1
-        # Should we skip test of archives
-        uncompress_skip_check = os.environ.get('UNCOMPRESS_SKIP_CHECK', False)
         # Forge URL of remote file
         file_url = self._file_url(rfile)
         while(error is True and nbtry < 3):
