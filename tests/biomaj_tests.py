@@ -351,6 +351,30 @@ class TestBiomajHTTPSDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
 
+@attr('network')
+@attr('sftp')
+class TestBiomajSFTPDownload(unittest.TestCase):
+  """
+  Test SFTP downloader
+  """
+  
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    #self.utils.clean()
+    pass
+
+  def test_sftp_download(self):
+    sftp = CurlDownload('sftp', 'ftp-server.demo.solarwinds.com', '/')
+    sftp.set_credentials("demo:demo")
+    (file_list, dir_list) = sftp.list()
+    sftp.match([r'^ReadMe.txt$'], file_list, dir_list)
+    sftp.download(self.utils.data_dir, False)
+    sftp.close()
+    self.assertTrue(len(sftp.files_to_download) == 1)
+
+
 @attr('directftp')
 @attr('network')
 class TestBiomajDirectFTPDownload(unittest.TestCase):
