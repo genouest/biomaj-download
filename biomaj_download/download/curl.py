@@ -89,6 +89,8 @@ class CurlDownload(DownloadInterface):
         self.http_parse = http_parse
         # Should we skip test of archives
         self.uncompress_skip_check = os.environ.get('UNCOMPRESS_SKIP_CHECK', False)
+        # Should we skip host verification
+        self.no_ssl_verifyhost = os.environ.get('NO_SSL_VERIFYHOST', False)
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)
@@ -131,6 +133,9 @@ class CurlDownload(DownloadInterface):
             curl.setopt(pycurl.TIMEOUT, self.timeout)
             curl.setopt(pycurl.NOSIGNAL, 1)
             curl.setopt(pycurl.WRITEDATA, fp)
+
+            if self.no_ssl_verifyhost:
+                curl.setopt(pycurl.SSL_VERIFYHOST, False)
 
             # This is specific to HTTP
             if self.method == 'POST':
@@ -221,6 +226,9 @@ class CurlDownload(DownloadInterface):
         # lets assign this buffer to pycurl object
         self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
         self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
+
+        if self.no_ssl_verifyhost:
+            self.crl.setopt(pycurl.SSL_VERIFYHOST, False)
 
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
         # Download should not take more than 5minutes
