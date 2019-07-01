@@ -87,6 +87,8 @@ class CurlDownload(DownloadInterface):
         self.url = self.protocol + '://' + self.host
         self.headers = {}
         self.http_parse = http_parse
+        # Should we skip test of archives
+        self.uncompress_skip_check = os.environ.get('UNCOMPRESS_SKIP_CHECK', False)
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)
@@ -153,7 +155,7 @@ class CurlDownload(DownloadInterface):
                 self.logger.error('Could not get errcode:' + str(e))
 
             # Check that the archive is correct
-            if (not error) and (not uncompress_skip_check):
+            if (not error) and (not self.uncompress_skip_check):
                 archive_status = Utils.archive_check(file_path)
                 if not archive_status:
                     self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
