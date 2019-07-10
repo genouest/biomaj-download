@@ -523,6 +523,48 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
 
+
+@attr('ftps')
+@attr('network')
+class TestBiomajFTPSDownload(unittest.TestCase):
+  """
+  Test FTPS downloader with NO_SSL_VERIFY (the remote server is misconfigured).
+  """
+  PROTOCOL = "ftps"
+  SERVER = "demo.wftpserver.com"
+  DIRECTORY = "/download/"
+  CREDENTIALS = "demo-user:demo-user"
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+    if "NO_SSL_VERIFY" not in os.environ:
+      os.environ['NO_SSL_VERIFY'] = "1"
+      self.clean_env = True
+    else:
+      self.clean_env = False
+
+  def tearDown(self):
+    self.utils.clean()
+    if self.clean_env:
+      del os.environ['NO_SSL_VERIFY']
+
+  def test_ftps_list(self):
+    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY)
+    ftpd.set_credentials(self.CREDENTIALS)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) > 1)
+
+  def test_download(self):
+    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY)
+    ftpd.set_credentials(self.CREDENTIALS)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+
+
 @attr('rsync')
 @attr('local')
 class TestBiomajRSYNCDownload(unittest.TestCase):

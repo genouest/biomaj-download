@@ -34,6 +34,8 @@ class FTPDownload(DownloadInterface):
         self.rootdir = rootdir
         self.url = url
         self.headers = {}
+        # Should we skip SSL verification (cURL -k/--insecure option)
+        self.no_ssl_verify = os.environ.get('NO_SSL_VERIFY', False);
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -120,6 +122,11 @@ class FTPDownload(DownloadInterface):
             curl.setopt(pycurl.TIMEOUT, self.timeout)
             curl.setopt(pycurl.NOSIGNAL, 1)
             curl.setopt(pycurl.WRITEDATA, fp)
+
+            # Disable SSL verification
+            if self.no_ssl_verify:
+                curl.setopt(pycurl.SSL_VERIFYHOST, False)
+                curl.setopt(pycurl.SSL_VERIFYPEER, False)
 
             try:
                 curl.perform()
@@ -254,6 +261,12 @@ class FTPDownload(DownloadInterface):
         # Download should not take more than 5minutes
         self.crl.setopt(pycurl.TIMEOUT, self.timeout)
         self.crl.setopt(pycurl.NOSIGNAL, 1)
+
+        # Disable SSL verification
+        if self.no_ssl_verify:
+            self.crl.setopt(pycurl.SSL_VERIFYHOST, False)
+            self.crl.setopt(pycurl.SSL_VERIFYPEER, False)
+
         try:
             self.crl.perform()
         except Exception as e:
