@@ -35,7 +35,7 @@ class FTPDownload(DownloadInterface):
         self.url = url
         self.headers = {}
         # Should we skip SSL verification (cURL -k/--insecure option)
-        self.no_ssl_verify = os.environ.get('NO_SSL_VERIFY', False);
+        self.no_ssl_verify = os.environ.get('NO_SSL_VERIFY', False)
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
