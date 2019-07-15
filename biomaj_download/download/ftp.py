@@ -20,27 +20,27 @@ except ImportError:
 # This code is copied from the current implementation of stat.filemode.
 if 'filemode' not in stat.__dict__:
     _filemode_table = (
-        ((stat.S_IFLNK,                "l"),
-         (stat.S_IFREG,                "-"),
-         (stat.S_IFBLK,                "b"),
-         (stat.S_IFDIR,                "d"),
-         (stat.S_IFCHR,                "c"),
-         (stat.S_IFIFO,                "p")),
-        ((stat.S_IRUSR,                "r"),),
-        ((stat.S_IWUSR,                "w"),),
-        ((stat.S_IXUSR | stat.S_ISUID, "s"),
-         (stat.S_ISUID,                "S"),
-         (stat.S_IXUSR,                "x")),
-        ((stat.S_IRGRP,                "r"),),
-        ((stat.S_IWGRP,                "w"),),
-        ((stat.S_IXGRP | stat.S_ISGID, "s"),
-         (stat.S_ISGID,                "S"),
-         (stat.S_IXGRP,                "x")),
-        ((stat.S_IROTH,                "r"),),
-        ((stat.S_IWOTH,                "w"),),
-        ((stat.S_IXOTH | stat.S_ISVTX, "t"),
-         (stat.S_ISVTX,                "T"),
-         (stat.S_IXOTH,                "x"))
+        ((stat.S_IFLNK,                "l"),    # noqa: E241
+         (stat.S_IFREG,                "-"),    # noqa: E241
+         (stat.S_IFBLK,                "b"),    # noqa: E241
+         (stat.S_IFDIR,                "d"),    # noqa: E241
+         (stat.S_IFCHR,                "c"),    # noqa: E241
+         (stat.S_IFIFO,                "p")),   # noqa: E241
+        ((stat.S_IRUSR,                "r"),),  # noqa: E241
+        ((stat.S_IWUSR,                "w"),),  # noqa: E241
+        ((stat.S_IXUSR | stat.S_ISUID, "s"),    # noqa: E241
+         (stat.S_ISUID,                "S"),    # noqa: E241
+         (stat.S_IXUSR,                "x")),   # noqa: E241
+        ((stat.S_IRGRP,                "r"),),  # noqa: E241
+        ((stat.S_IWGRP,                "w"),),  # noqa: E241
+        ((stat.S_IXGRP | stat.S_ISGID, "s"),    # noqa: E241
+         (stat.S_ISGID,                "S"),    # noqa: E241
+         (stat.S_IXGRP,                "x")),   # noqa: E241
+        ((stat.S_IROTH,                "r"),),  # noqa: E241
+        ((stat.S_IWOTH,                "w"),),  # noqa: E241
+        ((stat.S_IXOTH | stat.S_ISVTX, "t"),    # noqa: E241
+         (stat.S_ISVTX,                "T"),    # noqa: E241
+         (stat.S_IXOTH,                "x"))    # noqa: E241
     )
 
     def _filemode(mode):
