@@ -523,6 +523,16 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
 
+  def test_ms_server(self):
+      ftpd = FTPDownload("ftp", "test.rebex.net", "/")
+      ftpd.set_credentials("demo:password")
+      (file_list, dir_list) = ftpd.list()
+      ftpd.match(["^readme.txt$"], file_list, dir_list)
+      ftpd.download(self.utils.data_dir)
+      ftpd.close()
+      self.assertTrue(len(ftpd.files_to_download) == 1)
+
+
 @attr('rsync')
 @attr('local')
 class TestBiomajRSYNCDownload(unittest.TestCase):

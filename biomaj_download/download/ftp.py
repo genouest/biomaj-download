@@ -15,7 +15,9 @@ try:
 except ImportError:
     from StringIO import StringIO as BytesIO
 
-# In python < 3.3, stat.filmode is not defined
+# We use stat.filemode to convert from mode octal value to string.
+# In python < 3.3, stat.filmode is not defined.
+# This code is copied from the current implementation of stat.filemode.
 if 'filemode' not in stat.__dict__:
     _filemode_table = (
         ((stat.S_IFLNK,                "l"),
@@ -67,6 +69,12 @@ class FTPDownload(DownloadInterface):
     remote.files=^alu.*\\.gz$
 
     '''
+    # Utilities to parse ftp listings: UnixParser is the more common hence we
+    # put it first
+    ftp_listing_parsers = [
+        ftputil.stat.UnixParser(),
+        ftputil.stat.MSParser(),
+    ]
 
     def __init__(self, protocol, host, rootdir):
         DownloadInterface.__init__(self)
@@ -76,9 +84,6 @@ class FTPDownload(DownloadInterface):
         self.rootdir = rootdir
         self.url = url
         self.headers = {}
-        # Utilities to parse ftp response
-        self.unix_parser = ftputil.stat.UnixParser()
-        self.ms_parser = ftputil.stat.MSParser()
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -332,12 +337,17 @@ class FTPDownload(DownloadInterface):
             # Skip empty lines (usually the last)
             if not line:
                 continue
-            # Parse the line (we first try with the Unix format which is the
-            # more common and then with the MS format)
-            try:
-                stats = self.unix_parser.parse_line(line)
-            except ftputil.error.ParserError:
-                stats = self.ms_parser.parse_line(line)
+            # Parse the line
+            for i, parser in enumerate(self.ftp_listing_parsers, 1):
+                try:
+                    stats = parser.parse_line(line)
+                    break
+                except ftputil.error.ParserError:
+                    # If it's the last parser, re-raise the exception
+                    if i == len(self.ftp_listing_parsers):
+                        raise
+                    else:
+                        continue
             # Put stats in a dict
             rfile = {}
             rfile['name'] = stats._st_name
