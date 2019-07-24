@@ -26,7 +26,7 @@ class FTPDownload(DownloadInterface):
 
     '''
 
-    def __init__(self, protocol, host, rootdir):
+    def __init__(self, protocol, host, rootdir, ssl_verifyhost=True, ssl_verifypeer=True):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.crl = pycurl.Curl()
@@ -35,7 +35,8 @@ class FTPDownload(DownloadInterface):
         self.url = url
         self.headers = {}
         # Should we skip SSL verification (cURL -k/--insecure option)
-        self.no_ssl_verify = os.environ.get('NO_SSL_VERIFY', False)
+        self.ssl_verifyhost = ssl_verifyhost
+        self.ssl_verifypeer = ssl_verifypeer
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -105,6 +106,13 @@ class FTPDownload(DownloadInterface):
         while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
+
+            # Configure SSL verification (on some platforms, disabling
+            # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
+            # SSL_VERIFYPEER after)
+            curl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+            curl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+
             try:
                 curl.setopt(pycurl.URL, file_to_download)
             except Exception:
@@ -122,11 +130,6 @@ class FTPDownload(DownloadInterface):
             curl.setopt(pycurl.TIMEOUT, self.timeout)
             curl.setopt(pycurl.NOSIGNAL, 1)
             curl.setopt(pycurl.WRITEDATA, fp)
-
-            # Disable SSL verification
-            if self.no_ssl_verify:
-                curl.setopt(pycurl.SSL_VERIFYHOST, False)
-                curl.setopt(pycurl.SSL_VERIFYPEER, False)
 
             try:
                 curl.perform()
@@ -240,6 +243,12 @@ class FTPDownload(DownloadInterface):
         '''
         self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
 
+        # Configure SSL verification (on some platforms, disabling
+        # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
+        # SSL_VERIFYPEER after)
+        self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+        self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+
         try:
             self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
         except Exception:
@@ -261,11 +270,6 @@ class FTPDownload(DownloadInterface):
         # Download should not take more than 5minutes
         self.crl.setopt(pycurl.TIMEOUT, self.timeout)
         self.crl.setopt(pycurl.NOSIGNAL, 1)
-
-        # Disable SSL verification
-        if self.no_ssl_verify:
-            self.crl.setopt(pycurl.SSL_VERIFYHOST, False)
-            self.crl.setopt(pycurl.SSL_VERIFYPEER, False)
 
         try:
             self.crl.perform()

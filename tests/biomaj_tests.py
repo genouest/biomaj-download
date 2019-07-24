@@ -528,8 +528,10 @@ class TestBiomajFTPDownload(unittest.TestCase):
 @attr('network')
 class TestBiomajFTPSDownload(unittest.TestCase):
   """
-  Test FTPS downloader with NO_SSL_VERIFY (the remote server is misconfigured).
+  Test FTPS downloader.
   """
+  # This server is misconfigured hence we disable SSL verification
+  # TODO: add a correctly configured server when branch ms_ftp is merged
   PROTOCOL = "ftps"
   SERVER = "demo.wftpserver.com"
   DIRECTORY = "/download/"
@@ -537,26 +539,21 @@ class TestBiomajFTPSDownload(unittest.TestCase):
 
   def setUp(self):
     self.utils = UtilsForTest()
-    if "NO_SSL_VERIFY" not in os.environ:
-      os.environ['NO_SSL_VERIFY'] = "1"
-      self.clean_env = True
-    else:
-      self.clean_env = False
 
   def tearDown(self):
     self.utils.clean()
-    if self.clean_env:
-      del os.environ['NO_SSL_VERIFY']
 
-  def test_ftps_list(self):
-    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY)
+  def test_ftps_list_no_ssl(self):
+    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY,
+                       ssl_verifyhost=False, ssl_verifypeer=False)
     ftpd.set_credentials(self.CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
-  def test_download(self):
-    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY)
+  def test_download_no_ssl(self):
+    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY,
+                       ssl_verifyhost=False, ssl_verifypeer=False)
     ftpd.set_credentials(self.CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
