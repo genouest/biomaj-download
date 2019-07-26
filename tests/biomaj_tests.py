@@ -537,7 +537,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
 @attr('network')
 class TestBiomajFTPSDownload(unittest.TestCase):
   """
-  Test FTPS downloader.
+  Test FTP downloader with FTPS.
   """
   PROTOCOL = "ftps"
 
