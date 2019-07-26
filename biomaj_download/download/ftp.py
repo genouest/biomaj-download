@@ -1,9 +1,11 @@
 import pycurl
 import re
 import os
-from datetime import datetime
 import time
+from datetime import datetime
+import stat
 import hashlib
+import ftputil
 
 from biomaj_core.utils import Utils
 from biomaj_download.download.interface import DownloadInterface
@@ -12,6 +14,48 @@ try:
     from io import BytesIO
 except ImportError:
     from StringIO import StringIO as BytesIO
+
+# We use stat.filemode to convert from mode octal value to string.
+# In python < 3.3, stat.filmode is not defined.
+# This code is copied from the current implementation of stat.filemode.
+if 'filemode' not in stat.__dict__:
+    _filemode_table = (
+        ((stat.S_IFLNK,                "l"),    # noqa: E241
+         (stat.S_IFREG,                "-"),    # noqa: E241
+         (stat.S_IFBLK,                "b"),    # noqa: E241
+         (stat.S_IFDIR,                "d"),    # noqa: E241
+         (stat.S_IFCHR,                "c"),    # noqa: E241
+         (stat.S_IFIFO,                "p")),   # noqa: E241
+        ((stat.S_IRUSR,                "r"),),  # noqa: E241
+        ((stat.S_IWUSR,                "w"),),  # noqa: E241
+        ((stat.S_IXUSR | stat.S_ISUID, "s"),    # noqa: E241
+         (stat.S_ISUID,                "S"),    # noqa: E241
+         (stat.S_IXUSR,                "x")),   # noqa: E241
+        ((stat.S_IRGRP,                "r"),),  # noqa: E241
+        ((stat.S_IWGRP,                "w"),),  # noqa: E241
+        ((stat.S_IXGRP | stat.S_ISGID, "s"),    # noqa: E241
+         (stat.S_ISGID,                "S"),    # noqa: E241
+         (stat.S_IXGRP,                "x")),   # noqa: E241
+        ((stat.S_IROTH,                "r"),),  # noqa: E241
+        ((stat.S_IWOTH,                "w"),),  # noqa: E241
+        ((stat.S_IXOTH | stat.S_ISVTX, "t"),    # noqa: E241
+         (stat.S_ISVTX,                "T"),    # noqa: E241
+         (stat.S_IXOTH,                "x"))    # noqa: E241
+    )
+
+    def _filemode(mode):
+        """Convert a file's mode to a string of the form '-rwxrwxrwx'."""
+        perm = []
+        for table in _filemode_table:
+            for bit, char in table:
+                if mode & bit == bit:
+                    perm.append(char)
+                    break
+            else:
+                perm.append("-")
+        return "".join(perm)
+
+    stat.filemode = _filemode
 
 
 class FTPDownload(DownloadInterface):
@@ -25,6 +69,12 @@ class FTPDownload(DownloadInterface):
     remote.files=^alu.*\\.gz$
 
     '''
+    # Utilities to parse ftp listings: UnixParser is the more common hence we
+    # put it first
+    ftp_listing_parsers = [
+        ftputil.stat.UnixParser(),
+        ftputil.stat.MSParser(),
+    ]
 
     def __init__(self, protocol, host, rootdir):
         DownloadInterface.__init__(self)
@@ -284,48 +334,46 @@ class FTPDownload(DownloadInterface):
         rdirs = []
 
         for line in lines:
-            rfile = {}
-            # lets print each part separately
-            parts = line.split()
-            # the individual fields in this list of parts
-            if not parts:
+            # Skip empty lines (usually the last)
+            if not line:
                 continue
-            rfile['permissions'] = parts[0]
-            rfile['group'] = parts[2]
-            rfile['user'] = parts[3]
-            rfile['size'] = int(parts[4])
-            rfile['month'] = Utils.month_to_num(parts[5])
-            rfile['day'] = int(parts[6])
-            rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
-            try:
-                rfile['year'] = int(parts[7])
-            except Exception:
-                # specific ftp case issues at getting date info
-                curdate = datetime.now()
-                rfile['year'] = curdate.year
-                # Year not precised, month feater than current means previous year
-                if rfile['month'] > curdate.month:
-                    rfile['year'] = curdate.year - 1
-                # Same month but later day => previous year
-                if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
-                    rfile['year'] = curdate.year - 1
-            rfile['name'] = parts[8]
-            for i in range(9, len(parts)):
-                if parts[i] == '->':
-                    # Symlink, add to files AND dirs as we don't know the type of the link
-                    rdirs.append(rfile)
+            # Parse the line
+            for i, parser in enumerate(self.ftp_listing_parsers, 1):
+                try:
+                    stats = parser.parse_line(line)
                     break
-                else:
-                    rfile['name'] += ' ' + parts[i]
+                except ftputil.error.ParserError:
+                    # If it's the last parser, re-raise the exception
+                    if i == len(self.ftp_listing_parsers):
+                        raise
+                    else:
+                        continue
+            # Put stats in a dict
+            rfile = {}
+            rfile['name'] = stats._st_name
+            # Reparse mode to a string
+            rfile['permissions'] = stat.filemode(stats.st_mode)
+            rfile['group'] = stats.st_gid
+            rfile['user'] = stats.st_uid
+            rfile['size'] = stats.st_size
+            mtime = time.localtime(stats.st_mtime)
+            rfile['year'] = mtime.tm_year
+            rfile['month'] = mtime.tm_mon
+            rfile['day'] = mtime.tm_mday
+            rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
 
-            is_dir = False
-            if re.match('^d', rfile['permissions']):
-                is_dir = True
-
-            if not is_dir:
+            is_link = stat.S_ISLNK(stats.st_mode)
+            is_dir = stat.S_ISDIR(stats.st_mode)
+            # Append links to dirs and files since we don't know what the
+            # target is
+            if is_link:
                 rfiles.append(rfile)
-            else:
                 rdirs.append(rfile)
+            else:
+                if not is_dir:
+                    rfiles.append(rfile)
+                else:
+                    rdirs.append(rfile)
         return (rfiles, rdirs)
 
     def chroot(self, cwd):
