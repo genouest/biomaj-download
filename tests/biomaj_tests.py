@@ -533,6 +533,37 @@ class TestBiomajFTPDownload(unittest.TestCase):
       self.assertTrue(len(ftpd.files_to_download) == 1)
 
 
+@attr('ftps')
+@attr('network')
+class TestBiomajFTPSDownload(unittest.TestCase):
+  """
+  Test FTPS downloader.
+  """
+  PROTOCOL = "ftps"
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_ftps_list(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match([r'^readme.txt$'], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+
+
 @attr('rsync')
 @attr('local')
 class TestBiomajRSYNCDownload(unittest.TestCase):
