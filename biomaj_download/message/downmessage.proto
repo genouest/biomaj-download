@@ -1,3 +1,5 @@
+syntax = "proto2";
+
 package biomaj.download;
 
 message File {
@@ -64,7 +66,7 @@ message DownloadFile {
 
     enum Protocol {
         FTP = 0;
-        SFTP = 1;
+        FTPS = 1;
         HTTP = 2;
         HTTPS = 3;
         DIRECTFTP = 4;
