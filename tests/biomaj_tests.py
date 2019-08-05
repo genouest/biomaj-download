@@ -362,6 +362,40 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
 
 
+
+@attr('directftps')
+@attr('network')
+class TestBiomajDirectFTPSDownload(unittest.TestCase):
+  """
+  Test DirectFTP downloader with FTPS.
+  """
+  
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_ftps_list(self):
+    file_list = ['/readme.txt']
+    ftpd = DirectFTPDownload('ftps', 'test.rebex.net', '')
+    ftpd.set_credentials('demo:password')
+    ftpd.set_files_to_download(file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    file_list = ['/readme.txt']
+    ftpd = DirectFTPDownload('ftps', 'test.rebex.net', '')
+    ftpd.set_credentials('demo:password')
+    ftpd.set_files_to_download(file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'readme.txt')))
+
+
 @attr('directhttp')
 @attr('network')
 class TestBiomajDirectHTTPDownload(unittest.TestCase):
@@ -531,6 +565,37 @@ class TestBiomajFTPDownload(unittest.TestCase):
       ftpd.download(self.utils.data_dir)
       ftpd.close()
       self.assertTrue(len(ftpd.files_to_download) == 1)
+
+
+@attr('ftps')
+@attr('network')
+class TestBiomajFTPSDownload(unittest.TestCase):
+  """
+  Test FTP downloader with FTPS.
+  """
+  PROTOCOL = "ftps"
+
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_ftps_list(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match([r'^readme.txt$'], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
 
 
 @attr('rsync')
