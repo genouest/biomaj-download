@@ -11,6 +11,7 @@ branches:
   except:
   - "/^feature.*$/"
 install:
+- apt-get update && apt-get install -y libgnutls-dev
 - pip install -r requirements.txt
 - pip install coverage nose
 - pip install python-coveralls
