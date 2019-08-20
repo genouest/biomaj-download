@@ -362,6 +362,40 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
 
 
+
+@attr('directftps')
+@attr('network')
+class TestBiomajDirectFTPSDownload(unittest.TestCase):
+  """
+  Test DirectFTP downloader with FTPS.
+  """
+  
+  def setUp(self):
+    self.utils = UtilsForTest()
+
+  def tearDown(self):
+    self.utils.clean()
+
+  def test_ftps_list(self):
+    file_list = ['/readme.txt']
+    ftpd = DirectFTPDownload('ftps', 'test.rebex.net', '')
+    ftpd.set_credentials('demo:password')
+    ftpd.set_files_to_download(file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    file_list = ['/readme.txt']
+    ftpd = DirectFTPDownload('ftps', 'test.rebex.net', '')
+    ftpd.set_credentials('demo:password')
+    ftpd.set_files_to_download(file_list)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.download(self.utils.data_dir, False)
+    ftpd.close()
+    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'readme.txt')))
+
+
 @attr('directhttp')
 @attr('network')
 class TestBiomajDirectHTTPDownload(unittest.TestCase):
@@ -523,19 +557,23 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
 
+  def test_ms_server(self):
+      ftpd = FTPDownload("ftp", "test.rebex.net", "/")
+      ftpd.set_credentials("demo:password")
+      (file_list, dir_list) = ftpd.list()
+      ftpd.match(["^readme.txt$"], file_list, dir_list)
+      ftpd.download(self.utils.data_dir)
+      ftpd.close()
+      self.assertTrue(len(ftpd.files_to_download) == 1)
+
 
 @attr('ftps')
 @attr('network')
 class TestBiomajFTPSDownload(unittest.TestCase):
   """
-  Test FTPS downloader.
+  Test FTP downloader with FTPS.
   """
-  # This server is misconfigured hence we disable SSL verification
-  # TODO: add a correctly configured server when branch ms_ftp is merged
   PROTOCOL = "ftps"
-  SERVER = "demo.wftpserver.com"
-  DIRECTORY = "/download/"
-  CREDENTIALS = "demo-user:demo-user"
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -543,18 +581,42 @@ class TestBiomajFTPSDownload(unittest.TestCase):
   def tearDown(self):
     self.utils.clean()
 
+  def test_ftps_list(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.close()
+    self.assertTrue(len(file_list) == 1)
+
+  def test_download(self):
+    ftpd = FTPDownload(self.PROTOCOL, "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match([r'^readme.txt$'], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+
   def test_ftps_list_no_ssl(self):
-    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY,
+    # This server is misconfigured hence we disable SSL verification
+    SERVER = "demo.wftpserver.com"
+    DIRECTORY = "/download/"
+    CREDENTIALS = "demo-user:demo-user"
+    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY,
                        ssl_verifyhost=False, ssl_verifypeer=False)
-    ftpd.set_credentials(self.CREDENTIALS)
+    ftpd.set_credentials(CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
   def test_download_no_ssl(self):
-    ftpd = FTPDownload(self.PROTOCOL, self.SERVER, self.DIRECTORY,
+    # This server is misconfigured hence we disable SSL verification
+    SERVER = "demo.wftpserver.com"
+    DIRECTORY = "/download/"
+    CREDENTIALS = "demo-user:demo-user"
+    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY,
                        ssl_verifyhost=False, ssl_verifypeer=False)
-    ftpd.set_credentials(self.CREDENTIALS)
+    ftpd.set_credentials(CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
