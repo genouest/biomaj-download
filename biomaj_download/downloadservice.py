@@ -129,19 +129,17 @@ class DownloadService(object):
             downloader = FTPDownload(protocol_name, server, remote_dir)
         if protocol in [2, 3]:
             downloader = HTTPDownload(protocol_name, server, remote_dir, http_parse)
+        if protocol == 7:
+            downloader = LocalDownload(remote_dir)
         if protocol == 4:
             downloader = DirectFTPDownload('ftp', server, '/')
         if protocol == 5:
-            downloader = DirectFTPDownload('ftps', server, '/')          
-        if protocol == 6:     
             downloader = DirectHttpDownload('http', server, '/')
-        if protocol == 7:
+        if protocol == 6:
             downloader = DirectHttpDownload('https', server, '/')
         if protocol == 8:
-            downloader = LocalDownload(remote_dir)
-        if protocol == 9:
             downloader = RSYNCDownload('rsync', server, remote_dir)
-        if protocol == 10:
+        if protocol == 9:
             downloader = IRODSDownload('irods', server, remote_dir)
         if downloader is None:
             return None

@@ -70,12 +70,11 @@ message DownloadFile {
         HTTP = 2;
         HTTPS = 3;
         DIRECTFTP = 4;
-        DIRECTFTPS = 5;
-        DIRECTHTTP = 6;
-        DIRECTHTTPS = 7;
-        LOCAL = 8;
-        RSYNC = 9;
-        IRODS = 10;
+        DIRECTHTTP = 5;
+        DIRECTHTTPS = 6;
+        LOCAL = 7;
+        RSYNC = 8;
+        IRODS = 9;
     }
 
     message Param {
