@@ -28,6 +28,12 @@ app = Flask(__name__)
 app_log = logging.getLogger('werkzeug')
 app_log.setLevel(logging.ERROR)
 
+# Classify protocols from downmessage.proto
+ALL_PROTOCOLS = [v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values]
+DIRECT_PROTOCOLS = [
+    v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values
+    if v.name.startswith("DIRECT")]
+
 
 @app.route('/api/download-message')
 def ping():
@@ -133,6 +139,8 @@ class DownloadService(object):
             downloader = LocalDownload(remote_dir)
         if protocol == 4:
             downloader = DirectFTPDownload('ftp', server, '/')
+        if protocol == 10:
+            downloader = DirectFTPDownload('ftps', server, '/')
         if protocol == 5:
             downloader = DirectHttpDownload('http', server, '/')
         if protocol == 6:
@@ -147,8 +155,8 @@ class DownloadService(object):
         for remote_file in remote_files:
             if remote_file['save_as']:
                 save_as = remote_file['save_as']
-        # For direct protocol, we only keep base name
-        if protocol in [4, 5, 6]:
+        # For direct protocols, we only keep base name
+        if protocol in DIRECT_PROTOCOLS:
             tmp_remote = []
             for remote_file in remote_files:
                 tmp_remote.append(remote_file['name'])
