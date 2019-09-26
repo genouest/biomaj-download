@@ -75,6 +75,7 @@ message DownloadFile {
         LOCAL = 7;
         RSYNC = 8;
         IRODS = 9;
+        DIRECTFTPS = 10;
     }
 
     message Param {
