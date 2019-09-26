@@ -29,10 +29,10 @@ app_log = logging.getLogger('werkzeug')
 app_log.setLevel(logging.ERROR)
 
 # Classify protocols from downmessage.proto
-ALL_PROTOCOLS = [v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values]
+ALL_PROTOCOLS = [key for key, item in downmessage_pb2.DownloadFile.Protocol.items()]
 DIRECT_PROTOCOLS = [
-    v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values
-    if v.name.startswith("DIRECT")]
+    key for key, item in downmessage_pb2.DownloadFile.Protocol.items()
+if key.startswith("DIRECT")]
 
 
 @app.route('/api/download-message')
