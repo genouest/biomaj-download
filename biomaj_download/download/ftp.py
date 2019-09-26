@@ -90,6 +90,8 @@ class FTPDownload(DownloadInterface):
         self.ssl_verifypeer = True
         # Path to the certificate of the server (cURL --cacert option; PEM format)
         self.ssl_server_cert = None
+        # Keep alive
+        self.tcp_keepalive = 0
 
     def set_options(self, protocol_options):
         super(FTPDownload, self).set_options(protocol_options)
@@ -99,6 +101,8 @@ class FTPDownload(DownloadInterface):
             self.ssl_verifypeer = Utils.to_bool(protocol_options["ssl_verifypeer"])
         if "ssl_server_cert" in protocol_options:
             self.ssl_server_cert = protocol_options["ssl_server_cert"]
+        if "tcp_keepalive" in protocol_options:
+            self.tcp_keepalive = Utils.to_int(protocol_options["tcp_keepalive"])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -168,6 +172,12 @@ class FTPDownload(DownloadInterface):
         while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
+
+            # Configure TCP keepalive
+            if self.tcp_keepalive:
+                curl.setopt(pycurl.TCP_KEEPALIVE, True)
+                curl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+                curl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
 
             # Configure SSL verification (on some platforms, disabling
             # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
@@ -312,6 +322,12 @@ class FTPDownload(DownloadInterface):
         :return: tuple of file and dirs in current directory with details
         '''
         self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
+
+        # Configure TCP keepalive
+        if self.tcp_keepalive:
+            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
 
         # See the corresponding lines in method:`curl_download`
         self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
