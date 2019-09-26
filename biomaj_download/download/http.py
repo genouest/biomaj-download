@@ -50,8 +50,8 @@ class HTTPDownload(FTPDownload):
 
     '''
 
-    def __init__(self, protocol, host, rootdir, http_parse=None, ssl_verifyhost=True, ssl_verifypeer=True):
-        FTPDownload.__init__(self, protocol, host, rootdir, ssl_verifyhost, ssl_verifypeer)
+    def __init__(self, protocol, host, rootdir, http_parse=None):
+        FTPDownload.__init__(self, protocol, host, rootdir)
         self.http_parse = http_parse
 
     def list(self, directory=''):

@@ -122,5 +122,7 @@ message DownloadFile {
     optional Proxy proxy = 6;
 
     optional HTTP_METHOD http_method = 8 [ default = GET];
+    
+    map<string, string> protocol_options = 9;
 
 }

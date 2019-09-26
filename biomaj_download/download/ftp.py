@@ -76,7 +76,7 @@ class FTPDownload(DownloadInterface):
         ftputil.stat.MSParser(),
     ]
 
-    def __init__(self, protocol, host, rootdir, ssl_verifyhost=True, ssl_verifypeer=True):
+    def __init__(self, protocol, host, rootdir):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.crl = pycurl.Curl()
@@ -84,9 +84,17 @@ class FTPDownload(DownloadInterface):
         self.rootdir = rootdir
         self.url = url
         self.headers = {}
+        # Initialize options
         # Should we skip SSL verification (cURL -k/--insecure option)
-        self.ssl_verifyhost = ssl_verifyhost
-        self.ssl_verifypeer = ssl_verifypeer
+        self.ssl_verifyhost = True
+        self.ssl_verifypeer = True
+
+    def set_options(self, protocol_options):
+        super(FTPDownload, self).set_options(protocol_options)
+        if "ssl_verifyhost" in protocol_options:
+            self.ssl_verifyhost = Utils.to_bool(protocol_options["ssl_verifyhost"])
+        if "ssl_verifypeer" in protocol_options:
+            self.ssl_verifypeer = Utils.to_bool(protocol_options["ssl_verifypeer"])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -293,9 +301,7 @@ class FTPDownload(DownloadInterface):
         '''
         self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
 
-        # Configure SSL verification (on some platforms, disabling
-        # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
-        # SSL_VERIFYPEER after)
+        # See the corresponding lines in method:`curl_download`
         self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
         self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
 

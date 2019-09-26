@@ -598,24 +598,24 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     self.assertTrue(len(ftpd.files_to_download) == 1)
 
   def test_ftps_list_no_ssl(self):
-    # This server is misconfigured hence we disable SSL verification
+    # This server is misconfigured hence we disable all SSL verification
     SERVER = "demo.wftpserver.com"
     DIRECTORY = "/download/"
     CREDENTIALS = "demo-user:demo-user"
-    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY,
-                       ssl_verifyhost=False, ssl_verifypeer=False)
+    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY)
+    ftpd.set_options(dict(ssl_verifyhost="False", ssl_verifypeer="False"))
     ftpd.set_credentials(CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
   def test_download_no_ssl(self):
-    # This server is misconfigured hence we disable SSL verification
+    # This server is misconfigured hence we disable all SSL verification
     SERVER = "demo.wftpserver.com"
     DIRECTORY = "/download/"
     CREDENTIALS = "demo-user:demo-user"
-    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY,
-                       ssl_verifyhost=False, ssl_verifypeer=False)
+    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY)
+    ftpd.set_options(dict(ssl_verifyhost="False", ssl_verifypeer="False"))
     ftpd.set_credentials(CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)

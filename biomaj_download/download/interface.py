@@ -266,6 +266,15 @@ class DownloadInterface(object):
         '''
         self.credentials = userpwd
 
+    def set_options(self, protocol_options):
+        """
+        Set protocol specific options.
+
+        Subclasses that override this method must call the
+        parent implementation.
+        """
+        self.protocol_options = protocol_options
+
     def close(self):
         '''
         Close connection
