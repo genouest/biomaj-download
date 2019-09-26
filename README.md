@@ -1,5 +1,7 @@
 # About
 
+[![PyPI version](https://badge.fury.io/py/biomaj-download.svg)](https://badge.fury.io/py/biomaj-download)
+
 Microservice to manage the downloads of biomaj.
 
 A protobuf interface is available in biomaj_download/message/message_pb2.py to exchange messages between BioMAJ and the download service.
