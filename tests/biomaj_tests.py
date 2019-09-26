@@ -623,6 +623,23 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 1)
 
+  def test_download_ssl_certficate(self):
+    # This server is misconfigured but we use its certificate
+    # The hostname is wrong so we disable host verification
+    SERVER = "demo.wftpserver.com"
+    DIRECTORY = "/download/"
+    CREDENTIALS = "demo-user:demo-user"
+    ftpd = FTPDownload(self.PROTOCOL, SERVER, DIRECTORY)
+    curdir = os.path.dirname(os.path.realpath(__file__))
+    cert_file = os.path.join(curdir, "caert.demo.wftpserver.com.pem")
+    ftpd.set_options(dict(ssl_verifyhost="False", ssl_server_cert=cert_file))
+    ftpd.set_credentials(CREDENTIALS)
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+
 
 @attr('rsync')
 @attr('local')
