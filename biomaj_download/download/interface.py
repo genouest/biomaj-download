@@ -4,6 +4,8 @@ import datetime
 import time
 import re
 
+from biomaj_core.utils import Utils
+
 
 class _FakeLock(object):
     '''
@@ -48,6 +50,9 @@ class DownloadInterface(object):
         self.protocol = None
         self.server = None
         self.offline_dir = None
+        # Options
+        self.protocol_options = {}
+        self.skip_check_uncompress = False
 
     def set_offline_dir(self, offline_dir):
         self.offline_dir = offline_dir
@@ -265,6 +270,17 @@ class DownloadInterface(object):
         :type userpwd: str
         '''
         self.credentials = userpwd
+
+    def set_options(self, protocol_options):
+        """
+        Set protocol specific options.
+
+        Subclasses that override this method must call the
+        parent implementation.
+        """
+        self.protocol_options = protocol_options
+        if "skip_check_uncompress" in protocol_options:
+            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
 
     def close(self):
         '''

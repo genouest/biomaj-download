@@ -84,6 +84,25 @@ class FTPDownload(DownloadInterface):
         self.rootdir = rootdir
         self.url = url
         self.headers = {}
+        # Initialize options
+        # Should we skip SSL verification (cURL -k/--insecure option)
+        self.ssl_verifyhost = True
+        self.ssl_verifypeer = True
+        # Path to the certificate of the server (cURL --cacert option; PEM format)
+        self.ssl_server_cert = None
+        # Keep alive
+        self.tcp_keepalive = 0
+
+    def set_options(self, protocol_options):
+        super(FTPDownload, self).set_options(protocol_options)
+        if "ssl_verifyhost" in protocol_options:
+            self.ssl_verifyhost = Utils.to_bool(protocol_options["ssl_verifyhost"])
+        if "ssl_verifypeer" in protocol_options:
+            self.ssl_verifypeer = Utils.to_bool(protocol_options["ssl_verifypeer"])
+        if "ssl_server_cert" in protocol_options:
+            self.ssl_server_cert = protocol_options["ssl_server_cert"]
+        if "tcp_keepalive" in protocol_options:
+            self.tcp_keepalive = Utils.to_int(protocol_options["tcp_keepalive"])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -153,6 +172,27 @@ class FTPDownload(DownloadInterface):
         while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
             curl = pycurl.Curl()
+
+            # Configure TCP keepalive
+            if self.tcp_keepalive:
+                curl.setopt(pycurl.TCP_KEEPALIVE, True)
+                curl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+                curl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+
+            # Configure SSL verification (on some platforms, disabling
+            # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
+            # SSL_VERIFYPEER after)
+            curl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+            curl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+            if self.ssl_server_cert:
+                # cacert is the name of the option for the curl command. The
+                # corresponding cURL option is CURLOPT_CAINFO.
+                # See https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
+                # This is inspired by that https://curl.haxx.se/docs/sslcerts.html
+                # (section "Certificate Verification", option 2) but the option
+                # CURLOPT_CAPATH is for a directory of certificates.
+                curl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+
             try:
                 curl.setopt(pycurl.URL, file_to_download)
             except Exception:
@@ -185,8 +225,7 @@ class FTPDownload(DownloadInterface):
             nbtry += 1
             curl.close()
             fp.close()
-            skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
-            if not error and skip_check_uncompress is None:
+            if not error and not self.skip_check_uncompress:
                 archive_status = Utils.archive_check(file_path)
                 if not archive_status:
                     self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
@@ -283,6 +322,18 @@ class FTPDownload(DownloadInterface):
         '''
         self.logger.debug('Download:List:' + self.url + self.rootdir + directory)
 
+        # Configure TCP keepalive
+        if self.tcp_keepalive:
+            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+
+        # See the corresponding lines in method:`curl_download`
+        self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+        self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+        if self.ssl_server_cert:
+            self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+
         try:
             self.crl.setopt(pycurl.URL, self.url + self.rootdir + directory)
         except Exception:
@@ -304,6 +355,7 @@ class FTPDownload(DownloadInterface):
         # Download should not take more than 5minutes
         self.crl.setopt(pycurl.TIMEOUT, self.timeout)
         self.crl.setopt(pycurl.NOSIGNAL, 1)
+
         try:
             self.crl.perform()
         except Exception as e:

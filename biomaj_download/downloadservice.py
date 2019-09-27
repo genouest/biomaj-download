@@ -29,10 +29,11 @@ app_log = logging.getLogger('werkzeug')
 app_log.setLevel(logging.ERROR)
 
 # Classify protocols from downmessage.proto
-ALL_PROTOCOLS = [v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values]
+ALL_PROTOCOLS = [key for key, item in downmessage_pb2.DownloadFile.Protocol.items()]
 DIRECT_PROTOCOLS = [
-    v.index for v in downmessage_pb2._DOWNLOADFILE_PROTOCOL.values
-    if v.name.startswith("DIRECT")]
+    key for key, item in downmessage_pb2.DownloadFile.Protocol.items()
+    if key.startswith("DIRECT")
+]
 
 
 @app.route('/api/download-message')
@@ -128,7 +129,8 @@ class DownloadService(object):
     def get_handler(self, protocol_name, server, remote_dir, remote_files=[],
                     credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
-                    save_as=None, timeout_download=None, offline_dir=None):
+                    save_as=None, timeout_download=None, offline_dir=None,
+                    protocol_options={}):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:
@@ -186,6 +188,10 @@ class DownloadService(object):
 
         downloader.set_protocol(protocol_name)
 
+        if protocol_options is not None:
+            self.logger.debug("Received protocol options: " + str(protocol_options))
+            downloader.set_options(protocol_options)
+
         downloader.logger = self.logger
         downloader.set_files_to_download(remote_files)
         return downloader
@@ -234,7 +240,9 @@ class DownloadService(object):
                                 proxy_auth=proxy_auth,
                                 save_as=biomaj_file_info.remote_file.save_as,
                                 timeout_download=biomaj_file_info.timeout_download,
-                                offline_dir=biomaj_file_info.local_dir)
+                                offline_dir=biomaj_file_info.local_dir,
+                                protocol_options=biomaj_file_info.protocol_options
+                                )
 
     def clean(self, biomaj_file_info=None):
         '''
