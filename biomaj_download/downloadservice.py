@@ -29,9 +29,10 @@ app_log = logging.getLogger('werkzeug')
 app_log.setLevel(logging.ERROR)
 
 # Classify protocols from downmessage.proto
-ALL_PROTOCOLS = [key for key, item in downmessage_pb2.DownloadFile.Protocol.items()]
+# Note: those lists are based on the protocol numbers, not the protocol names
+ALL_PROTOCOLS = [item for key, item in downmessage_pb2.DownloadFile.Protocol.items()]
 DIRECT_PROTOCOLS = [
-    key for key, item in downmessage_pb2.DownloadFile.Protocol.items()
+    item for key, item in downmessage_pb2.DownloadFile.Protocol.items()
     if key.startswith("DIRECT")
 ]
 
