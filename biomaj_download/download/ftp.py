@@ -225,8 +225,7 @@ class FTPDownload(DownloadInterface):
             nbtry += 1
             curl.close()
             fp.close()
-            skip_check_uncompress = os.environ.get('UNCOMPRESS_SKIP_CHECK', None)
-            if not error and skip_check_uncompress is None:
+            if not error and not self.skip_check_uncompress:
                 archive_status = Utils.archive_check(file_path)
                 if not archive_status:
                     self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
