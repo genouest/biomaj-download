@@ -17,6 +17,7 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 config = {
     'description': 'BioMAJ download service',
     'long_description': README + '\n\n' + CHANGES,
+    'long_description_content_type': 'text/markdown',
     'author': 'Olivier Sallou',
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
