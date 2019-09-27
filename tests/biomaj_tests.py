@@ -566,6 +566,20 @@ class TestBiomajFTPDownload(unittest.TestCase):
       ftpd.close()
       self.assertTrue(len(ftpd.files_to_download) == 1)
 
+  def test_download_tcp_keepalive(self):
+      """
+      Test setting tcp_keepalive (it probably doesn't change anything here but
+      we test that there is no obvious mistake in the code).
+      """
+      ftpd = FTPDownload("ftp", "test.rebex.net", "/")
+      ftpd.set_options(dict(tcp_keepalive=10))
+      ftpd.set_credentials("demo:password")
+      (file_list, dir_list) = ftpd.list()
+      ftpd.match(["^readme.txt$"], file_list, dir_list)
+      ftpd.download(self.utils.data_dir)
+      ftpd.close()
+      self.assertTrue(len(ftpd.files_to_download) == 1)
+
 
 @attr('ftps')
 @attr('network')
