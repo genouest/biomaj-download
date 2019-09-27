@@ -1,3 +1,5 @@
+3.0.27:
+  Fix previous release broken with a bug in direct protocols
 3.0.26:
   Change default download timeout to 1h
   #12 Allow FTPS protocol
