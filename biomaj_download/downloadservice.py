@@ -32,7 +32,8 @@ app_log.setLevel(logging.ERROR)
 ALL_PROTOCOLS = [key for key, item in downmessage_pb2.DownloadFile.Protocol.items()]
 DIRECT_PROTOCOLS = [
     key for key, item in downmessage_pb2.DownloadFile.Protocol.items()
-if key.startswith("DIRECT")]
+    if key.startswith("DIRECT")
+]
 
 
 @app.route('/api/download-message')
@@ -128,7 +129,7 @@ class DownloadService(object):
     def get_handler(self, protocol_name, server, remote_dir, remote_files=[],
                     credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
-                    save_as=None, timeout_download=None, offline_dir=None, 
+                    save_as=None, timeout_download=None, offline_dir=None,
                     protocol_options={}):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
@@ -186,7 +187,7 @@ class DownloadService(object):
         downloader.set_server(server)
 
         downloader.set_protocol(protocol_name)
-    
+
         if protocol_options is not None:
             self.logger.debug("Received protocol options: " + str(protocol_options))
             downloader.set_options(protocol_options)
