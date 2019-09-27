@@ -10,6 +10,10 @@ services:
 branches:
   except:
   - "/^feature.*$/"
+addons:
+  apt: 
+    packages:
+      - libgnutls-dev
 install:
 - pip install -r requirements.txt
 - pip install coverage nose

@@ -17,11 +17,12 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 config = {
     'description': 'BioMAJ download service',
     'long_description': README + '\n\n' + CHANGES,
+    'long_description_content_type': 'text/markdown',
     'author': 'Olivier Sallou',
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.0.26',
+    'version': '3.0.27',
      'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -45,6 +46,7 @@ config = {
                          'biomaj_core',
                          'biomaj_zipkin',
                          'pycurl',
+                         'ftputil',
                          'py-bcrypt',
                          'pika==0.13.0',
                          'redis',

@@ -1,3 +1,5 @@
+syntax = "proto2";
+
 package biomaj.download;
 
 message File {
@@ -64,7 +66,7 @@ message DownloadFile {
 
     enum Protocol {
         FTP = 0;
-        SFTP = 1;
+        FTPS = 1;
         HTTP = 2;
         HTTPS = 3;
         DIRECTFTP = 4;
@@ -73,6 +75,7 @@ message DownloadFile {
         LOCAL = 7;
         RSYNC = 8;
         IRODS = 9;
+        DIRECTFTPS = 10;
     }
 
     message Param {
@@ -83,7 +86,7 @@ message DownloadFile {
     message HttpParse {
         required string dir_line = 1 [default = '<img[\\s]+src="[\\S]+"[\\s]+alt="\\[DIR\\]"[\\s]*/?>[\\s]*<a[\\s]+href="([\\S]+)/"[\\s]*>.*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})'];
         required string file_line = 2 [default = '<img[\\s]+src="[\\S]+"[\\s]+alt="\\[[\\s]+\\]"[\\s]*/?>[\\s]<a[\\s]+href="([\\S]+)".*([\\d]{2}-[\\w\\d]{2,5}-[\\d]{4}\\s[\\d]{2}:[\\d]{2})[\\s]+([\\d\\.]+[MKG]{0,1})'];
-        required int32 dir_name = 3 [default =1];
+        required int32 dir_name = 3 [default = 1];
         required int32 dir_date = 4 [default = 2];
         required int32 file_name = 5 [default = 1];
         required int32 file_date = 6 [default = 2];
@@ -119,5 +122,7 @@ message DownloadFile {
     optional Proxy proxy = 6;
 
     optional HTTP_METHOD http_method = 8 [ default = GET];
+    
+    map<string, string> protocol_options = 9;
 
 }

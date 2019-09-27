@@ -3,8 +3,11 @@ import os
 import re
 from datetime import datetime
 import hashlib
+import time
+import stat
 
 import pycurl
+import ftputil
 
 import humanfriendly
 
@@ -20,6 +23,48 @@ try:
     from io import BytesIO
 except ImportError:
     from StringIO import StringIO as BytesIO
+
+# We use stat.filemode to convert from mode octal value to string.
+# In python < 3.3, stat.filmode is not defined.
+# This code is copied from the current implementation of stat.filemode.
+if 'filemode' not in stat.__dict__:
+    _filemode_table = (
+        ((stat.S_IFLNK,                "l"),    # noqa: E241
+         (stat.S_IFREG,                "-"),    # noqa: E241
+         (stat.S_IFBLK,                "b"),    # noqa: E241
+         (stat.S_IFDIR,                "d"),    # noqa: E241
+         (stat.S_IFCHR,                "c"),    # noqa: E241
+         (stat.S_IFIFO,                "p")),   # noqa: E241
+        ((stat.S_IRUSR,                "r"),),  # noqa: E241
+        ((stat.S_IWUSR,                "w"),),  # noqa: E241
+        ((stat.S_IXUSR | stat.S_ISUID, "s"),    # noqa: E241
+         (stat.S_ISUID,                "S"),    # noqa: E241
+         (stat.S_IXUSR,                "x")),   # noqa: E241
+        ((stat.S_IRGRP,                "r"),),  # noqa: E241
+        ((stat.S_IWGRP,                "w"),),  # noqa: E241
+        ((stat.S_IXGRP | stat.S_ISGID, "s"),    # noqa: E241
+         (stat.S_ISGID,                "S"),    # noqa: E241
+         (stat.S_IXGRP,                "x")),   # noqa: E241
+        ((stat.S_IROTH,                "r"),),  # noqa: E241
+        ((stat.S_IWOTH,                "w"),),  # noqa: E241
+        ((stat.S_IXOTH | stat.S_ISVTX, "t"),    # noqa: E241
+         (stat.S_ISVTX,                "T"),    # noqa: E241
+         (stat.S_IXOTH,                "x"))    # noqa: E241
+    )
+
+    def _filemode(mode):
+        """Convert a file's mode to a string of the form '-rwxrwxrwx'."""
+        perm = []
+        for table in _filemode_table:
+            for bit, char in table:
+                if mode & bit == bit:
+                    perm.append(char)
+                    break
+            else:
+                perm.append("-")
+        return "".join(perm)
+
+    stat.filemode = _filemode
 
 
 class HTTPParse(object):
@@ -61,6 +106,13 @@ class CurlDownload(DownloadInterface):
     SFTP_PROTOCOL_FAMILY = ["sftp"]
     ALL_PROTOCOLS = FTP_PROTOCOL_FAMILY + HTTP_PROTOCOL_FAMILY + SFTP_PROTOCOL_FAMILY
 
+    # Utilities to parse ftp listings: UnixParser is the more common hence we
+    # put it first
+    ftp_listing_parsers = [
+        ftputil.stat.UnixParser(),
+        ftputil.stat.MSParser(),
+    ]
+
     def __init__(self, protocol, host, rootdir, http_parse=None):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
@@ -87,10 +139,25 @@ class CurlDownload(DownloadInterface):
         self.url = self.protocol + '://' + self.host
         self.headers = {}
         self.http_parse = http_parse
-        # Should we skip test of archives
-        self.uncompress_skip_check = os.environ.get('UNCOMPRESS_SKIP_CHECK', False)
-        # Should we skip host verification
-        self.no_ssl_verifyhost = os.environ.get('NO_SSL_VERIFYHOST', False)
+        # Initialize options
+        # Should we skip SSL verification (cURL -k/--insecure option)
+        self.ssl_verifyhost = True
+        self.ssl_verifypeer = True
+        # Path to the certificate of the server (cURL --cacert option; PEM format)
+        self.ssl_server_cert = None
+        # Keep alive
+        self.tcp_keepalive = 0
+
+    def set_options(self, protocol_options):
+        super(CurlDownload, self).set_options(protocol_options)
+        if "ssl_verifyhost" in protocol_options:
+            self.ssl_verifyhost = Utils.to_bool(protocol_options["ssl_verifyhost"])
+        if "ssl_verifypeer" in protocol_options:
+            self.ssl_verifypeer = Utils.to_bool(protocol_options["ssl_verifypeer"])
+        if "ssl_server_cert" in protocol_options:
+            self.ssl_server_cert = protocol_options["ssl_server_cert"]
+        if "tcp_keepalive" in protocol_options:
+            self.tcp_keepalive = Utils.to_int(protocol_options["tcp_keepalive"])
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)
@@ -134,8 +201,25 @@ class CurlDownload(DownloadInterface):
             curl.setopt(pycurl.NOSIGNAL, 1)
             curl.setopt(pycurl.WRITEDATA, fp)
 
-            if self.no_ssl_verifyhost:
-                curl.setopt(pycurl.SSL_VERIFYHOST, False)
+            # Configure TCP keepalive
+            if self.tcp_keepalive:
+                curl.setopt(pycurl.TCP_KEEPALIVE, True)
+                curl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+                curl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+
+            # Configure SSL verification (on some platforms, disabling
+            # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
+            # SSL_VERIFYPEER after)
+            curl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+            curl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+            if self.ssl_server_cert:
+                # cacert is the name of the option for the curl command. The
+                # corresponding cURL option is CURLOPT_CAINFO.
+                # See https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
+                # This is inspired by that https://curl.haxx.se/docs/sslcerts.html
+                # (section "Certificate Verification", option 2) but the option
+                # CURLOPT_CAPATH is for a directory of certificates.
+                curl.setopt(pycurl.CAINFO, self.ssl_server_cert)
 
             # This is specific to HTTP
             if self.method == 'POST':
@@ -158,7 +242,7 @@ class CurlDownload(DownloadInterface):
                 self.logger.error('Could not get errcode:' + str(e))
 
             # Check that the archive is correct
-            if (not error) and (not self.uncompress_skip_check):
+            if not error and not self.skip_check_uncompress:
                 archive_status = Utils.archive_check(file_path)
                 if not archive_status:
                     self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
@@ -227,8 +311,17 @@ class CurlDownload(DownloadInterface):
         self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
         self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
 
-        if self.no_ssl_verifyhost:
-            self.crl.setopt(pycurl.SSL_VERIFYHOST, False)
+        # Configure TCP keepalive
+        if self.tcp_keepalive:
+            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+
+        # See the corresponding lines in method:`curl_download`
+        self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+        self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+        if self.ssl_server_cert:
+            self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
 
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
         # Download should not take more than 5minutes
@@ -267,48 +360,46 @@ class CurlDownload(DownloadInterface):
         rdirs = []
 
         for line in lines:
-            rfile = {}
-            # lets print each part separately
-            parts = line.split()
-            # the individual fields in this list of parts
-            if not parts:
+            # Skip empty lines (usually the last)
+            if not line:
                 continue
-            rfile['permissions'] = parts[0]
-            rfile['group'] = parts[2]
-            rfile['user'] = parts[3]
-            rfile['size'] = int(parts[4])
-            rfile['month'] = Utils.month_to_num(parts[5])
-            rfile['day'] = int(parts[6])
-            rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
-            try:
-                rfile['year'] = int(parts[7])
-            except Exception:
-                # specific ftp case issues at getting date info
-                curdate = datetime.now()
-                rfile['year'] = curdate.year
-                # Year not precised, month feater than current means previous year
-                if rfile['month'] > curdate.month:
-                    rfile['year'] = curdate.year - 1
-                # Same month but later day => previous year
-                if rfile['month'] == curdate.month and rfile['day'] > curdate.day:
-                    rfile['year'] = curdate.year - 1
-            rfile['name'] = parts[8]
-            for i in range(9, len(parts)):
-                if parts[i] == '->':
-                    # Symlink, add to files AND dirs as we don't know the type of the link
-                    rdirs.append(rfile)
+            # Parse the line
+            for i, parser in enumerate(self.ftp_listing_parsers, 1):
+                try:
+                    stats = parser.parse_line(line)
                     break
-                else:
-                    rfile['name'] += ' ' + parts[i]
+                except ftputil.error.ParserError:
+                    # If it's the last parser, re-raise the exception
+                    if i == len(self.ftp_listing_parsers):
+                        raise
+                    else:
+                        continue
+            # Put stats in a dict
+            rfile = {}
+            rfile['name'] = stats._st_name
+            # Reparse mode to a string
+            rfile['permissions'] = stat.filemode(stats.st_mode)
+            rfile['group'] = stats.st_gid
+            rfile['user'] = stats.st_uid
+            rfile['size'] = stats.st_size
+            mtime = time.localtime(stats.st_mtime)
+            rfile['year'] = mtime.tm_year
+            rfile['month'] = mtime.tm_mon
+            rfile['day'] = mtime.tm_mday
+            rfile['hash'] = hashlib.md5(line.encode('utf-8')).hexdigest()
 
-            is_dir = False
-            if re.match('^d', rfile['permissions']):
-                is_dir = True
-
-            if not is_dir:
+            is_link = stat.S_ISLNK(stats.st_mode)
+            is_dir = stat.S_ISDIR(stats.st_mode)
+            # Append links to dirs and files since we don't know what the
+            # target is
+            if is_link:
                 rfiles.append(rfile)
-            else:
                 rdirs.append(rfile)
+            else:
+                if not is_dir:
+                    rfiles.append(rfile)
+                else:
+                    rdirs.append(rfile)
         return (rfiles, rdirs)
 
     def _http_parse_result(self, result):
