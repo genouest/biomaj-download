@@ -126,14 +126,16 @@ class CurlDownload(DownloadInterface):
             self.protocol_family = "ftp"
             self._parse_result = self._ftp_parse_result
             self.ERRCODE_OK = 226
-        if self.protocol in self.HTTP_PROTOCOL_FAMILY:
+        elif self.protocol in self.HTTP_PROTOCOL_FAMILY:
             self.protocol_family = "http"
             self._parse_result = self._http_parse_result
             self.ERRCODE_OK = 200
-        if self.protocol in self.SFTP_PROTOCOL_FAMILY:
+        elif self.protocol in self.SFTP_PROTOCOL_FAMILY:
             self.protocol_family = "sftp"
             self._parse_result = self._ftp_parse_result
             self.ERRCODE_OK = 0
+        else:
+            raise ValueError("Unknown protocol")
         self.host = host
         self.rootdir = rootdir
         self.url = self.protocol + '://' + self.host
