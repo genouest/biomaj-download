@@ -185,8 +185,6 @@ class DownloadService(object):
 
         downloader.set_server(server)
 
-        downloader.set_protocol(protocol_name)
-
         if protocol_options is not None:
             self.logger.debug("Received protocol options: " + str(protocol_options))
             downloader.set_options(protocol_options)
