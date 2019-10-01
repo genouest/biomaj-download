@@ -119,7 +119,7 @@ class CurlDownload(DownloadInterface):
         self.crl = pycurl.Curl()
         protocol = protocol.lower()
         if protocol not in self.ALL_PROTOCOLS:
-            raise ValueError("value must be one of %s (case insensitive)" % self.ALL_PROTOCOLS)
+            raise ValueError("protocol must be one of %s (case insensitive). Got %s." % (self.ALL_PROTOCOLS, protocol))
         self.protocol = protocol
         # Initialize protocol specific constants
         if self.protocol in self.FTP_PROTOCOL_FAMILY:
@@ -134,7 +134,7 @@ class CurlDownload(DownloadInterface):
             self.protocol_family = "sftp"
             self._parse_result = self._ftp_parse_result
             self.ERRCODE_OK = 0
-        else:
+        else:  # Should not happen since we check before
             raise ValueError("Unknown protocol")
         self.host = host
         self.rootdir = rootdir
