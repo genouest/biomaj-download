@@ -143,6 +143,8 @@ class DownloadService(object):
             downloader = DirectHTTPDownload("http", server, '/')
         if protocol == 6:  # DirectHTTPS
             downloader = DirectHTTPDownload("https", server, '/')
+        if protocol == 10: # DirectFTPS
+            downloader = DirectFTPDownload('ftps', server, '/')
         if protocol == 7:  # Local
             downloader = LocalDownload(remote_dir)
         if protocol == 8:  # RSYNC
