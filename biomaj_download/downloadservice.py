@@ -134,9 +134,9 @@ class DownloadService(object):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:  # FTP, SFTP
-            downloader = CurlDownload(protocol, server, remote_dir)
+            downloader = CurlDownload(protocol_name, server, remote_dir)
         if protocol in [2, 3]:  # HTTP, HTTPS (could be factored with previous case)
-            downloader = CurlDownload(protocol, server, remote_dir, http_parse)
+            downloader = CurlDownload(protocol_name, server, remote_dir, http_parse)
         if protocol == 4:  # DirectFTP
             downloader = DirectFTPDownload("ftp", server, '/')
         if protocol == 5:  # DirectHTTP
