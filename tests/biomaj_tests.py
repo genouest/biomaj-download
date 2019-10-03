@@ -350,8 +350,6 @@ class TestBiomajHTTPSDownload(unittest.TestCase):
     )
     self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
     httpd = CurlDownload('https', 'mirrors.edge.kernel.org', '/pub/software/scm/git/debian/', self.http_parse)
-    # TODO: testing the archive used to work.
-    httpd.set_options(dict(skip_check_uncompress=True))
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^git-core-0.99.6.tar.gz$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)

@@ -177,7 +177,7 @@ class CurlDownload(DownloadInterface):
 
     def _download(self, file_path, rfile):
         """
-        This method is designed to work for FTP, HTTP(S) and SFTP.
+        This method is designed to work for FTP(S), HTTP(S) and SFTP.
         """
         error = True
         nbtry = 1
@@ -244,6 +244,10 @@ class CurlDownload(DownloadInterface):
             except Exception as e:
                 self.logger.error('Could not get errcode:' + str(e))
 
+            # Close cURL and file
+            curl.close()
+            fp.close()
+
             # Check that the archive is correct
             if not error and not self.skip_check_uncompress:
                 archive_status = Utils.archive_check(file_path)
@@ -252,9 +256,10 @@ class CurlDownload(DownloadInterface):
                     error = True
                     if os.path.exists(file_path):
                         os.remove(file_path)
+
+            # Increment retry counter
             nbtry += 1
-            curl.close()
-            fp.close()
+
         return error
 
     def header_function(self, header_line):
