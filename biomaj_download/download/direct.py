@@ -34,7 +34,7 @@ class DirectFTPDownload(CurlDownload):
         CurlDownload.__init__(self, curl_protocol, host, rootdir)
         self.save_as = None
 
-    def _append_file_to_download(self, file):
+    def _append_file_to_download(self, filename):
         '''
         Initialize the files in list with today as last-modification date.
         Size is also preset to zero, size will be set after download
@@ -49,10 +49,10 @@ class DirectFTPDownload(CurlDownload):
         rfile['month'] = today.month
         rfile['day'] = today.day
         rfile['year'] = today.year
-        if file.endswith('/'):
-            rfile['name'] = file[:-1]
+        if filename.endswith('/'):
+            rfile['name'] = filename[:-1]
         else:
-            rfile['name'] = file
+            rfile['name'] = filename
         rfile['save_as'] = rfile['name']
         rfile['hash'] = None
         super(DirectFTPDownload, self)._append_file_to_download(rfile)
