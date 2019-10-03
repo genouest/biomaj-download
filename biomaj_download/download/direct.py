@@ -30,10 +30,6 @@ class DirectFTPDownload(CurlDownload):
 
     ALL_PROTOCOLS = ["ftp", "ftps"]
 
-    def __init__(self, curl_protocol, host, rootdir=''):
-        CurlDownload.__init__(self, curl_protocol, host, rootdir)
-        self.save_as = None
-
     def _append_file_to_download(self, filename):
         '''
         Initialize the files in list with today as last-modification date.
