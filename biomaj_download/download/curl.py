@@ -138,7 +138,7 @@ class CurlDownload(DownloadInterface):
             raise ValueError("Unknown protocol")
         self.host = host
         self.rootdir = rootdir
-        self.url = self.protocol_family + '://' + self.host
+        self.url = self.curl_protocol + '://' + self.host
         self.headers = {}
         self.http_parse = http_parse
         # Initialize options
