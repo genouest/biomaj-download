@@ -49,8 +49,9 @@ class DirectFTPDownload(CurlDownload):
             rfile['name'] = filename[:-1]
         else:
             rfile['name'] = filename
-        rfile['save_as'] = rfile['name']
         rfile['hash'] = None
+        # Use self.save_as even if we use it in list(). This is important.
+        rfile['save_as'] = self.save_as
         super(DirectFTPDownload, self)._append_file_to_download(rfile)
 
     def list(self, directory=''):
@@ -64,9 +65,7 @@ class DirectFTPDownload(CurlDownload):
         '''
         All files to download match, no pattern
         '''
-        if dir_list is None:
-            dir_list = []
-        self.set_files_to_download(file_list)
+        pass
 
 
 class DirectHTTPDownload(DirectFTPDownload):
