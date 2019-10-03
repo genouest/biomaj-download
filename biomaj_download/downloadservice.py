@@ -187,6 +187,9 @@ class DownloadService(object):
 
         downloader.set_server(server)
 
+        # Set the name of the BioMAJ protocol to which we respond.
+        downloader.set_protocol(protocol_name)
+
         if protocol_options is not None:
             self.logger.debug("Received protocol options: " + str(protocol_options))
             downloader.set_options(protocol_options)

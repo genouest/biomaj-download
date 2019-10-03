@@ -30,8 +30,8 @@ class DirectFTPDownload(CurlDownload):
 
     ALL_PROTOCOLS = ["ftp", "ftps"]
 
-    def __init__(self, protocol, host, rootdir=''):
-        CurlDownload.__init__(self, protocol, host, rootdir)
+    def __init__(self, curl_protocol, host, rootdir=''):
+        CurlDownload.__init__(self, curl_protocol, host, rootdir)
         self.save_as = None
 
     def _append_file_to_download(self, file):
@@ -77,12 +77,12 @@ class DirectHTTPDownload(DirectFTPDownload):
 
     ALL_PROTOCOLS = ["http", "https"]
 
-    def __init__(self, protocol, host, rootdir=''):
+    def __init__(self, curl_protocol, host, rootdir=''):
         '''
         :param file_list: list of files to download on server
         :type file_list: list
         '''
-        DirectFTPDownload.__init__(self, protocol, host, rootdir)
+        DirectFTPDownload.__init__(self, curl_protocol, host, rootdir)
         self.method = 'GET'
         self.param = {}
 

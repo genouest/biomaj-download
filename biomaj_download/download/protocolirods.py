@@ -6,7 +6,7 @@ from irods.models import DataObject, User
 class IRODSDownload(DownloadInterface):
 
     # This is used only for messages
-    protocol = "irods"
+    real_protocol = "irods"
 
     def __init__(self, server, remote_dir):
         DownloadInterface.__init__(self)

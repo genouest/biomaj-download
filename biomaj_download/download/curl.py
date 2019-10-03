@@ -91,7 +91,7 @@ class HTTPParse(object):
 
 class CurlDownload(DownloadInterface):
     '''
-    Base class to download files from FTP, HTTP(S) and SFTP
+    Base class to download files from FTP(S), HTTP(S) and SFTP.
 
     protocol=ftp
     server=ftp.ncbi.nih.gov
@@ -113,24 +113,24 @@ class CurlDownload(DownloadInterface):
         ftputil.stat.MSParser(),
     ]
 
-    def __init__(self, protocol, host, rootdir, http_parse=None):
+    def __init__(self, curl_protocol, host, rootdir, http_parse=None):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
         self.crl = pycurl.Curl()
-        protocol = protocol.lower()
-        if protocol not in self.ALL_PROTOCOLS:
-            raise ValueError("protocol must be one of %s (case insensitive). Got %s." % (self.ALL_PROTOCOLS, protocol))
-        self.protocol = protocol
+        curl_protocol = curl_protocol.lower()
+        if curl_protocol not in self.ALL_PROTOCOLS:
+            raise ValueError("curl_protocol must be one of %s (case insensitive). Got %s." % (self.ALL_PROTOCOLS, curl_protocol))
+        self.curl_protocol = curl_protocol
         # Initialize protocol specific constants
-        if self.protocol in self.FTP_PROTOCOL_FAMILY:
+        if self.curl_protocol in self.FTP_PROTOCOL_FAMILY:
             self.protocol_family = "ftp"
             self._parse_result = self._ftp_parse_result
             self.ERRCODE_OK = 226
-        elif self.protocol in self.HTTP_PROTOCOL_FAMILY:
+        elif self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
             self.protocol_family = "http"
             self._parse_result = self._http_parse_result
             self.ERRCODE_OK = 200
-        elif self.protocol in self.SFTP_PROTOCOL_FAMILY:
+        elif self.curl_protocol in self.SFTP_PROTOCOL_FAMILY:
             self.protocol_family = "sftp"
             self._parse_result = self._ftp_parse_result
             self.ERRCODE_OK = 0
@@ -138,7 +138,7 @@ class CurlDownload(DownloadInterface):
             raise ValueError("Unknown protocol")
         self.host = host
         self.rootdir = rootdir
-        self.url = self.protocol + '://' + self.host
+        self.url = self.protocol_family + '://' + self.host
         self.headers = {}
         self.http_parse = http_parse
         # Initialize options

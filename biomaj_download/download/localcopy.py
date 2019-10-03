@@ -17,9 +17,6 @@ class LocalDownload(DownloadInterface):
     remote.files=^alu.*\\.gz$
     '''
 
-    # Not really a protocol but we set it to avoid None.
-    protocol = "Local"
-
     def __init__(self, rootdir, use_hardlinks=False):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')

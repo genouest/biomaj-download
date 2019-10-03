@@ -26,8 +26,7 @@ class DownloadInterface(object):
     '''
     Main interface that all downloaders must extend.
 
-    Usually, it is enough to overload _download, list, chroot, close and the
-    protocol class variable.
+    Usually, it is enough to overload _download, list, chroot, close.
 
     TODO:
       - some setters (set_server) are not used and their purpose is not clear
@@ -38,6 +37,10 @@ class DownloadInterface(object):
     files_num_threads = 4
 
     def __init__(self):
+        # This variable defines the protocol as passed by the config file (i.e.
+        # this is directftp for DirectFTPDownload). It is used by the workflow
+        # to send the download message so it must be set.
+        self.protocol = None
         self.config = None
         self.files_to_download = []
         self.files_to_copy = []
@@ -66,6 +69,9 @@ class DownloadInterface(object):
 
     def set_server(self, server):
         self.server = server
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
 
     def _append_file_to_download(self, rfile):
         """

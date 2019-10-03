@@ -19,7 +19,7 @@ class RSYNCDownload(DownloadInterface):
     '''
 
     # This is used to forge the command
-    protocol = "rsync"
+    real_protocol = "rsync"
 
     def __init__(self, server, rootdir):
         DownloadInterface.__init__(self)
@@ -59,9 +59,9 @@ class RSYNCDownload(DownloadInterface):
         url = self._remote_file_name(rfile)
         # Create the rsync command
         if self.credentials:
-            cmd = str(self.protocol) + " " + str(self.credentials) + "@" + url + " " + str(file_path)
+            cmd = str(self.real_protocol) + " " + str(self.credentials) + "@" + url + " " + str(file_path)
         else:
-            cmd = str(self.protocol) + " " + url + " " + str(file_path)
+            cmd = str(self.real_protocol) + " " + url + " " + str(file_path)
         self.logger.debug('RSYNC:RSYNC DOwNLOAD:' + cmd)
         # Launch the command (we are in offline_dir)
         try:
@@ -71,7 +71,7 @@ class RSYNCDownload(DownloadInterface):
             self.test_stderr_rsync_message(stderr)
             self.test_stderr_rsync_error(stderr)
         except ExceptionRsync as e:
-            self.logger.error("RsyncError:" + str(e))
+            self.logger.error(str(self.real_protocol) + " error:" + str(e))
         if err_code != 0:
             self.logger.error('Error while downloading ' + rfile["name"] + ' - ' + str(err_code))
             error = True
@@ -80,13 +80,13 @@ class RSYNCDownload(DownloadInterface):
     def test_stderr_rsync_error(self, stderr):
         stderr = str(stderr.decode('utf-8'))
         if "rsync error" in str(stderr):
-            reason = stderr.split(str(self.protocol) + " error:")[1].split("\n")[0]
+            reason = stderr.split(str(self.real_protocol) + " error:")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 
     def test_stderr_rsync_message(self, stderr):
         stderr = str(stderr.decode('utf-8'))
         if "rsync:" in str(stderr):
-            reason = stderr.split(str(self.protocol) + ":")[1].split("\n")[0]
+            reason = stderr.split(str(self.real_protocol) + ":")[1].split("\n")[0]
             raise ExceptionRsync(reason)
 
     def list(self, directory=''):
@@ -105,7 +105,7 @@ class RSYNCDownload(DownloadInterface):
             remote = str(self.server) + ":" + str(self.rootdir) + str(directory)
         if self.credentials:
             remote = str(self.credentials) + "@" + remote
-        cmd = str(self.protocol) + " --list-only " + remote
+        cmd = str(self.real_protocol) + " --list-only " + remote
         try:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             list_rsync, err = p.communicate()
