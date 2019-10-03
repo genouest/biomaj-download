@@ -78,10 +78,6 @@ class DirectHTTPDownload(DirectFTPDownload):
     ALL_PROTOCOLS = ["http", "https"]
 
     def __init__(self, curl_protocol, host, rootdir=''):
-        '''
-        :param file_list: list of files to download on server
-        :type file_list: list
-        '''
         DirectFTPDownload.__init__(self, curl_protocol, host, rootdir)
         self.method = 'GET'
         self.param = {}
