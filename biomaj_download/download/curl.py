@@ -116,7 +116,6 @@ class CurlDownload(DownloadInterface):
     def __init__(self, curl_protocol, host, rootdir, http_parse=None):
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
-        self.crl = pycurl.Curl()
         curl_protocol = curl_protocol.lower()
         if curl_protocol not in self.ALL_PROTOCOLS:
             raise ValueError("curl_protocol must be one of %s (case insensitive). Got %s." % (self.ALL_PROTOCOLS, curl_protocol))
@@ -141,6 +140,8 @@ class CurlDownload(DownloadInterface):
         self.url = self.curl_protocol + '://' + self.host
         self.headers = {}
         self.http_parse = http_parse
+        # Create the cURL object
+        self.crl = pycurl.Curl()
         # Initialize options
         # Should we skip SSL verification (cURL -k/--insecure option)
         self.ssl_verifyhost = True
