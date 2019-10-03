@@ -733,18 +733,18 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.utils.clean()
 
     def test_rsync_list(self):
-        rsyncd =  RSYNCDownload(self.examples, "")
+        rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
 
     def test_rsync_match(self):
-        rsyncd =  RSYNCDownload(self.examples, "")
+        rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
         self.assertTrue(len(rsyncd.files_to_download) != 0)
 
     def test_rsync_download(self):
-        rsyncd =  RSYNCDownload(self.examples, "")
+        rsyncd = RSYNCDownload(self.examples, "")
         rfile = {
             "name": "test2.fasta",
             "root": self.examples
@@ -753,14 +753,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertFalse(error)
 
     def test_rsync_general_download(self):
-        rsyncd =  RSYNCDownload(self.examples, "")
+        rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
         download_files=rsyncd.download(self.curdir)
         self.assertTrue(len(download_files)==1)
 
     def test_rsync_download_or_copy(self):
-        rsyncd =  RSYNCDownload(self.examples, "")
+        rsyncd = RSYNCDownload(self.examples, "")
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         files_to_download_prev = rsyncd.files_to_download
@@ -768,7 +768,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
 
     def test_rsync_download_in_subdir(self):
-        rsyncd =  RSYNCDownload(self.curdir, "")
+        rsyncd = RSYNCDownload(self.curdir, "")
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
@@ -778,7 +778,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
 class iRodsResult(object):
 
     def __init__(self, collname, dataname, datasize, owner, modify):
-        self.Collname =  'tests/'
+        self.Collname = 'tests/'
         self.Dataname = 'test.fasta.gz'
         self.Datasize = 45
         self.Dataowner_name = 'biomaj'
