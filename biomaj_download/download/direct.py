@@ -170,7 +170,6 @@ class DirectHttpDownload(DirectFTPDownload):
             curl.close()
             fp.close()
             self.logger.debug('downloaded!')
-            rfile['name'] = self.save_as
             self.set_permissions(file_path, rfile)
         return self.files_to_download
 
