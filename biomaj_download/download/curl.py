@@ -185,36 +185,39 @@ class CurlDownload(DownloadInterface):
         file_url = self._file_url(rfile)
         while(error is True and nbtry < 3):
             fp = open(file_path, "wb")
-            curl = pycurl.Curl()
+
+            # Reset cURL options before setting them
+            self.crl.reset()
             try:
-                curl.setopt(pycurl.URL, file_url)
+                self.crl.setopt(pycurl.URL, file_url)
             except Exception:
-                curl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
+                self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
             if self.proxy is not None:
-                curl.setopt(pycurl.PROXY, self.proxy)
+                self.crl.setopt(pycurl.PROXY, self.proxy)
                 if self.proxy_auth is not None:
-                    curl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+                    self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
             if self.credentials is not None:
-                curl.setopt(pycurl.USERPWD, self.credentials)
+                self.crl.setopt(pycurl.USERPWD, self.credentials)
 
-            curl.setopt(pycurl.CONNECTTIMEOUT, 300)
+            self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
             # Download should not take more than 5minutes
-            curl.setopt(pycurl.TIMEOUT, self.timeout)
-            curl.setopt(pycurl.NOSIGNAL, 1)
-            curl.setopt(pycurl.WRITEDATA, fp)
+            self.crl.setopt(pycurl.TIMEOUT, self.timeout)
+            self.crl.setopt(pycurl.NOSIGNAL, 1)
+
+            self.crl.setopt(pycurl.WRITEDATA, fp)
 
             # Configure TCP keepalive
             if self.tcp_keepalive:
-                curl.setopt(pycurl.TCP_KEEPALIVE, True)
-                curl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
-                curl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+                self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+                self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+                self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
 
             # Configure SSL verification (on some platforms, disabling
             # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
             # SSL_VERIFYPEER after)
-            curl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
-            curl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+            self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+            self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
             if self.ssl_server_cert:
                 # cacert is the name of the option for the curl command. The
                 # corresponding cURL option is CURLOPT_CAINFO.
@@ -222,7 +225,7 @@ class CurlDownload(DownloadInterface):
                 # This is inspired by that https://curl.haxx.se/docs/sslcerts.html
                 # (section "Certificate Verification", option 2) but the option
                 # CURLOPT_CAPATH is for a directory of certificates.
-                curl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+                self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
 
             # This is specific to HTTP
             if self.method == 'POST':
@@ -231,11 +234,11 @@ class CurlDownload(DownloadInterface):
                 # Sets request method to POST,
                 # Content-Type header to application/x-www-form-urlencoded
                 # and data to send in request body.
-                curl.setopt(pycurl.POSTFIELDS, postfields)
+                self.crl.setopt(pycurl.POSTFIELDS, postfields)
 
             try:
-                curl.perform()
-                errcode = curl.getinfo(pycurl.RESPONSE_CODE)
+                self.crl.perform()
+                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
                 if int(errcode) != self.ERRCODE_OK:
                     error = True
                     self.logger.error('Error while downloading ' + file_url + ' - ' + str(errcode))
@@ -244,8 +247,7 @@ class CurlDownload(DownloadInterface):
             except Exception as e:
                 self.logger.error('Could not get errcode:' + str(e))
 
-            # Close cURL and file
-            curl.close()
+            # Close file
             fp.close()
 
             # Check that the archive is correct
@@ -302,6 +304,8 @@ class CurlDownload(DownloadInterface):
         dir_url = self.url + self.rootdir + directory
         self.logger.debug('Download:List:' + dir_url)
 
+        # Reset cURL options before setting them
+        self.crl.reset()
         try:
             self.crl.setopt(pycurl.URL, dir_url)
         except Exception:

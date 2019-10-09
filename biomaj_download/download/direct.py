@@ -116,6 +116,8 @@ class DirectHTTPDownload(DirectFTPDownload):
 
             rfile['save_as'] = self.save_as
 
+            self.crl.reset()
+
             self.crl.setopt(pycurl.HEADER, True)
             if self.credentials is not None:
                 self.crl.setopt(pycurl.USERPWD, self.credentials)
