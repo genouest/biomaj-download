@@ -7,13 +7,15 @@ about the file (if possile). method:`match` matches everything.
 Also client code can use method:`set_save_as` to indicate the name of the file
 to save.
 
-The trick for the implementation is to overload
+The trick for the implementation is to override 
 method:`_append_file_to_download` to initialize the rfile with the file name
 and dummy values. Note that we use a list of rfile even if it contains only one
 file.
 method:`list` will modify directly the files_to_download.
 method:``match` don't call method:`_append_file_to_download` (since the list of
 files to download is already set up).
+We also override method:`set_files_to_download` to check that we pass only one
+file.
 """
 import datetime
 import pycurl
@@ -66,6 +68,14 @@ class DirectFTPDownload(CurlDownload):
         rfile['save_as'] = self.save_as
         super(DirectFTPDownload, self)._append_file_to_download(rfile)
 
+    def set_files_to_download(self, files_to_download):
+        if len(files_to_download) > 1:
+            self.files_to_download = []
+            msg = self.__class__.__name__ + ' accepts only 1 file'
+            self.logger.error(msg)
+            raise ValueError(msg)
+        return super(DirectFTPDownload, self).set_files_to_download(files_to_download)
+
     def list(self, directory=''):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
@@ -94,22 +104,6 @@ class DirectHTTPDownload(DirectFTPDownload):
         if self.method == "GET":
             url += '?' + urlencode(self.param)
         return url
-
-    def download(self, local_dir, keep_dirs=True):
-        '''
-        Download remote files to local_dir
-
-        :param local_dir: Directory where files should be downloaded
-        :type local_dir: str
-        :param keep_dirs: keep file name directory structure or copy file in local_dir directly
-        :param keep_dirs: bool
-        :return: list of downloaded files
-        '''
-        if len(self.files_to_download) > 1:
-            self.files_to_download = []
-            self.logger.error('DirectHTTP accepts only 1 file')
-            # TODO: raise exception ?
-        return super(DirectHTTPDownload, self).download(local_dir, keep_dirs)
 
     def list(self, directory=''):
         '''
