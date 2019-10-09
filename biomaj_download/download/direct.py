@@ -1,7 +1,19 @@
 """
-Subclasses for direct download (i.e. downloading without regexp).
+Subclasses for direct download (i.e. downloading without regexp). The usage is
+a bit different: instead of calling method:`list` and method:`match`, client
+code explicitely calls method:`set_files_to_download` (passing a list
+containing only the file name). method:`list` is used to get more information
+about the file (if possile). method:`match` matches everything.
+Also client code can use method:`set_save_as` to indicate the name of the file
+to save.
 
-Methods match and list must be adapted.
+The trick for the implementation is to overload
+method:`_append_file_to_download` to initialize the rfile with the file name
+and dummy values. Note that we use a list of rfile even if it contains only one
+file.
+method:`list` will modify directly the files_to_download.
+method:``match` don't call method:`_append_file_to_download` (since the list of
+files to download is already set up).
 """
 import datetime
 import pycurl
@@ -33,7 +45,7 @@ class DirectFTPDownload(CurlDownload):
     def _append_file_to_download(self, filename):
         '''
         Initialize the files in list with today as last-modification date.
-        Size is also preset to zero, size will be set after download
+        Size is also preset to zero.
         '''
         today = datetime.date.today()
         rfile = {}
