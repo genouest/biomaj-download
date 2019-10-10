@@ -109,7 +109,6 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         Try to get file headers to get last_modification and size
         '''
-        file_url = self._file_url(self.files_to_download[0])
         for rfile in self.files_to_download:
             if self.save_as is None:
                 self.save_as = rfile['name']
@@ -128,6 +127,8 @@ class DirectHTTPDownload(DirectFTPDownload):
                     self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
             self.crl.setopt(pycurl.NOBODY, True)
+
+            file_url = self._file_url(rfile)
             try:
                 self.crl.setopt(pycurl.URL, file_url)
             except Exception:
