@@ -109,24 +109,15 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         Try to get file headers to get last_modification and size
         '''
+        self._basic_curl_configuration()
+        # Specific configuration
+        self.crl.setopt(pycurl.HEADER, True)
+        self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
             if self.save_as is None:
                 self.save_as = rfile['name']
 
             rfile['save_as'] = self.save_as
-
-            self.crl.reset()
-
-            self.crl.setopt(pycurl.HEADER, True)
-            if self.credentials is not None:
-                self.crl.setopt(pycurl.USERPWD, self.credentials)
-
-            if self.proxy is not None:
-                self.crl.setopt(pycurl.PROXY, self.proxy)
-                if self.proxy_auth is not None:
-                    self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
-
-            self.crl.setopt(pycurl.NOBODY, True)
 
             file_url = self._file_url(rfile)
             try:
@@ -134,10 +125,10 @@ class DirectHTTPDownload(DirectFTPDownload):
             except Exception:
                 self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
 
+            # Create a buffer and assign it to the pycurl object
             output = BytesIO()
-            # lets assign this buffer to pycurl object
             self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
-            self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
+
             self.crl.perform()
 
             # Figure out what encoding was sent with the response, if any.

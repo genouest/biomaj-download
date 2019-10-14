@@ -141,6 +141,8 @@ class CurlDownload(DownloadInterface):
         self.headers = {}
         self.http_parse = http_parse
         # Create the cURL object
+        # This object is shared by all operations to use the cache.
+        # Before using it, call method:`_basic_curl_configuration`.
         self.crl = pycurl.Curl()
         # Initialize options
         # Should we skip SSL verification (cURL -k/--insecure option)
@@ -150,6 +152,51 @@ class CurlDownload(DownloadInterface):
         self.ssl_server_cert = None
         # Keep alive
         self.tcp_keepalive = 0
+
+    def _basic_curl_configuration(self):
+        """
+        Perform basic configuration (i.e. that doesn't depend on the
+        operation: _download or list). This method shoulmd be called before any
+        operation.
+        """
+        # Reset cURL options before setting them
+        self.crl.reset()
+
+        if self.proxy is not None:
+            self.crl.setopt(pycurl.PROXY, self.proxy)
+            if self.proxy_auth is not None:
+                self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
+
+        if self.credentials is not None:
+            self.crl.setopt(pycurl.USERPWD, self.credentials)
+
+        # Configure TCP keepalive
+        if self.tcp_keepalive:
+            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+
+        # Configure SSL verification (on some platforms, disabling
+        # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
+        # SSL_VERIFYPEER after)
+        self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
+        self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
+        if self.ssl_server_cert:
+            # cacert is the name of the option for the curl command. The
+            # corresponding cURL option is CURLOPT_CAINFO.
+            # See https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
+            # This is inspired by that https://curl.haxx.se/docs/sslcerts.html
+            # (section "Certificate Verification", option 2) but the option
+            # CURLOPT_CAPATH is for a directory of certificates.
+            self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+
+        # Configure timeouts
+        self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
+        self.crl.setopt(pycurl.TIMEOUT, self.timeout)
+        self.crl.setopt(pycurl.NOSIGNAL, 1)
+
+        # Header function
+        self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
 
     def set_options(self, protocol_options):
         super(CurlDownload, self).set_options(protocol_options)
@@ -184,48 +231,17 @@ class CurlDownload(DownloadInterface):
         # Forge URL of remote file
         file_url = self._file_url(rfile)
         while(error is True and nbtry < 3):
-            fp = open(file_path, "wb")
 
-            # Reset cURL options before setting them
-            self.crl.reset()
+            self._basic_curl_configuration()
+
             try:
                 self.crl.setopt(pycurl.URL, file_url)
             except Exception:
                 self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
-            if self.proxy is not None:
-                self.crl.setopt(pycurl.PROXY, self.proxy)
-                if self.proxy_auth is not None:
-                    self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
 
-            if self.credentials is not None:
-                self.crl.setopt(pycurl.USERPWD, self.credentials)
-
-            self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
-            # Download should not take more than 5minutes
-            self.crl.setopt(pycurl.TIMEOUT, self.timeout)
-            self.crl.setopt(pycurl.NOSIGNAL, 1)
-
-            self.crl.setopt(pycurl.WRITEDATA, fp)
-
-            # Configure TCP keepalive
-            if self.tcp_keepalive:
-                self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
-                self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
-                self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
-
-            # Configure SSL verification (on some platforms, disabling
-            # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
-            # SSL_VERIFYPEER after)
-            self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
-            self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
-            if self.ssl_server_cert:
-                # cacert is the name of the option for the curl command. The
-                # corresponding cURL option is CURLOPT_CAINFO.
-                # See https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
-                # This is inspired by that https://curl.haxx.se/docs/sslcerts.html
-                # (section "Certificate Verification", option 2) but the option
-                # CURLOPT_CAPATH is for a directory of certificates.
-                self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+            # Create file and assign it to the pycurl object
+            fp = open(file_path, "wb")
+            self.crl.setopt(pycurl.WRITEFUNCTION, fp.write)
 
             # This is specific to HTTP
             if self.method == 'POST':
@@ -236,6 +252,7 @@ class CurlDownload(DownloadInterface):
                 # and data to send in request body.
                 self.crl.setopt(pycurl.POSTFIELDS, postfields)
 
+            # Try download
             try:
                 self.crl.perform()
                 errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
@@ -304,41 +321,18 @@ class CurlDownload(DownloadInterface):
         dir_url = self.url + self.rootdir + directory
         self.logger.debug('Download:List:' + dir_url)
 
-        # Reset cURL options before setting them
-        self.crl.reset()
+        self._basic_curl_configuration()
+
         try:
             self.crl.setopt(pycurl.URL, dir_url)
         except Exception:
             self.crl.setopt(pycurl.URL, dir_url.encode('ascii', 'ignore'))
 
-        if self.proxy is not None:
-            self.crl.setopt(pycurl.PROXY, self.proxy)
-            if self.proxy_auth is not None:
-                self.crl.setopt(pycurl.PROXYUSERPWD, self.proxy_auth)
-
-        if self.credentials is not None:
-            self.crl.setopt(pycurl.USERPWD, self.credentials)
+        # Create buffer and assign it to the pycurl object
         output = BytesIO()
-        # lets assign this buffer to pycurl object
         self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
-        self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
 
-        # Configure TCP keepalive
-        if self.tcp_keepalive:
-            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
-            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
-            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
-
-        # See the corresponding lines in method:`curl_download`
-        self.crl.setopt(pycurl.SSL_VERIFYHOST, 2 if self.ssl_verifyhost else 0)
-        self.crl.setopt(pycurl.SSL_VERIFYPEER, 1 if self.ssl_verifypeer else 0)
-        if self.ssl_server_cert:
-            self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
-
-        self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
-        # Download should not take more than 5minutes
-        self.crl.setopt(pycurl.TIMEOUT, self.timeout)
-        self.crl.setopt(pycurl.NOSIGNAL, 1)
+        # Try to list
         try:
             self.crl.perform()
         except Exception as e:
