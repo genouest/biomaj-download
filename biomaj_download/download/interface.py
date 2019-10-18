@@ -32,7 +32,8 @@ class DownloadInterface(object):
       - file operations which are used to list and match remote files, download
         them, etc.
 
-    Usually, it is enough to overload _download, list, chroot and close.
+    Usually, it is enough to overload list, _append_file_to_download and
+    _download.
 
     TODO:
       - the purpose of some setters (set_server, set_protocol) is not clear
