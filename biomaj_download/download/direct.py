@@ -7,7 +7,7 @@ about the file (if possile). method:`match` matches everything.
 Also client code can use method:`set_save_as` to indicate the name of the file
 to save.
 
-The trick for the implementation is to override 
+The trick for the implementation is to override
 method:`_append_file_to_download` to initialize the rfile with the file name
 and dummy values. Note that we use a list of rfile even if it contains only one
 file.
