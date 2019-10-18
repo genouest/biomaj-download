@@ -214,9 +214,9 @@ class CurlDownload(DownloadInterface):
         self.crl.setopt(pycurl.NOSIGNAL, 1)
 
         # Header function
-        self.crl.setopt(pycurl.HEADERFUNCTION, self.header_function)
+        self.crl.setopt(pycurl.HEADERFUNCTION, self._header_function)
 
-    def header_function(self, header_line):
+    def _header_function(self, header_line):
         # HTTP standard specifies that headers are encoded in iso-8859-1.
         # On Python 2, decoding step can be skipped.
         # On Python 3, decoding step is required.
