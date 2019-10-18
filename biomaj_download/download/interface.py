@@ -26,11 +26,17 @@ class DownloadInterface(object):
     '''
     Main interface that all downloaders must extend.
 
-    Usually, it is enough to overload _download, list, chroot, close.
+    The methods are divided into 2 broad categories:
+      - setters which act on properties of the downloader; those methods are
+        important in microservice mode
+      - file operations which are used to list and match remote files, download
+        them, etc.
+
+    Usually, it is enough to overload _download, list, chroot and close.
 
     TODO:
-      - some setters (set_server) are not used and their purpose is not clear
-        since those parameters are set when constructing the object
+      - the purpose of some setters (set_server, set_protocol) is not clear
+        since a subclass cannot always change those parameters arbitrarily
       - chroot is not used in BioMaJ
     '''
 
@@ -64,6 +70,10 @@ class DownloadInterface(object):
         self.protocol_options = {}
         self.skip_check_uncompress = False
 
+    #
+    # Setters for downloader
+    #
+
     def set_offline_dir(self, offline_dir):
         self.offline_dir = offline_dir
 
@@ -71,31 +81,12 @@ class DownloadInterface(object):
         self.server = server
 
     def set_protocol(self, protocol):
+        """
+        Method used by DownloadService to set the protocol. This value is
+        passed from the config file so is not always a real protocol (for
+        instance it can be "directhttp" for a direct downloader).
+        """
         self.protocol = protocol
-
-    def _append_file_to_download(self, rfile):
-        """
-        Add a file to the download list and check its properties (this method
-        is called in `match` and `set_files_to_download`).
-
-        Downloaders can override this to add some properties to the file (for
-        instance, most of them will add "root").
-        """
-        # Add properties to the file if needed (for safety)
-        if 'save_as' not in rfile or rfile['save_as'] is None:
-            rfile['save_as'] = rfile['name']
-        if self.param:
-            if 'param' not in rfile or not rfile['param']:
-                rfile['param'] = self.param
-        self.files_to_download.append(rfile)
-
-    def set_files_to_download(self, files):
-        """
-        Convenience method to set the list of files to download.
-        """
-        self.files_to_download = []
-        for file_to_download in files:
-            self._append_file_to_download(file_to_download)
 
     def set_param(self, param):
         self.param = param
@@ -126,6 +117,54 @@ class DownloadInterface(object):
 
     def set_method(self, method):
         self.method = method
+
+    def set_credentials(self, userpwd):
+        '''
+        Set credentials in format user:pwd
+
+        :param userpwd: credentials
+        :type userpwd: str
+        '''
+        self.credentials = userpwd
+
+    def set_options(self, protocol_options):
+        """
+        Set protocol specific options.
+
+        Subclasses that override this method must call the
+        parent implementation.
+        """
+        self.protocol_options = protocol_options
+        if "skip_check_uncompress" in protocol_options:
+            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
+
+    #
+    # File operations (match, list, download) and associated hook methods
+    #
+
+    def _append_file_to_download(self, rfile):
+        """
+        Add a file to the download list and check its properties (this method
+        is called in `match` and `set_files_to_download`).
+
+        Downloaders can override this to add some properties to the file (for
+        instance, most of them will add "root").
+        """
+        # Add properties to the file if needed (for safety)
+        if 'save_as' not in rfile or rfile['save_as'] is None:
+            rfile['save_as'] = rfile['name']
+        if self.param:
+            if 'param' not in rfile or not rfile['param']:
+                rfile['param'] = self.param
+        self.files_to_download.append(rfile)
+
+    def set_files_to_download(self, files):
+        """
+        Convenience method to set the list of files to download.
+        """
+        self.files_to_download = []
+        for file_to_download in files:
+            self._append_file_to_download(file_to_download)
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
@@ -333,26 +372,6 @@ class DownloadInterface(object):
         Change directory
         '''
         pass
-
-    def set_credentials(self, userpwd):
-        '''
-        Set credentials in format user:pwd
-
-        :param userpwd: credentials
-        :type userpwd: str
-        '''
-        self.credentials = userpwd
-
-    def set_options(self, protocol_options):
-        """
-        Set protocol specific options.
-
-        Subclasses that override this method must call the
-        parent implementation.
-        """
-        self.protocol_options = protocol_options
-        if "skip_check_uncompress" in protocol_options:
-            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
 
     def close(self):
         '''
