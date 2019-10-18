@@ -114,8 +114,27 @@ class CurlDownload(DownloadInterface):
     ]
 
     def __init__(self, curl_protocol, host, rootdir, http_parse=None):
+        """
+        Initialize a CurlDownloader.
+
+        :param curl_protocol: (real) protocol to use
+        :type curl_protocol: str (see :py:var:~CurlDownload.ALL_PROTOCOLS)
+
+        :param host: server name
+        :type host: str
+
+        :param rootdir: base directory
+        :type rootdir: str
+
+        :param http_parse: object used to extract file information from HTML pages
+        :type http_parse: py:class:HTTPParse.
+        """
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
+        # Initialize curl_protocol.
+        # Note that we don't change that field in set_protocol since this
+        # method uses the protocol from the configuration file. It's not clear
+        # what to do in this case.
         curl_protocol = curl_protocol.lower()
         if curl_protocol not in self.ALL_PROTOCOLS:
             raise ValueError("curl_protocol must be one of %s (case insensitive). Got %s." % (self.ALL_PROTOCOLS, curl_protocol))
@@ -135,9 +154,8 @@ class CurlDownload(DownloadInterface):
             self.ERRCODE_OK = 0
         else:  # Should not happen since we check before
             raise ValueError("Unknown protocol")
-        self.host = host
         self.rootdir = rootdir
-        self.url = self.curl_protocol + '://' + self.host
+        self.set_server(host)
         self.headers = {}
         self.http_parse = http_parse
         # Create the cURL object
@@ -225,6 +243,10 @@ class CurlDownload(DownloadInterface):
 
         # Now we can actually record the header name and value.
         self.headers[name] = value
+
+    def set_server(self, server):
+        super(CurlDownload, self).set_server(server)
+        self.url = self.curl_protocol + '://' + self.server
 
     def set_options(self, protocol_options):
         super(CurlDownload, self).set_options(protocol_options)
