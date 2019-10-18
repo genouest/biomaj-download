@@ -490,9 +490,6 @@ class CurlDownload(DownloadInterface):
                 rfiles.append(rfile)
         return (rfiles, rdirs)
 
-    def chroot(self, cwd):
-        self.logger.debug('Download: change dir ' + cwd)
-
     def close(self):
         if self.crl is not None:
             self.crl.close()
