@@ -15,7 +15,6 @@ class LocalDownload(DownloadInterface):
     remote.dir=/blast/db/FASTA/
 
     remote.files=^alu.*\\.gz$
-
     '''
 
     def __init__(self, rootdir, use_hardlinks=False):
@@ -23,6 +22,11 @@ class LocalDownload(DownloadInterface):
         self.logger.debug('Download')
         self.rootdir = rootdir
         self.use_hardlinks = use_hardlinks
+
+    def _append_file_to_download(self, rfile):
+        if 'root' not in rfile or not rfile['root']:
+            rfile['root'] = self.rootdir
+        super(LocalDownload, self)._append_file_to_download(rfile)
 
     def download(self, local_dir):
         '''

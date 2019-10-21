@@ -24,12 +24,30 @@ class _FakeLock(object):
 
 class DownloadInterface(object):
     '''
-    Main interface that all downloaders must extend
+    Main interface that all downloaders must extend.
+
+    The methods are divided into 2 broad categories:
+      - setters which act on properties of the downloader; those methods are
+        important in microservice mode
+      - file operations which are used to list and match remote files, download
+        them, etc.
+
+    Usually, it is enough to overload list, _append_file_to_download and
+    _download.
+
+    TODO:
+      - the purpose of some setters (set_server, set_protocol) is not clear
+        since a subclass cannot always change those parameters arbitrarily
+      - chroot is not used in BioMaJ
     '''
 
     files_num_threads = 4
 
     def __init__(self):
+        # This variable defines the protocol as passed by the config file (i.e.
+        # this is directftp for DirectFTPDownload). It is used by the workflow
+        # to send the download message so it must be set.
+        self.protocol = None
         self.config = None
         self.files_to_download = []
         self.files_to_copy = []
@@ -47,12 +65,15 @@ class DownloadInterface(object):
         self.logger = logging.getLogger('biomaj')
         self.param = None
         self.method = None
-        self.protocol = None
         self.server = None
         self.offline_dir = None
         # Options
         self.protocol_options = {}
         self.skip_check_uncompress = False
+
+    #
+    # Setters for downloader
+    #
 
     def set_offline_dir(self, offline_dir):
         self.offline_dir = offline_dir
@@ -61,14 +82,12 @@ class DownloadInterface(object):
         self.server = server
 
     def set_protocol(self, protocol):
+        """
+        Method used by DownloadService to set the protocol. This value is
+        passed from the config file so is not always a real protocol (for
+        instance it can be "directhttp" for a direct downloader).
+        """
         self.protocol = protocol
-
-    def set_files_to_download(self, files):
-        self.files_to_download = files
-        for file_to_download in self.files_to_download:
-            if self.param:
-                if 'param' not in file_to_download or not file_to_download['param']:
-                    file_to_download['param'] = self.param
 
     def set_param(self, param):
         self.param = param
@@ -100,6 +119,54 @@ class DownloadInterface(object):
     def set_method(self, method):
         self.method = method
 
+    def set_credentials(self, userpwd):
+        '''
+        Set credentials in format user:pwd
+
+        :param userpwd: credentials
+        :type userpwd: str
+        '''
+        self.credentials = userpwd
+
+    def set_options(self, protocol_options):
+        """
+        Set protocol specific options.
+
+        Subclasses that override this method must call the
+        parent implementation.
+        """
+        self.protocol_options = protocol_options
+        if "skip_check_uncompress" in protocol_options:
+            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
+
+    #
+    # File operations (match, list, download) and associated hook methods
+    #
+
+    def _append_file_to_download(self, rfile):
+        """
+        Add a file to the download list and check its properties (this method
+        is called in `match` and `set_files_to_download`).
+
+        Downloaders can override this to add some properties to the file (for
+        instance, most of them will add "root").
+        """
+        # Add properties to the file if needed (for safety)
+        if 'save_as' not in rfile or rfile['save_as'] is None:
+            rfile['save_as'] = rfile['name']
+        if self.param:
+            if 'param' not in rfile or not rfile['param']:
+                rfile['param'] = self.param
+        self.files_to_download.append(rfile)
+
+    def set_files_to_download(self, files):
+        """
+        Convenience method to set the list of files to download.
+        """
+        self.files_to_download = []
+        for file_to_download in files:
+            self._append_file_to_download(file_to_download)
+
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
         '''
         Find files matching patterns. Sets instance variable files_to_download.
@@ -130,13 +197,12 @@ class DownloadInterface(object):
                 if subdir == '^':
                     subdirs_pattern = subdirs_pattern[1:]
                     subdir = subdirs_pattern[0]
-                if not dir_list and pattern == '**/*':
-                    # Take all and no more dirs, take all files
+                # If getting all, get all files
+                if pattern == '**/*':
                     for rfile in file_list:
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     return
                 for direlt in dir_list:
@@ -147,10 +213,9 @@ class DownloadInterface(object):
                         self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
                         for rfile in file_list:
                             if pattern == '**/*' or re.match(pattern, rfile['name']):
-                                rfile['root'] = self.rootdir
                                 if prefix != '':
                                     rfile['name'] = prefix + '/' + rfile['name']
-                                self.files_to_download.append(rfile)
+                                self._append_file_to_download(rfile)
                                 self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     else:
                         if re.match(subdirs_pattern[0], subdir):
@@ -163,10 +228,9 @@ class DownloadInterface(object):
             else:
                 for rfile in file_list:
                     if re.match(pattern, rfile['name']):
-                        rfile['root'] = self.rootdir
                         if prefix != '':
                             rfile['name'] = prefix + '/' + rfile['name']
-                        self.files_to_download.append(rfile)
+                        self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
@@ -226,7 +290,6 @@ class DownloadInterface(object):
                         self.files_to_copy.append(dfile)
                     else:
                         new_files_to_download.append(dfile)
-
         else:
             # Copy everything
             for dfile in self.files_to_download:
@@ -236,17 +299,66 @@ class DownloadInterface(object):
                 else:
                     new_files_to_download.append(dfile)
 
-        self.files_to_download = new_files_to_download
+        self.set_files_to_download(new_files_to_download)
 
-    def download(self, local_dir):
+    def _download(self, file_path, rfile):
+        '''
+        Download one file and return False in case of success and True
+        otherwise. This must be implemented in subclasses.
+        '''
+        raise NotImplementedError()
+
+    def download(self, local_dir, keep_dirs=True):
         '''
         Download remote files to local_dir
 
         :param local_dir: Directory where files should be downloaded
         :type local_dir: str
+        :param keep_dirs: keep file name directory structure or copy file in local_dir directly
+        :param keep_dirs: bool
         :return: list of downloaded files
         '''
-        pass
+        self.logger.debug(self.__class__.__name__ + ':Download')
+        nb_files = len(self.files_to_download)
+        cur_files = 1
+        self.offline_dir = local_dir
+        for rfile in self.files_to_download:
+            if self.kill_received:
+                raise Exception('Kill request received, exiting')
+            # Determine where to store file (directory and name)
+            file_dir = local_dir
+            if keep_dirs:
+                file_dir = local_dir + '/' + os.path.dirname(rfile['save_as'])
+            if file_dir[-1] == "/":
+                file_path = file_dir + os.path.basename(rfile['save_as'])
+            else:
+                file_path = file_dir + '/' + os.path.basename(rfile['save_as'])
+
+            # For unit tests only, workflow will take in charge directory
+            # creation before to avoid thread multi access
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
+
+            msg = self.__class__.__name__ + ':Download:Progress:'
+            msg += str(cur_files) + '/' + str(nb_files)
+            msg += ' downloading file ' + rfile['name'] + ' save as ' + rfile['save_as']
+            self.logger.debug(msg)
+            cur_files += 1
+            start_time = datetime.datetime.now()
+            start_time = time.mktime(start_time.timetuple())
+            error = self._download(file_path, rfile)
+            if error:
+                rfile['download_time'] = 0
+                rfile['error'] = True
+                raise Exception(self.__class__.__name__ + ":Download:Error:" + rfile["name"])
+            else:
+                end_time = datetime.datetime.now()
+                end_time = time.mktime(end_time.timetuple())
+                rfile['download_time'] = end_time - start_time
+            # Set permissions
+            self.set_permissions(file_path, rfile)
+
+        return self.files_to_download
 
     def list(self):
         '''
@@ -261,26 +373,6 @@ class DownloadInterface(object):
         Change directory
         '''
         pass
-
-    def set_credentials(self, userpwd):
-        '''
-        Set credentials in format user:pwd
-
-        :param userpwd: credentials
-        :type userpwd: str
-        '''
-        self.credentials = userpwd
-
-    def set_options(self, protocol_options):
-        """
-        Set protocol specific options.
-
-        Subclasses that override this method must call the
-        parent implementation.
-        """
-        self.protocol_options = protocol_options
-        if "skip_check_uncompress" in protocol_options:
-            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
 
     def close(self):
         '''

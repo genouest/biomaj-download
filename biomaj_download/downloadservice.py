@@ -13,10 +13,9 @@ import pika
 from flask import Flask
 from flask import jsonify
 
-from biomaj_download.download.ftp import FTPDownload
-from biomaj_download.download.http import HTTPDownload
+from biomaj_download.download.curl import CurlDownload
 from biomaj_download.download.direct import DirectFTPDownload
-from biomaj_download.download.direct import DirectHttpDownload
+from biomaj_download.download.direct import DirectHTTPDownload
 from biomaj_download.download.localcopy import LocalDownload
 from biomaj_download.message import downmessage_pb2
 from biomaj_download.download.rsync import RSYNCDownload
@@ -134,24 +133,24 @@ class DownloadService(object):
                     protocol_options={}):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
-        if protocol in [0, 1]:
-            downloader = FTPDownload(protocol_name, server, remote_dir)
-        if protocol in [2, 3]:
-            downloader = HTTPDownload(protocol_name, server, remote_dir, http_parse)
-        if protocol == 7:
-            downloader = LocalDownload(remote_dir)
-        if protocol == 4:
-            downloader = DirectFTPDownload('ftp', server, '/')
-        if protocol == 10:
+        if protocol in [0, 1]:  # FTP, SFTP
+            downloader = CurlDownload(protocol_name, server, remote_dir)
+        if protocol in [2, 3]:  # HTTP, HTTPS (could be factored with previous case)
+            downloader = CurlDownload(protocol_name, server, remote_dir, http_parse)
+        if protocol == 4:  # DirectFTP
+            downloader = DirectFTPDownload("ftp", server, '/')
+        if protocol == 5:  # DirectHTTP
+            downloader = DirectHTTPDownload("http", server, '/')
+        if protocol == 6:  # DirectHTTPS
+            downloader = DirectHTTPDownload("https", server, '/')
+        if protocol == 10:  # DirectFTPS
             downloader = DirectFTPDownload('ftps', server, '/')
-        if protocol == 5:
-            downloader = DirectHttpDownload('http', server, '/')
-        if protocol == 6:
-            downloader = DirectHttpDownload('https', server, '/')
-        if protocol == 8:
-            downloader = RSYNCDownload('rsync', server, remote_dir)
-        if protocol == 9:
-            downloader = IRODSDownload('irods', server, remote_dir)
+        if protocol == 7:  # Local
+            downloader = LocalDownload(remote_dir)
+        if protocol == 8:  # RSYNC
+            downloader = RSYNCDownload(server, remote_dir)
+        if protocol == 9:  # iRods
+            downloader = IRODSDownload(server, remote_dir)
         if downloader is None:
             return None
 
@@ -182,11 +181,13 @@ class DownloadService(object):
 
         if save_as:
             downloader.set_save_as(save_as)
+
         if param:
             downloader.set_param(param)
 
         downloader.set_server(server)
 
+        # Set the name of the BioMAJ protocol to which we respond.
         downloader.set_protocol(protocol_name)
 
         if protocol_options is not None:
