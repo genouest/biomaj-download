@@ -100,7 +100,7 @@ class DirectFTPDownload(CurlDownload):
             self.crl.setopt(pycurl.OPT_FILETIME, True)
             self.crl.setopt(pycurl.NOBODY, True)
 
-            # Very old servers may not support the MDTM commands. Therefore, 
+            # Very old servers may not support the MDTM commands. Therefore,
             # cURL will raise an error. In that case, we simply skip the rest
             # of the function as it was done before. Download will work however.
             # Note that if the file does not exist, it will be skipped too
@@ -108,7 +108,7 @@ class DirectFTPDownload(CurlDownload):
             # this case.
             try:
                 self.crl.perform()
-            except Exception as e:
+            except Exception:
                 continue
 
             timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
