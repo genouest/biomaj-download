@@ -22,6 +22,7 @@ import pycurl
 import re
 import hashlib
 import sys
+import os
 
 from biomaj_download.download.curl import CurlDownload
 from biomaj_core.utils import Utils
@@ -76,11 +77,49 @@ class DirectFTPDownload(CurlDownload):
             raise ValueError(msg)
         return super(DirectFTPDownload, self).set_files_to_download(files_to_download)
 
+    def _file_url(self, rfile):
+        # rfile['root'] is set to self.rootdir if needed but may be different.
+        # We don't use os.path.join because rfile['name'] may starts with /
+        return self.url + '/' + rfile['root'] + rfile['name']
+
     def list(self, directory=''):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
         '''
-        # TODO: are we sure about this implementation ?
+        self._basic_curl_configuration()
+        for rfile in self.files_to_download:
+            if self.save_as is None:
+                self.save_as = os.path.basename(rfile['name'])
+            rfile['save_as'] = self.save_as
+            file_url = self._file_url(rfile)
+            try:
+                self.crl.setopt(pycurl.URL, file_url)
+            except Exception:
+                self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
+            self.crl.setopt(pycurl.URL, file_url)
+            self.crl.setopt(pycurl.OPT_FILETIME, True)
+            self.crl.setopt(pycurl.NOBODY, True)
+
+            # Very old servers may not support the MDTM commands. Therefore,
+            # cURL will raise an error. In that case, we simply skip the rest
+            # of the function as it was done before. Download will work however.
+            # Note that if the file does not exist, it will be skipped too
+            # (that was the case before too). Of course, download will fail in
+            # this case.
+            try:
+                self.crl.perform()
+            except Exception:
+                continue
+
+            timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
+            dt = datetime.datetime.fromtimestamp(timestamp)
+            size_file = int(self.crl.getinfo(pycurl.CONTENT_LENGTH_DOWNLOAD))
+
+            rfile['year'] = dt.year
+            rfile['month'] = dt.month
+            rfile['day'] = dt.day
+            rfile['size'] = size_file
+            rfile['hash'] = hashlib.md5(str(timestamp).encode('utf-8')).hexdigest()
         return (self.files_to_download, [])
 
     def match(self, patterns, file_list, dir_list=None, prefix='', submatch=False):
