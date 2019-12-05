@@ -113,6 +113,14 @@ class CurlDownload(DownloadInterface):
         ftputil.stat.MSParser(),
     ]
 
+    # Valid values for ftp_method options as string and int
+    VALID_FTP_FILEMETHOD = {
+        "default": pycurl.FTPMETHOD_DEFAULT,
+        "multicwd": pycurl.FTPMETHOD_MULTICWD,
+        "nocwd": pycurl.FTPMETHOD_NOCWD,
+        "singlecwd": pycurl.FTPMETHOD_SINGLECWD,
+    }
+
     def __init__(self, curl_protocol, host, rootdir, http_parse=None):
         """
         Initialize a CurlDownloader.
@@ -162,7 +170,9 @@ class CurlDownload(DownloadInterface):
         # This object is shared by all operations to use the cache.
         # Before using it, call method:`_basic_curl_configuration`.
         self.crl = pycurl.Curl()
+        #
         # Initialize options
+        #
         # Should we skip SSL verification (cURL -k/--insecure option)
         self.ssl_verifyhost = True
         self.ssl_verifypeer = True
@@ -170,6 +180,8 @@ class CurlDownload(DownloadInterface):
         self.ssl_server_cert = None
         # Keep alive
         self.tcp_keepalive = 0
+        # FTP method (cURL --ftp-method option)
+        self.ftp_method = pycurl.FTPMETHOD_DEFAULT  # Use cURL default
 
     def _basic_curl_configuration(self):
         """
@@ -207,6 +219,9 @@ class CurlDownload(DownloadInterface):
             # (section "Certificate Verification", option 2) but the option
             # CURLOPT_CAPATH is for a directory of certificates.
             self.crl.setopt(pycurl.CAINFO, self.ssl_server_cert)
+
+        # Configure ftp method
+        self.crl.setopt(pycurl.FTP_FILEMETHOD, self.ftp_method)
 
         # Configure timeouts
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
@@ -258,6 +273,13 @@ class CurlDownload(DownloadInterface):
             self.ssl_server_cert = protocol_options["ssl_server_cert"]
         if "tcp_keepalive" in protocol_options:
             self.tcp_keepalive = Utils.to_int(protocol_options["tcp_keepalive"])
+        if "ftp_method" in protocol_options:
+            # raw_val is a string which contains the name of the option as in the CLI.
+            # We always convert raw_val to a valid integer
+            raw_val = protocol_options["ftp_method"].lower()
+            if raw_val not in self.VALID_FTP_FILEMETHOD:
+                raise ValueError("Invalid value for ftp_method")
+            self.ftp_method = self.VALID_FTP_FILEMETHOD[raw_val]
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)
