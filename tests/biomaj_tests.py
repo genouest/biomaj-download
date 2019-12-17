@@ -230,7 +230,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     except Exception:
       msg = "In %s: copy worked but hardlinks were not used." % self.id()
       logging.info(msg)
-      
+
 @attr('network')
 @attr('http')
 class TestBiomajHTTPDownload(unittest.TestCase):
@@ -365,7 +365,7 @@ class TestBiomajSFTPDownload(unittest.TestCase):
   """
 
   PROTOCOL = "ftps"
-  
+
   def setUp(self):
     self.utils = UtilsForTest()
 
@@ -420,7 +420,7 @@ class TestBiomajDirectFTPSDownload(unittest.TestCase):
   """
   Test DirectFTP downloader with FTPS.
   """
-  
+
   def setUp(self):
     self.utils = UtilsForTest()
 
