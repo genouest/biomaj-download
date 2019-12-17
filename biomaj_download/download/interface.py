@@ -68,7 +68,7 @@ class DownloadInterface(object):
         self.server = None
         self.offline_dir = None
         # Options
-        self.protocol_options = {}
+        self.options = {}  # This field is used to forge the download message
         self.skip_check_uncompress = False
 
     #
@@ -128,16 +128,16 @@ class DownloadInterface(object):
         '''
         self.credentials = userpwd
 
-    def set_options(self, protocol_options):
+    def set_options(self, options):
         """
-        Set protocol specific options.
+        Set download options.
 
-        Subclasses that override this method must call the
-        parent implementation.
+        Subclasses that override this method must call this implementation.
         """
-        self.protocol_options = protocol_options
-        if "skip_check_uncompress" in protocol_options:
-            self.skip_check_uncompress = Utils.to_bool(protocol_options["skip_check_uncompress"])
+        # Copy the option dict
+        self.options = options
+        if "skip_check_uncompress" in options:
+            self.skip_check_uncompress = Utils.to_bool(options["skip_check_uncompress"])
 
     #
     # File operations (match, list, download) and associated hook methods

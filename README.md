@@ -59,9 +59,9 @@ Web processes should be behind a proxy/load balancer, API base url /api/download
 
 Prometheus endpoint metrics are exposed via /metrics on web server
 
-# Protocol options
+# Download options
 
-Since version 3.0.26, you can use the `set_options` method to pass a dictionary of protocol-specific options.
+Since version 3.0.26, you can use the `set_options` method to pass a dictionary of downloader-specific options.
 The following list shows some options and their effect (the option to set is the key and the parameter is the associated value):
 
   * **skip_check_uncompress**:
@@ -102,4 +102,3 @@ The following list shows some options and their effect (the option to set is the
 
 Those options can be set in bank properties.
 See file `global.properties.example` in [biomaj module](https://github.com/genouest/biomaj).
-

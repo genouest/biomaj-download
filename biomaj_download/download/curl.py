@@ -263,20 +263,20 @@ class CurlDownload(DownloadInterface):
         super(CurlDownload, self).set_server(server)
         self.url = self.curl_protocol + '://' + self.server
 
-    def set_options(self, protocol_options):
-        super(CurlDownload, self).set_options(protocol_options)
-        if "ssl_verifyhost" in protocol_options:
-            self.ssl_verifyhost = Utils.to_bool(protocol_options["ssl_verifyhost"])
-        if "ssl_verifypeer" in protocol_options:
-            self.ssl_verifypeer = Utils.to_bool(protocol_options["ssl_verifypeer"])
-        if "ssl_server_cert" in protocol_options:
-            self.ssl_server_cert = protocol_options["ssl_server_cert"]
-        if "tcp_keepalive" in protocol_options:
-            self.tcp_keepalive = Utils.to_int(protocol_options["tcp_keepalive"])
-        if "ftp_method" in protocol_options:
+    def set_options(self, options):
+        super(CurlDownload, self).set_options(options)
+        if "ssl_verifyhost" in options:
+            self.ssl_verifyhost = Utils.to_bool(options["ssl_verifyhost"])
+        if "ssl_verifypeer" in options:
+            self.ssl_verifypeer = Utils.to_bool(options["ssl_verifypeer"])
+        if "ssl_server_cert" in options:
+            self.ssl_server_cert = options["ssl_server_cert"]
+        if "tcp_keepalive" in options:
+            self.tcp_keepalive = Utils.to_int(options["tcp_keepalive"])
+        if "ftp_method" in options:
             # raw_val is a string which contains the name of the option as in the CLI.
             # We always convert raw_val to a valid integer
-            raw_val = protocol_options["ftp_method"].lower()
+            raw_val = options["ftp_method"].lower()
             if raw_val not in self.VALID_FTP_FILEMETHOD:
                 raise ValueError("Invalid value for ftp_method")
             self.ftp_method = self.VALID_FTP_FILEMETHOD[raw_val]
