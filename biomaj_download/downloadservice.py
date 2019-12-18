@@ -130,7 +130,7 @@ class DownloadService(object):
                     credentials=None, http_parse=None, http_method=None, param=None,
                     proxy=None, proxy_auth='',
                     save_as=None, timeout_download=None, offline_dir=None,
-                    protocol_options={}):
+                    options={}):
         protocol = downmessage_pb2.DownloadFile.Protocol.Value(protocol_name.upper())
         downloader = None
         if protocol in [0, 1]:  # FTP, SFTP
@@ -190,9 +190,9 @@ class DownloadService(object):
         # Set the name of the BioMAJ protocol to which we respond.
         downloader.set_protocol(protocol_name)
 
-        if protocol_options is not None:
-            self.logger.debug("Received protocol options: " + str(protocol_options))
-            downloader.set_options(protocol_options)
+        if options is not None:
+            self.logger.debug("Received options: " + str(options))
+            downloader.set_options(options)
 
         downloader.logger = self.logger
         downloader.set_files_to_download(remote_files)
@@ -243,7 +243,7 @@ class DownloadService(object):
                                 save_as=biomaj_file_info.remote_file.save_as,
                                 timeout_download=biomaj_file_info.timeout_download,
                                 offline_dir=biomaj_file_info.local_dir,
-                                protocol_options=biomaj_file_info.protocol_options
+                                options=biomaj_file_info.options
                                 )
 
     def clean(self, biomaj_file_info=None):
