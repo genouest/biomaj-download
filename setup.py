@@ -47,6 +47,8 @@ config = {
                          'biomaj_zipkin',
                          'pycurl',
                          'ftputil',
+                         'tenacity',
+                         'simpeeval',
                          'py-bcrypt',
                          'pika==0.13.0',
                          'redis',
