@@ -4,7 +4,47 @@ import datetime
 import time
 import re
 
+import tenacity
+from simpleeval import simple_eval, ast
+
 from biomaj_core.utils import Utils
+from biomaj_core.config import BiomajConfig
+
+
+# These following functions are used in the retryer:
+# retry request download occur while `error` is true
+def is_true(value):
+    """Return True if value is True"""
+    return value is True
+
+
+# and the last value of `error` is returned once stop/wait conditions have been
+# fulfilled
+def return_last_value(retry_state):
+    """return the result of the last call attempt"""
+    return retry_state.outcome.result()
+
+
+# Functions and operators allowed when parsing wait_condition
+ALL_WAIT_CONDITIONS = {
+    "wait_fixed": tenacity.wait_fixed,
+    "wait_exponential": tenacity.wait_exponential,
+    "wait_random": tenacity.wait_random
+}
+
+ALL_WAIT_OPERATORS = {
+    ast.Add: tenacity.wait.wait_base.__add__
+}
+
+# Functions and operators allowed when parsing stop_condition
+ALL_STOP_CONDITIONS = {
+    "stop_after_delay": tenacity.stop_after_delay,
+    "stop_after_attempt": tenacity.stop_after_attempt
+}
+
+ALL_STOP_OPERATORS = {
+    ast.BitOr: tenacity.stop.stop_base.__or__
+}
 
 
 class _FakeLock(object):
@@ -70,6 +110,11 @@ class DownloadInterface(object):
         # Options
         self.options = {}  # This field is used to forge the download message
         self.skip_check_uncompress = False
+        # Construct default retryer (may be replaced in set_options)
+        self._set_retryer(
+            BiomajConfig.DEFAULTS["stop_condition"],
+            BiomajConfig.DEFAULTS["wait_condition"]
+        )
 
     #
     # Setters for downloader
@@ -138,6 +183,11 @@ class DownloadInterface(object):
         self.options = options
         if "skip_check_uncompress" in options:
             self.skip_check_uncompress = Utils.to_bool(options["skip_check_uncompress"])
+        # If stop or wait condition is specified, we reconstruct the retryer
+        if "stop_condition" or "wait_condition" in options:
+            stop_condition = options.get("stop_condition", BiomajConfig.DEFAULTS["stop_condition"])
+            wait_condition = options.get("wait_condition", BiomajConfig.DEFAULTS["wait_condition"])
+            self._set_retryer(stop_condition, wait_condition)
 
     #
     # File operations (match, list, download) and associated hook methods
@@ -346,7 +396,7 @@ class DownloadInterface(object):
             cur_files += 1
             start_time = datetime.datetime.now()
             start_time = time.mktime(start_time.timetuple())
-            error = self._download(file_path, rfile)
+            error = self.retryer(self._download, file_path, rfile)
             if error:
                 rfile['download_time'] = 0
                 rfile['error'] = True
@@ -373,6 +423,39 @@ class DownloadInterface(object):
         Change directory
         '''
         pass
+
+    def _set_retryer(self, stop_condition, wait_condition):
+        """
+        Add a retryer to retry the current download if it fails.
+        """       
+        # Try to construct stop condition
+        if not isinstance(stop_condition, tenacity.stop.stop_base):
+            try:
+                stop_cond = simple_eval(stop_condition,
+                                        functions=ALL_STOP_CONDITIONS,
+                                        operators=ALL_STOP_OPERATORS)
+            except Exception:
+                raise ValueError()
+        else:
+            stop_cond = stop_condition
+        # Try to construct wait condition
+        if not isinstance(wait_condition, tenacity.wait.wait_base):
+            try:
+                wait_cond = simple_eval(wait_condition,
+                                        functions=ALL_WAIT_CONDITIONS,
+                                        operators=ALL_WAIT_OPERATORS)
+            except Exception:
+                raise ValueError()
+        else:
+            wait_cond = wait_condition
+
+        self.retryer = tenacity.Retrying(
+             stop=stop_cond,
+             wait=wait_cond,
+             retry_error_callback=return_last_value,
+             retry=tenacity.retry_if_result(is_true),
+             reraise=True
+        )
 
     def close(self):
         '''

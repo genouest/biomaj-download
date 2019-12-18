@@ -21,6 +21,8 @@ from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
 import unittest
+import tenacity
+
 
 class UtilsForTest():
   """
@@ -615,6 +617,39 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['year']=='2013')
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
+
+  def test_download_retry(self):
+    """
+    Try to download fake files to test retry.
+    """
+    n_attempts = 5
+    ftpd = CurlDownload("ftp", "speedtest.tele2.net", "/")
+    # Download a fake file
+    ftpd.set_files_to_download([
+          {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+           'size': 1, 'save_as': 'TOTO1KB'}
+    ])        
+    ftpd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
+                          stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+    self.assertRaisesRegexp(
+        Exception, "^CurlDownload:Download:Error:",
+        ftpd.download, self.utils.data_dir,
+    )
+    logging.debug(ftpd.retryer.statistics)
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    # Try to download another file to ensure that it retryies
+    ftpd.set_files_to_download([
+          {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+           'size': 1, 'save_as': 'TOTO1KB'}
+    ])
+    self.assertRaisesRegexp(
+        Exception, "^CurlDownload:Download:Error:",
+        ftpd.download, self.utils.data_dir,
+    )
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    ftpd.close()  
 
   def test_ms_server(self):
       ftpd = CurlDownload("ftp", "test.rebex.net", "/")
