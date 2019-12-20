@@ -65,6 +65,11 @@ class UtilsForTest():
     if self.bank_properties is None:
       self.__copy_test_bank_properties()
 
+    # Create an invalid archive file (empty file). This is deleted by clean().
+    # See TestBiomajRSYNCDownload.test_rsync_download_skip_check_uncompress.
+    self.invalid_archive = os.path.join(self.test_dir, 'invalid.gz')
+    open(self.invalid_archive, 'w').close()
+
   def clean(self):
     """
     Deletes temp directory
@@ -821,6 +826,17 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 3)
 
+    def test_rsync_download_skip_check_uncompress(self):
+        """
+        Download the fake archive file with RSYNC but skip check.
+        """
+        rsyncd = RSYNCDownload(self.utils.test_dir + '/', "")
+        rsyncd.set_options(dict(skip_check_uncompress=True))
+        (file_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'invalid.gz'], file_list, dir_list, prefix='')
+        rsyncd.download(self.utils.data_dir)
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+
 
 class iRodsResult(object):
 
@@ -893,6 +909,7 @@ class MockiRODSSession(object):
         my_test_file = open("tests/test.fasta.gz", "r+")
         return(my_test_file)
 
+
 @attr('irods')
 @attr('roscoZone')
 @attr('network')
@@ -934,5 +951,20 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         ))
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
+        irodsd.download(self.utils.data_dir)
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+
+    def test_irods_download_skip_check_uncompress(self):
+        """
+        Download the fake archive file with iRODS but skip check.
+        """
+        irodsd = IRODSDownload("localhost", "/tempZone/home/rods")
+        irodsd.set_options(dict(skip_check_uncompress=True))
+        irodsd.set_param(dict(
+            user='rods',
+            password='rods',
+        ))
+        (file_list, dir_list) = irodsd.list()
+        irodsd.match([r'invalid.gz$'], file_list, dir_list, prefix='')
         irodsd.download(self.utils.data_dir)
         self.assertTrue(len(irodsd.files_to_download) == 1)

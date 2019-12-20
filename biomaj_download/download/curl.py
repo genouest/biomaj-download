@@ -1,5 +1,4 @@
 import sys
-import os
 import re
 from datetime import datetime
 import hashlib
@@ -301,7 +300,7 @@ class CurlDownload(DownloadInterface):
         error = True
         # Forge URL of remote file
         file_url = self._file_url(rfile)
-        
+
         self._basic_curl_configuration()
 
         try:
@@ -337,16 +336,11 @@ class CurlDownload(DownloadInterface):
         # Close file
         fp.close()
 
-        # Check that the archive is correct
-        if not error and not self.skip_check_uncompress:
-            archive_status = Utils.archive_check(file_path)
-            if not archive_status:
-                self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
-                error = True
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+        if error:
+            return error
 
-        return error
+        # Our part is done so call parent _download
+        return super(CurlDownload, self)._download(file_path, rfile)
 
     def list(self, directory=''):
         '''

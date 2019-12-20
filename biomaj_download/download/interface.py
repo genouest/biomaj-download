@@ -354,9 +354,21 @@ class DownloadInterface(object):
     def _download(self, file_path, rfile):
         '''
         Download one file and return False in case of success and True
-        otherwise. This must be implemented in subclasses.
+        otherwise.
+
+        Subclasses that override this method must call this implementation to
+        perform test on archives.
         '''
-        raise NotImplementedError()
+        error = False
+        # Check that the archive is correct
+        if not self.skip_check_uncompress:
+            archive_status = Utils.archive_check(file_path)
+            if not archive_status:
+                self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
+                error = True
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        return error
 
     def download(self, local_dir, keep_dirs=True):
         '''
@@ -427,7 +439,7 @@ class DownloadInterface(object):
     def _set_retryer(self, stop_condition, wait_condition):
         """
         Add a retryer to retry the current download if it fails.
-        """       
+        """
         # Try to construct stop condition
         if not isinstance(stop_condition, tenacity.stop.stop_base):
             try:
@@ -450,11 +462,11 @@ class DownloadInterface(object):
             wait_cond = wait_condition
 
         self.retryer = tenacity.Retrying(
-             stop=stop_cond,
-             wait=wait_cond,
-             retry_error_callback=return_last_value,
-             retry=tenacity.retry_if_result(is_true),
-             reraise=True
+            stop=stop_cond,
+            wait=wait_cond,
+            retry_error_callback=return_last_value,
+            retry=tenacity.retry_if_result(is_true),
+            reraise=True
         )
 
     def close(self):

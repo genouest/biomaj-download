@@ -59,7 +59,7 @@ class IRODSDownload(DownloadInterface):
         session.cleanup()
         return (rfiles, rdirs)
 
-    def _download(self, file_dir, rfile):
+    def _download(self, file_path, rfile):
         error = False
         self.logger.debug('IRODS:IRODS DOWNLOAD')
         session = iRODSSession(host=self.server, port=self.port,
@@ -73,12 +73,17 @@ class IRODSDownload(DownloadInterface):
                 file_to_get = rfile['root'] + "/" + rfile['name']
             # Write the file to download in the wanted file_dir with the
             # python-irods iget
-            obj = session.data_objects.get(file_to_get, file_dir)
+            obj = session.data_objects.get(file_to_get, file_path)
         except ExceptionIRODS as e:
             self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + str(obj))
             self.logger.error(self.__class__.__name__ + ":Download:Error:" + str(e))
         session.cleanup()
-        return(error)
+
+        if error:
+            return error
+
+        # Our part is done so call parent _download
+        return super(IRODSDownload, self)._download(file_path, rfile)
 
 
 class ExceptionIRODS(Exception):
