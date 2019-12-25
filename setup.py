@@ -48,7 +48,7 @@ config = {
                          'pycurl',
                          'ftputil',
                          'tenacity',
-                         'simpeeval',
+                         'simpleeval',
                          'py-bcrypt',
                          'pika==0.13.0',
                          'redis',
