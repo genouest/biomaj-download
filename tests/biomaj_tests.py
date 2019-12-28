@@ -364,7 +364,7 @@ class TestBiomajSFTPDownload(unittest.TestCase):
   Test SFTP downloader
   """
 
-  PROTOCOL = "ftps"
+  PROTOCOL = "sftp"
 
   def setUp(self):
     self.utils = UtilsForTest()
