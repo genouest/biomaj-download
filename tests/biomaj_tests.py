@@ -633,7 +633,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.set_files_to_download([
           {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
            'size': 1, 'save_as': 'TOTO1KB'}
-    ])        
+    ])
     ftpd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
                           stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
     self.assertRaisesRegexp(
@@ -654,7 +654,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     )
     self.assertTrue(len(ftpd.files_to_download) == 1)
     self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
-    ftpd.close()  
+    ftpd.close()
 
   def test_ms_server(self):
       ftpd = CurlDownload("ftp", "test.rebex.net", "/")
