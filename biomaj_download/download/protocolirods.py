@@ -1,5 +1,6 @@
 from biomaj_download.download.interface import DownloadInterface
 from irods.session import iRODSSession
+from irods.exception import iRODSException
 from irods.models import DataObject, User
 
 
@@ -73,10 +74,11 @@ class IRODSDownload(DownloadInterface):
                 file_to_get = rfile['root'] + "/" + rfile['name']
             # Write the file to download in the wanted file_dir with the
             # python-irods iget
-            obj = session.data_objects.get(file_to_get, file_path)
-        except ExceptionIRODS as e:
-            self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + str(obj))
-            self.logger.error(self.__class__.__name__ + ":Download:Error:" + str(e))
+            session.data_objects.get(file_to_get, file_path)
+        except iRODSException as e:
+            error = True
+            self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + file_to_get)
+            self.logger.error(self.__class__.__name__ + ":Download:Error:" + repr(e))
         session.cleanup()
 
         if error:
@@ -84,11 +86,3 @@ class IRODSDownload(DownloadInterface):
 
         # Our part is done so call parent _download
         return super(IRODSDownload, self)._download(file_path, rfile)
-
-
-class ExceptionIRODS(Exception):
-    def __init__(self, exception_reason):
-        self.exception_reason = exception_reason
-
-    def __str__(self):
-        return self.exception_reason
