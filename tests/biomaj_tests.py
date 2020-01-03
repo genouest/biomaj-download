@@ -1,5 +1,9 @@
 """
 Note that attributes 'network' and 'local_irods' are ignored for CI.
+
+To run 'local_irods' tests, you need an iRODS server on localhost (default port,
+user 'rods', password 'rods') and a zone /tempZone/home/rods. See
+UtilsForLocalIRODSTest.
 """
 from nose.plugins.attrib import attr
 
@@ -11,6 +15,8 @@ import logging
 import stat
 
 from mock import patch
+
+from irods.session import iRODSSession
 
 from biomaj_core.config import BiomajConfig
 from biomaj_core.utils import Utils
@@ -134,6 +140,37 @@ class UtilsForTest():
             fout.write(line)
     fout.close()
 
+
+class UtilsForLocalIRODSTest(UtilsForTest):
+    """
+    This class is used to prepare 'local_irods' tests.
+    """
+    SERVER = "localhost"
+    PORT = 1247
+    ZONE = "tempZone"
+    USER = "rods"
+    PASSWORD = "irods"
+    COLLECTION = os.path.join("/" + ZONE, "home/rods/")  # Don't remove or add /
+
+    def __init__(self):
+        super(UtilsForLocalIRODSTest, self).__init__()
+        self._session = iRODSSession(host=self.SERVER, port=self.PORT,
+                                     user=self.USER, password=self.PASSWORD,
+                                     zone=self.ZONE)
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        # Copy some valid archives (bank/test.fasta.gz)
+        file_ = os.path.join(self.curdir, "bank/test.fasta.gz")
+        self._session.data_objects.put(file_, self.COLLECTION)
+        # Copy invalid.gz
+        self._session.data_objects.put(self.invalid_archive, self.COLLECTION)
+
+    def clean(self):
+        super(UtilsForLocalIRODSTest, self).clean()
+        # Remove files on iRODS (use force otherwise the files are put in trash)
+        # Remove test.fasta.gz
+        self._session.data_objects.unlink(os.path.join(self.COLLECTION, "test.fasta.gz"), force=True)
+        # Remove invalid.gz
+        self._session.data_objects.unlink(os.path.join(self.COLLECTION, "invalid.gz"), force=True)
 
 class TestBiomajUtils(unittest.TestCase):
 
@@ -938,16 +975,28 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
 
-    @attr('local_irods')
+
+@attr('local_irods')
+@attr('network')
+class TestBiomajLocalIRODSDownload(unittest.TestCase):
+    """
+    Test with a local iRODS server.
+    """
+
+    def setUp(self):
+        self.utils = UtilsForLocalIRODSTest()
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+
+    def tearDown(self):
+        self.utils.clean()
+
     def test_irods_download(self):
-        # To run this test, you need an iRODS server on localhost (default
-        # port, user 'rods', password 'rods'), and populate a zone
-        # /tempZone/home/rods with a file that matches r'^test.*\.gz$' (for
-        # instance, by copying tests/bank/test/test.fasta.gz).
-        irodsd = IRODSDownload("localhost", "/tempZone/home/rods")
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
         irodsd.set_param(dict(
-            user='rods',
-            password='rods',
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
         ))
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
@@ -958,11 +1007,11 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         """
         Download the fake archive file with iRODS but skip check.
         """
-        irodsd = IRODSDownload("localhost", "/tempZone/home/rods")
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
         irodsd.set_options(dict(skip_check_uncompress=True))
         irodsd.set_param(dict(
-            user='rods',
-            password='rods',
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
         ))
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'invalid.gz$'], file_list, dir_list, prefix='')
