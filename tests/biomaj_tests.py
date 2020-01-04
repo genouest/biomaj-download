@@ -874,6 +874,40 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 1)
 
+    def test_rsync_download_retry(self):
+        """
+        Try to download fake files to test retry.
+        """
+        n_attempts = 5
+        rsyncd = RSYNCDownload(self.utils.test_dir + '/', "")
+        rsyncd.set_options(dict(skip_check_uncompress=True))
+        # Download a fake file
+        rsyncd.set_files_to_download([
+              {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        rsyncd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
+                                stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+        self.assertRaisesRegexp(
+            Exception, "^RSYNCDownload:Download:Error:",
+            rsyncd.download, self.utils.data_dir,
+        )
+        logging.debug(rsyncd.retryer.statistics)
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        # Try to download another file to ensure that it retryies
+        rsyncd.set_files_to_download([
+              {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        self.assertRaisesRegexp(
+            Exception, "^RSYNCDownload:Download:Error:",
+            rsyncd.download, self.utils.data_dir,
+        )
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        rsyncd.close()
+
 
 class iRodsResult(object):
 
@@ -1017,3 +1051,41 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         irodsd.match([r'invalid.gz$'], file_list, dir_list, prefix='')
         irodsd.download(self.utils.data_dir)
         self.assertTrue(len(irodsd.files_to_download) == 1)
+
+    def test_irods_download_retry(self):
+        """
+        Try to download fake files to test retry.
+        """
+        n_attempts = 5
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
+        irodsd.set_options(dict(skip_check_uncompress=True))
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
+        ))
+        # Download a fake file
+        irodsd.set_files_to_download([
+              {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        irodsd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
+                                stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+        self.assertRaisesRegexp(
+            Exception, "^IRODSDownload:Download:Error:",
+            irodsd.download, self.utils.data_dir,
+        )
+        logging.debug(irodsd.retryer.statistics)
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        # Try to download another file to ensure that it retryies
+        irodsd.set_files_to_download([
+              {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        self.assertRaisesRegexp(
+            Exception, "^IRODSDownload:Download:Error:",
+            irodsd.download, self.utils.data_dir,
+        )
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        irodsd.close()
