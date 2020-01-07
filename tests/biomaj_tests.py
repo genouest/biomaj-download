@@ -149,7 +149,7 @@ class UtilsForLocalIRODSTest(UtilsForTest):
     PORT = 1247
     ZONE = "tempZone"
     USER = "rods"
-    PASSWORD = "irods"
+    PASSWORD = "rods"
     COLLECTION = os.path.join("/" + ZONE, "home/rods/")  # Don't remove or add /
 
     def __init__(self):
