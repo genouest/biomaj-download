@@ -11,42 +11,6 @@ from biomaj_core.utils import Utils
 from biomaj_core.config import BiomajConfig
 
 
-# These following functions are used in the retryer:
-# retry request download occur while `error` is true
-def is_true(value):
-    """Return True if value is True"""
-    return value is True
-
-
-# and the last value of `error` is returned once stop/wait conditions have been
-# fulfilled
-def return_last_value(retry_state):
-    """return the result of the last call attempt"""
-    return retry_state.outcome.result()
-
-
-# Functions and operators allowed when parsing wait_condition
-ALL_WAIT_CONDITIONS = {
-    "wait_fixed": tenacity.wait_fixed,
-    "wait_exponential": tenacity.wait_exponential,
-    "wait_random": tenacity.wait_random
-}
-
-ALL_WAIT_OPERATORS = {
-    ast.Add: tenacity.wait.wait_base.__add__
-}
-
-# Functions and operators allowed when parsing stop_condition
-ALL_STOP_CONDITIONS = {
-    "stop_after_delay": tenacity.stop_after_delay,
-    "stop_after_attempt": tenacity.stop_after_attempt
-}
-
-ALL_STOP_OPERATORS = {
-    ast.BitOr: tenacity.stop.stop_base.__or__
-}
-
-
 class _FakeLock(object):
     '''
     Fake lock for downloaders not called by a Downloadthread
@@ -82,6 +46,77 @@ class DownloadInterface(object):
     '''
 
     files_num_threads = 4
+
+    #
+    # Constants to parse retryer
+    #
+
+    # Functions available when parsing stop condition: those are constructors
+    # of stop conditions classes (then using them will create objects). Note
+    # that there is an exception for stop_never.
+    ALL_STOP_CONDITIONS = {
+        "stop_when_event_set": tenacity.stop_when_event_set,
+        "stop_after_attempt": tenacity.stop_after_attempt,
+        "stop_after_delay": tenacity.stop_after_delay,
+        "stop_any": tenacity.stop_any,  # Similar to |
+        "stop_all": tenacity.stop_all,  # Similar to &
+    }
+
+    # tenacity.stop_never is an instance of _stop_never, not a class so we
+    # import it as a name.
+    ALL_STOP_NAMES = {
+        "stop_never": tenacity.stop_never,
+    }
+
+    # Operators for stop conditions: | means to stop if one of the conditions
+    # is True, & means to stop if all the conditions are True.
+    ALL_STOP_OPERATORS = {
+        ast.BitOr: tenacity.stop.stop_base.__or__,
+        ast.BitAnd: tenacity.stop.stop_base.__and__,
+    }
+
+    # Functions available when parsing wait condition: those are constructors
+    # of wait conditions classes (then using them will create objects). Note
+    # that there is an exception for wait_none.
+    ALL_WAIT_CONDITIONS = {
+        "wait_fixed": tenacity.wait_fixed,
+        "wait_random": tenacity.wait_random,
+        "wait_incrementing": tenacity.wait_incrementing,
+        "wait_exponential": tenacity.wait_exponential,
+        "wait_random_exponential": tenacity.wait_random_exponential,
+        "wait_combine": tenacity.wait_combine,  # Sum of wait conditions (similar to +)
+        "wait_chain": tenacity.wait_chain,  # Give a list of wait conditions (one for each attempt)
+    }
+
+    # Create an instance of wait_none to use it like a constant.
+    ALL_WAIT_NAMES = {
+        "wait_none": tenacity.wait.wait_none()
+    }
+
+    # Operators for wait conditions: + means to sum waiting times of wait
+    # conditions.
+    ALL_WAIT_OPERATORS = {
+        ast.Add: tenacity.wait.wait_base.__add__
+    }
+
+    @staticmethod
+    def is_true(download_error):
+        """Method used by retryer to determine if we should retry to downlaod a
+        file based on the return value of method:`_download` (passed as the
+        argument): we must retry while this value is True.
+
+        See method:`_set_retryer`.
+        """
+        return download_error is True
+
+    @staticmethod
+    def return_last_value(retry_state):
+        """Method used by the retryer to determine the return value of the
+        retryer: we return the result of the last attempt.
+
+        See method:`_set_retryer`.
+        """
+        return retry_state.outcome.result()
 
     def __init__(self):
         # This variable defines the protocol as passed by the config file (i.e.
@@ -358,6 +393,8 @@ class DownloadInterface(object):
 
         Subclasses that override this method must call this implementation to
         perform test on archives.
+
+        Note that this method is executed inside a retryer.
         '''
         error = False
         # Check that the archive is correct
@@ -443,29 +480,32 @@ class DownloadInterface(object):
         # Try to construct stop condition
         if not isinstance(stop_condition, tenacity.stop.stop_base):
             try:
+                # Eval the string
                 stop_cond = simple_eval(stop_condition,
-                                        functions=ALL_STOP_CONDITIONS,
-                                        operators=ALL_STOP_OPERATORS)
-            except Exception:
-                raise ValueError()
+                                        functions=self.ALL_STOP_CONDITIONS,
+                                        operators=self.ALL_STOP_OPERATORS,
+                                        names=self.ALL_STOP_NAMES)
+            except Exception as e:
+                raise ValueError("Error while parsing stop condition: %s" % e)
         else:
             stop_cond = stop_condition
         # Try to construct wait condition
         if not isinstance(wait_condition, tenacity.wait.wait_base):
             try:
                 wait_cond = simple_eval(wait_condition,
-                                        functions=ALL_WAIT_CONDITIONS,
-                                        operators=ALL_WAIT_OPERATORS)
-            except Exception:
-                raise ValueError()
+                                        functions=self.ALL_WAIT_CONDITIONS,
+                                        operators=self.ALL_WAIT_OPERATORS,
+                                        names=self.ALL_WAIT_NAMES)
+            except Exception as e:
+                raise ValueError("Error while parsing stop condition: %s" % e)
         else:
             wait_cond = wait_condition
 
         self.retryer = tenacity.Retrying(
             stop=stop_cond,
             wait=wait_cond,
-            retry_error_callback=return_last_value,
-            retry=tenacity.retry_if_result(is_true),
+            retry_error_callback=self.return_last_value,
+            retry=tenacity.retry_if_result(self.is_true),
             reraise=True
         )
 
