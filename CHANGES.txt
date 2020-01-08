@@ -1,6 +1,7 @@
-3.1.2 [UNRELEASED]:
+3.1.2:
   #18 Add a protocol option to set CURLOPT_FTP_FILEMETHOD
   #19 Rename protocol options to options
+  Fix copy of production files instead of download when files are in subdirectories
 3.1.1:
   #17 Support MDTM command in directftp
 3.1.0:

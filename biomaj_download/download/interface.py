@@ -284,7 +284,10 @@ class DownloadInterface(object):
                     new_files_to_download.append(dfile)
                     index += 1
                 else:
-                    if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
+                    fileName = dfile["name"]
+                    if dfile["name"].startswith('/'):
+                        fileName = dfile["name"][1:]
+                    if not check_exists or os.path.exists(os.path.join(root_dir, fileName)):
                         dfile['root'] = root_dir
                         self.logger.debug('Copy file instead of downloading it: %s' % (os.path.join(root_dir, dfile['name'])))
                         self.files_to_copy.append(dfile)
@@ -293,7 +296,10 @@ class DownloadInterface(object):
         else:
             # Copy everything
             for dfile in self.files_to_download:
-                if not check_exists or os.path.exists(os.path.join(root_dir, dfile['name'])):
+                fileName = dfile["name"]
+                if dfile["name"].startswith('/'):
+                    fileName = dfile["name"][1:]
+                if not check_exists or os.path.exists(os.path.join(root_dir, fileName)):
                     dfile['root'] = root_dir
                     self.files_to_copy.append(dfile)
                 else:
