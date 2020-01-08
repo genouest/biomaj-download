@@ -671,8 +671,8 @@ class TestBiomajFTPDownload(unittest.TestCase):
           {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
            'size': 1, 'save_as': 'TOTO1KB'}
     ])
-    ftpd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
-                          stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+    ftpd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                          wait_condition=tenacity.wait.wait_none()))
     self.assertRaisesRegexp(
         Exception, "^CurlDownload:Download:Error:",
         ftpd.download, self.utils.data_dir,
@@ -908,8 +908,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
               {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        rsyncd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
-                                stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+        rsyncd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                                wait_condition=tenacity.wait.wait_none()))
         self.assertRaisesRegexp(
             Exception, "^RSYNCDownload:Download:Error:",
             rsyncd.download, self.utils.data_dir,
@@ -1090,8 +1090,8 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
               {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        irodsd.set_options(dict(wait_condition=tenacity.wait.wait_fixed(3),
-                                stop_condition=tenacity.stop.stop_after_attempt(n_attempts)))
+        irodsd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                                wait_condition=tenacity.wait.wait_none()))
         self.assertRaisesRegexp(
             Exception, "^IRODSDownload:Download:Error:",
             irodsd.download, self.utils.data_dir,
