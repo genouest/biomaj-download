@@ -693,6 +693,28 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
     ftpd.close()
 
+  def test_download_complex_retry(self):
+    """
+    Try to download fake files (use a complex string for stop and wait
+    conditions).
+    """
+    n_attempts = 5
+    ftpd = CurlDownload("ftp", "speedtest.tele2.net", "/")
+    # Download a fake file
+    ftpd.set_files_to_download([
+          {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+           'size': 1, 'save_as': 'TOTO1KB'}
+    ])
+    ftpd.set_options(dict(stop_condition="stop_never | stop_after_attempt(%i)" % n_attempts,
+                          wait_condition="wait_none + wait_random(1, 2)"))
+    self.assertRaisesRegexp(
+        Exception, "^CurlDownload:Download:Error:",
+        ftpd.download, self.utils.data_dir,
+    )
+    logging.debug(ftpd.retryer.statistics)
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+
   def test_ms_server(self):
       ftpd = CurlDownload("ftp", "test.rebex.net", "/")
       ftpd.set_credentials("demo:password")
