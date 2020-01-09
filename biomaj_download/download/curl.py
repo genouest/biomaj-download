@@ -186,7 +186,7 @@ class CurlDownload(DownloadInterface):
     def _basic_curl_configuration(self):
         """
         Perform basic configuration (i.e. that doesn't depend on the
-        operation: _download or list). This method shoulmd be called before any
+        operation: _download or list). This method should be called before any
         operation.
         """
         # Reset cURL options before setting them
