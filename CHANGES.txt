@@ -1,3 +1,5 @@
+3.2.1 UNRELEASED:
+
 3.1.2:
   #18 Add a protocol option to set CURLOPT_FTP_FILEMETHOD
   #19 Rename protocol options to options
