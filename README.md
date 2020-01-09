@@ -15,7 +15,7 @@ To compile protobuf, in biomaj_download/message:
 
 # Development
 
-    flake8  biomaj_download/\*.py biomaj_download/download
+    flake8 --ignore E501 biomaj_download/\*.py biomaj_download/download
 
 # Test
 
@@ -66,36 +66,36 @@ The following list shows some options and their effect (the option to set is the
 
   * **skip_check_uncompress**:
     * parameter: bool.
-    * downloader(s): all.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: If true, don't test the archives after download.
     * default: false (i.e. test the archives).
   * **ssl_verifyhost**:
     * parameter: bool.
-    * downloader(s): `CurlDownloader`, `DirectFTPDownload`, `DirectHTTPDownload`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: If false, don't check that the name of the remote server is the same than in the SSL certificate.
     * default: true (i.e. check host name).
     * note: It's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html) for the corresponding cURL option.
   * **ssl_verifypeer**:
     * parameter: bool.
-    * downloader(s): `CurlDownloader`, `DirectFTPDownload`, `DirectHTTPDownload`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: If false, don't check the authenticity of the peer's certificate.
     * default: true (i.e. check authenticity).
     * note: It's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html) for the corresponding cURL option.
   * **ssl_server_cert**:
     * parameter: filename of the certificate.
-    * downloader(s): `CurlDownloader`, `DirectFTPDownload`, `DirectHTTPDownload`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: Pass a file holding one or more certificates to verify the peer with.
     * default: use OS certificates.
     * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html) for the corresponding cURL option.
   * **tcp_keepalive**:
     * parameter: int.
-    * downloader(s): `CurlDownloader`, `DirectFTPDownload`, `DirectHTTPDownload`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: Sets the interval, in seconds, that the operating system will wait between sending keepalive probes.
     * default: cURL default (60s at the time of this writing).
     * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPINTVL.html) for the corresponding cURL option.
   * **ftp_method**:
     * parameter: one of `default`, `multicwd`, `nocwd`, `singlecwd` (case insensitive).
-    * downloader(s): `CurlDownloader`, `DirectFTPDownload`, `DirectHTTPDownload`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
     * effect: Sets the method to use to reach a file on a FTP(S) server (`nocwd` and `singlecwd` are usually faster but not always supported).
     * default: `default` (which is `multicwd` at the time of this writing)
     * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option.
