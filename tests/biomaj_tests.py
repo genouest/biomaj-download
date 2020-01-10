@@ -30,7 +30,6 @@ import unittest
 import tenacity
 
 
-
 class UtilsForTest():
   """
   Copy properties files to a temp directory and update properties to
