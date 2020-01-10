@@ -114,6 +114,7 @@ class UtilsForTest():
     curdir = os.path.dirname(os.path.realpath(__file__))
     global_template = os.path.join(curdir,'global.properties')
     fout = open(self.global_properties,'w')
+    # Adapt directories in global configuration to the current test directory
     with open(global_template,'r') as fin:
         for line in fin:
           if line.startswith('conf.dir'):
