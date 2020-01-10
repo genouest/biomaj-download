@@ -30,6 +30,7 @@ import unittest
 import tenacity
 
 
+
 class UtilsForTest():
   """
   Copy properties files to a temp directory and update properties to
@@ -85,13 +86,15 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
+    # Copy bank configuration (those bank use external resources so there is no tuning to do)
+    self.bank_properties = ['alu', 'testhttp', 'directhttp', 'multi']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
         from_file = os.path.join(curdir, b+'.properties')
         to_file = os.path.join(self.conf_dir, b+'.properties')
         shutil.copyfile(from_file, to_file)
 
+    # Copy bank process
     self.bank_process = ['test.sh']
     curdir = os.path.dirname(os.path.realpath(__file__))
     procdir = os.path.join(curdir, 'bank/process')
@@ -101,11 +104,11 @@ class UtilsForTest():
       shutil.copyfile(from_file, to_file)
       os.chmod(to_file, stat.S_IRWXU)
 
-    # Manage local bank test, use bank test subdir as remote
-    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'computed2.properties', 'sub1.properties', 'sub2.properties']
+    # Copy and adapt bank configuration that use local resources: we use the "bank" dir in current test directory as remote
+    properties = ['local', 'localprocess', 'computed', 'computed2', 'sub1', 'sub2', 'computederror', 'error']
     for prop in properties:
-      from_file = os.path.join(curdir, prop)
-      to_file = os.path.join(self.conf_dir, prop)
+      from_file = os.path.join(curdir, prop+'.properties')
+      to_file = os.path.join(self.conf_dir, prop+'.properties')
       fout = open(to_file,'w')
       with open(from_file,'r') as fin:
         for line in fin:
@@ -124,6 +127,7 @@ class UtilsForTest():
     curdir = os.path.dirname(os.path.realpath(__file__))
     global_template = os.path.join(curdir,'global.properties')
     fout = open(self.global_properties,'w')
+    # Adapt directories in global configuration to the current test directory
     with open(global_template,'r') as fin:
         for line in fin:
           if line.startswith('conf.dir'):
@@ -172,44 +176,6 @@ class UtilsForLocalIRODSTest(UtilsForTest):
         # Remove invalid.gz
         self._session.data_objects.unlink(os.path.join(self.COLLECTION, "invalid.gz"), force=True)
 
-class TestBiomajUtils(unittest.TestCase):
-
-  def setUp(self):
-    self.utils = UtilsForTest()
-
-  def tearDown(self):
-    self.utils.clean()
-
-
-  def test_mimes(self):
-    fasta_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'bank/test2.fasta')
-    (mime, encoding) = Utils.detect_format(fasta_file)
-    self.assertTrue('application/fasta' == mime)
-
-  @attr('compress')
-  def test_uncompress(self):
-    from_file = { 'root': os.path.dirname(os.path.realpath(__file__)),
-                  'name': 'bank/test.fasta.gz'
-                  }
-
-    to_dir = self.utils.data_dir
-    Utils.copy_files([from_file], to_dir)
-    Utils.uncompress(os.path.join(to_dir, from_file['name']))
-    self.assertTrue(os.path.exists(to_dir+'/bank/test.fasta'))
-
-  def test_copy_with_regexp(self):
-    from_dir = os.path.dirname(os.path.realpath(__file__))
-    to_dir = self.utils.data_dir
-    Utils.copy_files_with_regexp(from_dir, to_dir, ['.*\.py'])
-    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
-
-  def test_copy(self):
-    from_dir = os.path.dirname(os.path.realpath(__file__))
-    local_file = 'biomaj_tests.py'
-    files_to_copy = [ {'root': from_dir, 'name': local_file}]
-    to_dir = self.utils.data_dir
-    Utils.copy_files(files_to_copy, to_dir)
-    self.assertTrue(os.path.exists(to_dir+'/biomaj_tests.py'))
 
 class TestBiomajLocalDownload(unittest.TestCase):
   """
@@ -274,6 +240,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     except Exception:
       msg = "In %s: copy worked but hardlinks were not used." % self.id()
       logging.info(msg)
+
 
 @attr('network')
 @attr('http')
@@ -408,7 +375,7 @@ class TestBiomajSFTPDownload(unittest.TestCase):
   Test SFTP downloader
   """
 
-  PROTOCOL = "ftps"
+  PROTOCOL = "sftp"
 
   def setUp(self):
     self.utils = UtilsForTest()
@@ -455,7 +422,6 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
     self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
-
 
 
 @attr('directftps')
