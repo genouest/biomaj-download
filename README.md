@@ -59,14 +59,76 @@ Web processes should be behind a proxy/load balancer, API base url /api/download
 
 Prometheus endpoint metrics are exposed via /metrics on web server
 
+# Retrying
+
+A common problem when downloading a large number of files is the handling of temporary failures (network issues, server too busy to answer, etc.).
+Since version 3.1.2, `biomaj-download` uses the [Tenacity library](https://github.com/jd/tenacity) which is designed to handle this.
+
+This mechanism is configurable through 2 downloader-specific options (see below): **stop_condition** and **wait_condition**.
+When working on python code, you can pass instances of `stop_base` and `wait_base` respectively.
+This includes classes defined in Tenacity or your own derived classes.
+
+For bank configuration those options also parse strings read from the configuration file.
+This parsing is based on the [Simple Eval library](https://github.com/danthedeckie/simpleeval).
+The rules are straightforward:
+
+  * All concrete stop and wait classes defined in Tenacity (i.e. classes inheriting from `stop_base` and `wait_base` respectively) can be used
+    by calling their constructor with the expected parameters.
+    For example, the string `"stop_after_attempt(5)"` will create the desired object.
+    You can use classes that allow to combine other stop or wait conditions (namely `wait_combine`, `stop_all` and `stop_any`).
+	Note that stop and wait classes that need no argument must be used as constants (i.e. use `"stop_never"` and not `"stop_never()"`).
+	Currently, this is the case for `"stop_never"` and `"wait_none"`.
+  * Operator `+` can be used to add wait conditions (similar to `wait_combine`).
+  * Operators `&` and `|` can be used to compose stop conditions (similar to `wait_all` and `wait_none` respectively).
+
+However, in this case, you can't use your own conditions.
+The complete list of stop conditions is:
+
+* `stop_never` (although its use is discouraged)
+* `stop_after_attempt`
+* `stop_after_delay`
+* `stop_when_event_set`
+* `stop_all`
+* `stop_any`
+
+The complete list of wait conditions is:
+
+* `wait_none`
+* `wait_fixed`
+* `wait_random`
+* `wait_incrementing`
+* `wait_exponential`
+* `wait_random_exponential`
+* `wait_combine`
+* `wait_chain`
+
+Please refer to [Tenacity doc](https://tenacity.readthedocs.io/en/latest/) for their meaning and their parameters.
+
+Examples (inspired by Tenacity doc):
+
+  * `"wait_fixed(3) + wait_random(0, 2)"` and `"wait_combine(wait_fixed(3), wait_random(0, 2))"` are equivalent and will wait 3 seconds + up to 2 seconds of random delay
+  * `"wait_chain(*([wait_fixed(3) for i in range(3)] + [wait_fixed(7) for i in range(2)] + [wait_fixed(9)]))"` will wait 3s for 3 attempts, 7s for the next 2 attempts and 9s for all attempts thereafter (here `+` is the list concatenation).
+  * `"wait_none + wait_random(1,2)"` will wait between 1s and 2s (since `wait_none` doesn't wait).
+  * `"stop_never | stop_after_attempt(5)"` will stop after 5 attempts (since `stop_never` never stops).
+
 # Download options
 
 Since version 3.0.26, you can use the `set_options` method to pass a dictionary of downloader-specific options.
 The following list shows some options and their effect (the option to set is the key and the parameter is the associated value):
 
+  * **stop_condition**:
+    * parameter: an instance of Tenacity `stop_base` or a string (see above).
+    * downloader(s): all (except LocalDownloader).
+    * effect: sets the condition on which we should stop retrying to download a file.
+    * default: .
+  * **wait_condition**:
+    * parameter: an instance of Tenacity `wait_base` or a string (see above).
+    * downloader(s): all (except LocalDownloader).
+    * effect: sets the wait policy between download trials.
+    * default: .
   * **skip_check_uncompress**:
     * parameter: bool.
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
+    * downloader(s): all (except LocalDownloader).
     * effect: If true, don't test the archives after download.
     * default: false (i.e. test the archives).
   * **ssl_verifyhost**:
