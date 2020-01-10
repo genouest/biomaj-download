@@ -22,6 +22,7 @@ from biomaj_download.download.protocolirods import IRODSDownload
 
 import unittest
 
+
 class UtilsForTest():
   """
   Copy properties files to a temp directory and update properties to
@@ -191,6 +192,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     except Exception:
       msg = "In %s: copy worked but hardlinks were not used." % self.id()
       logging.info(msg)
+
 
 @attr('network')
 @attr('http')
@@ -372,7 +374,6 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
     self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
-
 
 
 @attr('directftps')
@@ -818,6 +819,7 @@ class MockiRODSSession(object):
     def open(self,r):
         my_test_file = open("tests/test.fasta.gz", "r+")
         return(my_test_file)
+
 
 @attr('irods')
 @attr('roscoZone')
