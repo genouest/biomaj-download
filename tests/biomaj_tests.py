@@ -73,13 +73,15 @@ class UtilsForTest():
   def __copy_test_bank_properties(self):
     if self.bank_properties is not None:
       return
-    self.bank_properties = ['alu', 'local', 'testhttp','directhttp']
+    # Copy bank configuration (those bank use external resources so there is no tuning to do)
+    self.bank_properties = ['alu', 'testhttp', 'directhttp', 'multi']
     curdir = os.path.dirname(os.path.realpath(__file__))
     for b in self.bank_properties:
         from_file = os.path.join(curdir, b+'.properties')
         to_file = os.path.join(self.conf_dir, b+'.properties')
         shutil.copyfile(from_file, to_file)
 
+    # Copy bank process
     self.bank_process = ['test.sh']
     curdir = os.path.dirname(os.path.realpath(__file__))
     procdir = os.path.join(curdir, 'bank/process')
@@ -89,11 +91,11 @@ class UtilsForTest():
       shutil.copyfile(from_file, to_file)
       os.chmod(to_file, stat.S_IRWXU)
 
-    # Manage local bank test, use bank test subdir as remote
-    properties = ['multi.properties', 'computederror.properties', 'error.properties', 'local.properties', 'localprocess.properties', 'testhttp.properties', 'computed.properties', 'computed2.properties', 'sub1.properties', 'sub2.properties']
+    # Copy and adapt bank configuration that use local resources: we use the "bank" dir in current test directory as remote
+    properties = ['local', 'localprocess', 'computed', 'computed2', 'sub1', 'sub2', 'computederror', 'error']
     for prop in properties:
-      from_file = os.path.join(curdir, prop)
-      to_file = os.path.join(self.conf_dir, prop)
+      from_file = os.path.join(curdir, prop+'.properties')
+      to_file = os.path.join(self.conf_dir, prop+'.properties')
       fout = open(to_file,'w')
       with open(from_file,'r') as fin:
         for line in fin:
