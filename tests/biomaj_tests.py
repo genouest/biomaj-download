@@ -20,6 +20,7 @@ from irods.session import iRODSSession
 
 from biomaj_core.config import BiomajConfig
 from biomaj_core.utils import Utils
+from biomaj_download.download.interface import DownloadInterface
 from biomaj_download.download.curl import CurlDownload, HTTPParse
 from biomaj_download.download.direct import DirectFTPDownload, DirectHTTPDownload
 from biomaj_download.download.localcopy  import LocalDownload
@@ -174,6 +175,44 @@ class UtilsForLocalIRODSTest(UtilsForTest):
         self._session.data_objects.unlink(os.path.join(self.COLLECTION, "test.fasta.gz"), force=True)
         # Remove invalid.gz
         self._session.data_objects.unlink(os.path.join(self.COLLECTION, "invalid.gz"), force=True)
+
+
+class TestDownloadInterface(unittest.TestCase):
+  """
+  Test of the interface.
+  """
+
+  def test_retry_parsing(self):
+    """
+    Test parsing of stop and wait conditions.
+    """
+    downloader = DownloadInterface()
+    # Test some garbage
+    d = dict(stop_condition="stop_after_attempts")  # no param
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(stop_condition="1 + 1")  # not a stop_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    # Test some garbage
+    d = dict(wait_condition="wait_random")  # no param
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(wait_condition="I love python")  # not a stop_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    # Test operators
+    d = dict(stop_condition="stop_never | stop_after_attempt(5)",
+             wait_condition="wait_none + wait_random(1, 2)")
+    downloader.set_options(d)
+    # Test wait_combine, wait_chain
+    d = dict(wait_condition="wait_combine(wait_fixed(3), wait_random(1, 2))")
+    downloader.set_options(d)
+    d = dict(wait_condition="wait_chain(wait_fixed(3), wait_random(1, 2))")
+    downloader.set_options(d)
+    # Test stop_any and stop_all
+    stop_condition = "stop_any(stop_after_attempt(5), stop_after_delay(10))"
+    d = dict(stop_condition=stop_condition)
+    downloader.set_options(d)
+    stop_condition = "stop_all(stop_after_attempt(5), stop_after_delay(10))"
+    d = dict(stop_condition=stop_condition)
+    downloader.set_options(d)
 
 
 class TestBiomajLocalDownload(unittest.TestCase):
@@ -657,28 +696,6 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(len(ftpd.files_to_download) == 1)
     self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
     ftpd.close()
-
-  def test_download_complex_retry(self):
-    """
-    Try to download fake files (use a complex string for stop and wait
-    conditions).
-    """
-    n_attempts = 5
-    ftpd = CurlDownload("ftp", "speedtest.tele2.net", "/")
-    # Download a fake file
-    ftpd.set_files_to_download([
-          {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
-           'size': 1, 'save_as': 'TOTO1KB'}
-    ])
-    ftpd.set_options(dict(stop_condition="stop_never | stop_after_attempt(%i)" % n_attempts,
-                          wait_condition="wait_none + wait_random(1, 2)"))
-    self.assertRaisesRegexp(
-        Exception, "^CurlDownload:Download:Error:",
-        ftpd.download, self.utils.data_dir,
-    )
-    logging.debug(ftpd.retryer.statistics)
-    self.assertTrue(len(ftpd.files_to_download) == 1)
-    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
 
   def test_ms_server(self):
       ftpd = CurlDownload("ftp", "test.rebex.net", "/")

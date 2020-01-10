@@ -52,11 +52,24 @@ class DownloadInterface(object):
     #
     # Constants to parse retryer
     #
+    # Note that due to the current implementation of operators, tenacity allows
+    # nonsensical operations. For example the following snippets are valid:
+    # stop_after_attempt(1, 2) + 4
+    # stop_after_attempt(1, 2) + stop_none.
+    # Of course, trying to use those wait conditions will raise cryptic errors.
+    # The situation is similar for stop conditions.
+    # For parsing, this is particularly confusing if we consider stop_none as a
+    # function since then both "stop_none" and "stop_none()" are parsed
+    # and evaluated correctly but the later raises error. Considering it has a
+    # a name is slightly more clear (since then we must write "stop_none" but
+    # the code use the object which makes sense).
+    # See https://github.com/jd/tenacity/issues/211.
 
     # Functions available when parsing stop condition: those are constructors
     # of stop conditions classes (then using them will create objects). Note
     # that there is an exception for stop_never.
     ALL_STOP_CONDITIONS = {
+        #"stop_never": tenacity.stop._stop_never,  # In case, we want to use it like a function (see above)
         "stop_when_event_set": tenacity.stop_when_event_set,
         "stop_after_attempt": tenacity.stop_after_attempt,
         "stop_after_delay": tenacity.stop_after_delay,
@@ -81,6 +94,7 @@ class DownloadInterface(object):
     # of wait conditions classes (then using them will create objects). Note
     # that there is an exception for wait_none.
     ALL_WAIT_CONDITIONS = {
+        # "wait_none": tenacity.wait_none,  # In case, we want to use it like a function (see above)
         "wait_fixed": tenacity.wait_fixed,
         "wait_random": tenacity.wait_random,
         "wait_incrementing": tenacity.wait_incrementing,
