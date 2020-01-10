@@ -1,9 +1,9 @@
 """
 Subclasses for direct download (i.e. downloading without regexp). The usage is
 a bit different: instead of calling method:`list` and method:`match`, client
-code explicitely calls method:`set_files_to_download` (passing a list
+code explicitly calls method:`set_files_to_download` (passing a list
 containing only the file name). method:`list` is used to get more information
-about the file (if possile). method:`match` matches everything.
+about the file (if possible). method:`match` matches everything.
 Also client code can use method:`set_save_as` to indicate the name of the file
 to save.
 
