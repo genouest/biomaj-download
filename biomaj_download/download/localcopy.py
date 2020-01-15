@@ -8,7 +8,7 @@ from biomaj_download.download.interface import DownloadInterface
 
 class LocalDownload(DownloadInterface):
     '''
-    Base class to copy file from local system
+    Base class to copy file from local system.
 
     protocol=cp
     server=localhost
