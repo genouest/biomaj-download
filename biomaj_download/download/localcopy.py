@@ -15,6 +15,9 @@ class LocalDownload(DownloadInterface):
     remote.dir=/blast/db/FASTA/
 
     remote.files=^alu.*\\.gz$
+
+    Note that we redefine download and list in such a way that we don't need to
+    define _download and _network_configuration.
     '''
 
     def __init__(self, rootdir, use_hardlinks=False):

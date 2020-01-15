@@ -53,6 +53,13 @@ class RSYNCDownload(DownloadInterface):
             url = self.server + ":" + url
         return url
 
+    def _network_configuration(self):
+        '''
+        Perform some configuration before network operations (list and
+        download).
+        '''
+        pass
+
     def _download(self, file_path, rfile):
         error = False
         err_code = ''
