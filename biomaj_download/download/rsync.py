@@ -112,7 +112,7 @@ class RSYNCDownload(DownloadInterface):
             remote = str(self.server) + ":" + str(self.rootdir) + str(directory)
         if self.credentials:
             remote = str(self.credentials) + "@" + remote
-        cmd = str(self.real_protocol) + " --list-only " + remote
+        cmd = str(self.real_protocol) + " --list-only --no-motd " + remote
         try:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             list_rsync, err = p.communicate()
