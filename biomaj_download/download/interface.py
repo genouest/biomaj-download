@@ -314,6 +314,13 @@ class DownloadInterface(object):
         '''
         raise NotImplementedError()
 
+    def _network_configuration(self):
+        '''
+        Perform some configuration before network operations (list and
+        download). This must be implemented in subclasses.
+        '''
+        raise NotImplementedError()
+
     def download(self, local_dir, keep_dirs=True):
         '''
         Download remote files to local_dir
@@ -325,6 +332,7 @@ class DownloadInterface(object):
         :return: list of downloaded files
         '''
         self.logger.debug(self.__class__.__name__ + ':Download')
+        self._network_configuration()
         nb_files = len(self.files_to_download)
         cur_files = 1
         self.offline_dir = local_dir

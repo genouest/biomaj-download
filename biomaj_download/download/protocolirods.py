@@ -35,13 +35,13 @@ class IRODSDownload(DownloadInterface):
             self.port = int(param['port'])
 
     def list(self, directory=''):
-        session = iRODSSession(host=self.server, port=self.port, user=self.user, password=self.password, zone=self.zone)
+        self._network_configuration()
         rfiles = []
         rdirs = []
         rfile = {}
         date = None
-        query = session.query(DataObject.name, DataObject.size,
-                              DataObject.owner_name, DataObject.modify_time)
+        query = self.session.query(DataObject.name, DataObject.size,
+                                   DataObject.owner_name, DataObject.modify_time)
         results = query.filter(User.name == self.user).get_results()
         for result in results:
             # Avoid duplication
@@ -57,15 +57,17 @@ class IRODSDownload(DownloadInterface):
             rfile['year'] = int(date[0])
             rfile['name'] = str(result[DataObject.name])
             rfiles.append(rfile)
-        session.cleanup()
+        self.session.cleanup()
         return (rfiles, rdirs)
+
+    def _network_configuration(self):
+        self.session = iRODSSession(host=self.server, port=self.port,
+                                    user=self.user, password=self.password,
+                                    zone=self.zone)
 
     def _download(self, file_dir, rfile):
         error = False
         self.logger.debug('IRODS:IRODS DOWNLOAD')
-        session = iRODSSession(host=self.server, port=self.port,
-                               user=self.user, password=self.password,
-                               zone=self.zone)
         try:
             # iRODS don't like multiple "/"
             if rfile['root'][-1] == "/":
@@ -74,10 +76,9 @@ class IRODSDownload(DownloadInterface):
                 file_to_get = rfile['root'] + "/" + rfile['name']
             # Write the file to download in the wanted file_dir with the
             # python-irods iget
-            session.data_objects.get(file_to_get, file_dir)
+            self.session.data_objects.get(file_to_get, file_dir)
         except iRODSException as e:
             error = True
             self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + file_to_get)
             self.logger.error(self.__class__.__name__ + ":Download:Error:" + repr(e))
-        session.cleanup()
         return(error)

@@ -8,13 +8,16 @@ from biomaj_download.download.interface import DownloadInterface
 
 class LocalDownload(DownloadInterface):
     '''
-    Base class to copy file from local system
+    Base class to copy file from local system.
 
     protocol=cp
     server=localhost
     remote.dir=/blast/db/FASTA/
 
     remote.files=^alu.*\\.gz$
+
+    Note that we redefine download and list in such a way that we don't need to
+    define _download and _network_configuration.
     '''
 
     def __init__(self, rootdir, use_hardlinks=False):
