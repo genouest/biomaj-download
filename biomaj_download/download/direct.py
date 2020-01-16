@@ -86,7 +86,7 @@ class DirectFTPDownload(CurlDownload):
         '''
         FTP protocol does not give us the possibility to get file date from remote url
         '''
-        self._basic_curl_configuration()
+        self._network_configuration()
         for rfile in self.files_to_download:
             if self.save_as is None:
                 self.save_as = os.path.basename(rfile['name'])
@@ -148,7 +148,7 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         Try to get file headers to get last_modification and size
         '''
-        self._basic_curl_configuration()
+        self._network_configuration()
         # Specific configuration
         self.crl.setopt(pycurl.HEADER, True)
         self.crl.setopt(pycurl.NOBODY, True)

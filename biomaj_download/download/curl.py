@@ -182,7 +182,7 @@ class CurlDownload(DownloadInterface):
         # FTP method (cURL --ftp-method option)
         self.ftp_method = pycurl.FTPMETHOD_DEFAULT  # Use cURL default
 
-    def _basic_curl_configuration(self):
+    def _network_configuration(self):
         """
         Perform basic configuration (i.e. that doesn't depend on the
         operation: _download or list). This method should be called before any
@@ -301,8 +301,6 @@ class CurlDownload(DownloadInterface):
         # Forge URL of remote file
         file_url = self._file_url(rfile)
 
-        self._basic_curl_configuration()
-
         try:
             self.crl.setopt(pycurl.URL, file_url)
         except Exception:
@@ -354,7 +352,7 @@ class CurlDownload(DownloadInterface):
         dir_url = self.url + self.rootdir + directory
         self.logger.debug('Download:List:' + dir_url)
 
-        self._basic_curl_configuration()
+        self._network_configuration()
 
         try:
             self.crl.setopt(pycurl.URL, dir_url)

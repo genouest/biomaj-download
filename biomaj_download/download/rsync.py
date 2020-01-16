@@ -53,6 +53,13 @@ class RSYNCDownload(DownloadInterface):
             url = self.server + ":" + url
         return url
 
+    def _network_configuration(self):
+        '''
+        Perform some configuration before network operations (list and
+        download).
+        '''
+        pass
+
     def _download(self, file_path, rfile):
         error = False
         err_code = ''
@@ -109,7 +116,7 @@ class RSYNCDownload(DownloadInterface):
             remote = str(self.server) + ":" + str(self.rootdir) + str(directory)
         if self.credentials:
             remote = str(self.credentials) + "@" + remote
-        cmd = str(self.real_protocol) + " --list-only " + remote
+        cmd = str(self.real_protocol) + " --list-only --no-motd " + remote
         try:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             list_rsync, err = p.communicate()
