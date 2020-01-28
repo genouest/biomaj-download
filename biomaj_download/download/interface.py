@@ -3,6 +3,7 @@ import logging
 import datetime
 import time
 import re
+import copy
 
 import six
 
@@ -263,9 +264,12 @@ class DownloadInterface(object):
                 # Check that it is an instance of stop_base
                 if not isinstance(stop_cond, tenacity.stop.stop_base):
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
-                # Test that this is a correct stop condition by calling it
+                # Test that this is a correct stop condition by calling it.
+                # We use a deepcopy to be sure to not alter the object (even
+                # if it seems that calling a wait condition doesn't modify it).
                 try:
-                    stop_cond(tenacity.compat.make_retry_state(0, 0))
+                    s = copy.deepcopy(stop_cond)
+                    s(tenacity.compat.make_retry_state(0, 0))
                 except Exception:
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
             except Exception as e:
@@ -286,9 +290,12 @@ class DownloadInterface(object):
                 # Check that it is an instance of wait_base
                 if not isinstance(wait_cond, tenacity.wait.wait_base):
                     raise ValueError(wait_condition + " doesn't yield a wait condition")
-                # Test that this is a correct wait condition by calling it
+                # Test that this is a correct wait condition by calling it.
+                # We use a deepcopy to be sure to not alter the object (even
+                # if it seems that calling a stop condition doesn't modify it).
                 try:
-                    wait_cond(tenacity.compat.make_retry_state(0, 0))
+                    w = copy.deepcopy(wait_cond)
+                    w(tenacity.compat.make_retry_state(0, 0))
                 except Exception:
                     raise ValueError(wait_condition + " doesn't yield a stop condition")
             except Exception as e:
