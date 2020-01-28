@@ -111,6 +111,11 @@ Examples (inspired by Tenacity doc):
   * `"wait_none + wait_random(1,2)"` will wait between 1s and 2s (since `wait_none` doesn't wait).
   * `"stop_never | stop_after_attempt(5)"` will stop after 5 attempts (since `stop_never` never stops).
 
+Note that some protocols (e.g. FTP) classify errors as temporary or permanent (for example trying to download inexisting file).
+In our experience, so called permanent errors may well be temporary.
+Therefore downloaders always retry whatever the error.
+In some cases, this is a waste of time but generally this is worth it.
+
 # Download options
 
 Since version 3.0.26, you can use the `set_options` method to pass a dictionary of downloader-specific options.
