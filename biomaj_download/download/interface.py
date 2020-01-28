@@ -266,7 +266,7 @@ class DownloadInterface(object):
         if isinstance(wait_condition, tenacity.wait.wait_base):
             # Use the value directly
             wait_cond = wait_condition
-        elif  isinstance(wait_condition, six.string_types):
+        elif isinstance(wait_condition, six.string_types):
             # Try to parse the string
             try:
                 wait_cond = simple_eval(wait_condition,
