@@ -195,20 +195,20 @@ class TestDownloadInterface(unittest.TestCase):
     d = dict(stop_condition="stop_after_attempts(5) & 1")  # not a stop_condition
     self.assertRaises(ValueError, downloader.set_options, d)
     # Test some garbage
-    d = dict(wait_condition="wait_random")  # no param
+    d = dict(wait_policy="wait_random")  # no param
     self.assertRaises(ValueError, downloader.set_options, d)
-    d = dict(wait_condition="I love python")  # not a wait_condition
+    d = dict(wait_policy="I love python")  # not a wait_condition
     self.assertRaises(ValueError, downloader.set_options, d)
-    d = dict(wait_condition="wait_random(5) + 3")  # not a wait_condition
+    d = dict(wait_policy="wait_random(5) + 3")  # not a wait_condition
     self.assertRaises(ValueError, downloader.set_options, d)
     # Test operators
     d = dict(stop_condition="stop_never | stop_after_attempt(5)",
-             wait_condition="wait_none + wait_random(1, 2)")
+             wait_policy="wait_none + wait_random(1, 2)")
     downloader.set_options(d)
     # Test wait_combine, wait_chain
-    d = dict(wait_condition="wait_combine(wait_fixed(3), wait_random(1, 2))")
+    d = dict(wait_policy="wait_combine(wait_fixed(3), wait_random(1, 2))")
     downloader.set_options(d)
-    d = dict(wait_condition="wait_chain(wait_fixed(3), wait_random(1, 2))")
+    d = dict(wait_policy="wait_chain(wait_fixed(3), wait_random(1, 2))")
     downloader.set_options(d)
     # Test stop_any and stop_all
     stop_condition = "stop_any(stop_after_attempt(5), stop_after_delay(10))"

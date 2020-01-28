@@ -64,7 +64,7 @@ Prometheus endpoint metrics are exposed via /metrics on web server
 A common problem when downloading a large number of files is the handling of temporary failures (network issues, server too busy to answer, etc.).
 Since version 3.1.2, `biomaj-download` uses the [Tenacity library](https://github.com/jd/tenacity) which is designed to handle this.
 
-This mechanism is configurable through 2 downloader-specific options (see below): **stop_condition** and **wait_condition**.
+This mechanism is configurable through 2 downloader-specific options (see below): **stop_condition** and **wait_policy**.
 When working on python code, you can pass instances of Tenacity's `stop_base` and `wait_base` respectively.
 This includes classes defined in Tenacity or your own derived classes.
 
@@ -77,8 +77,8 @@ The rules are straightforward:
     For example, the string `"stop_after_attempt(5)"` will create the desired object.
 	Note that stop and wait classes that need no argument must be used as constants (i.e. use `"stop_never"` and not `"stop_never()"`).
 	Currently, this is the case for `"stop_never"` (as in Tenacity) and `"wait_none"` (this slightly differs from Tenacity where it is `"wait_none()"`).
-  * You can use classes that allow to combine other stop or wait conditions (namely `wait_combine`, `stop_all` and `stop_any`).
-  * Operator `+` can be used to add wait conditions (similar to `wait_combine`).
+  * You can use classes that allow to combine other stop conditions (namely `stop_all` and `stop_any`) or wait policies (namely `wait_combine`).
+  * Operator `+` can be used to add wait policies (similar to `wait_combine`).
   * Operators `&` and `|` can be used to compose stop conditions (similar to `wait_all` and `wait_none` respectively).
 
 However, in this case, you can't use your own conditions.
@@ -91,7 +91,7 @@ The complete list of stop conditions is:
 * `stop_all`
 * `stop_any`
 
-The complete list of wait conditions is:
+The complete list of wait policies is:
 
 * `wait_none`
 * `wait_fixed`
@@ -127,7 +127,7 @@ The following list shows some options and their effect (the option to set is the
     * downloader(s): all (except LocalDownloader).
     * effect: sets the condition on which we should stop retrying to download a file.
     * default: .
-  * **wait_condition**:
+  * **wait_policy**:
     * parameter: an instance of Tenacity `wait_base` or a string (see above).
     * downloader(s): all (except LocalDownloader).
     * effect: sets the wait policy between download trials.

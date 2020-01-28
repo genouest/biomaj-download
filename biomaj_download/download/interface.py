@@ -57,7 +57,7 @@ class DownloadInterface(object):
     # nonsensical operations. For example the following snippets are valid:
     # stop_after_attempt(1, 2) + 4
     # stop_after_attempt(1, 2) + stop_none.
-    # Of course, trying to use those wait conditions will raise cryptic errors.
+    # Of course, trying to use those wait policies will raise cryptic errors.
     # The situation is similar for stop conditions.
     # See https://github.com/jd/tenacity/issues/211.
     # To avoid such errors, we test the objects in _set_retryer.
@@ -96,18 +96,18 @@ class DownloadInterface(object):
         ast.BitAnd: tenacity.stop.stop_base.__and__,
     }
 
-    # Functions available when parsing wait condition: those are constructors
-    # of wait conditions classes (then using them will create objects). Note
+    # Functions available when parsing wait policy: those are constructors
+    # of wait policies classes (then using them will create objects). Note
     # that there is an exception for wait_none.
-    ALL_WAIT_CONDITIONS = {
+    ALL_WAIT_POLICIES = {
         # "wait_none": tenacity.wait_none,  # In case, we want to use it like a function (see above)
         "wait_fixed": tenacity.wait_fixed,
         "wait_random": tenacity.wait_random,
         "wait_incrementing": tenacity.wait_incrementing,
         "wait_exponential": tenacity.wait_exponential,
         "wait_random_exponential": tenacity.wait_random_exponential,
-        "wait_combine": tenacity.wait_combine,  # Sum of wait conditions (similar to +)
-        "wait_chain": tenacity.wait_chain,  # Give a list of wait conditions (one for each attempt)
+        "wait_combine": tenacity.wait_combine,  # Sum of wait policies (similar to +)
+        "wait_chain": tenacity.wait_chain,  # Give a list of wait policies (one for each attempt)
     }
 
     # Create an instance of wait_none to use it like a constant.
@@ -115,8 +115,8 @@ class DownloadInterface(object):
         "wait_none": tenacity.wait.wait_none()
     }
 
-    # Operators for wait conditions: + means to sum waiting times of wait
-    # conditions.
+    # Operators for wait policies: + means to sum waiting times of wait
+    # policies.
     ALL_WAIT_OPERATORS = {
         ast.Add: tenacity.wait.wait_base.__add__
     }
@@ -170,7 +170,7 @@ class DownloadInterface(object):
         # Construct default retryer (may be replaced in set_options)
         self._set_retryer(
             BiomajConfig.DEFAULTS["stop_condition"],
-            BiomajConfig.DEFAULTS["wait_condition"]
+            BiomajConfig.DEFAULTS["wait_policy"]
         )
 
     #
@@ -240,13 +240,13 @@ class DownloadInterface(object):
         self.options = options
         if "skip_check_uncompress" in options:
             self.skip_check_uncompress = Utils.to_bool(options["skip_check_uncompress"])
-        # If stop or wait condition is specified, we reconstruct the retryer
-        if "stop_condition" or "wait_condition" in options:
+        # If stop_condition or wait_policy is specified, we reconstruct the retryer
+        if "stop_condition" or "wait_policy" in options:
             stop_condition = options.get("stop_condition", BiomajConfig.DEFAULTS["stop_condition"])
-            wait_condition = options.get("wait_condition", BiomajConfig.DEFAULTS["wait_condition"])
-            self._set_retryer(stop_condition, wait_condition)
+            wait_policy = options.get("wait_policy", BiomajConfig.DEFAULTS["wait_policy"])
+            self._set_retryer(stop_condition, wait_policy)
 
-    def _set_retryer(self, stop_condition, wait_condition):
+    def _set_retryer(self, stop_condition, wait_policy):
         """
         Add a retryer to retry the current download if it fails.
         """
@@ -266,7 +266,7 @@ class DownloadInterface(object):
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
                 # Test that this is a correct stop condition by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
-                # if it seems that calling a wait condition doesn't modify it).
+                # if it seems that calling a wait policy doesn't modify it).
                 try:
                     s = copy.deepcopy(stop_cond)
                     s(tenacity.compat.make_retry_state(0, 0))
@@ -276,36 +276,36 @@ class DownloadInterface(object):
                 raise ValueError("Error while parsing stop condition: %s" % e)
         else:
             raise TypeError("Expected tenacity.stop.stop_base or string, got %s" % type(stop_condition))
-        # Try to construct wait condition
-        if isinstance(wait_condition, tenacity.wait.wait_base):
+        # Try to construct wait policy
+        if isinstance(wait_policy, tenacity.wait.wait_base):
             # Use the value directly
-            wait_cond = wait_condition
-        elif isinstance(wait_condition, six.string_types):
+            wait_pol = wait_policy
+        elif isinstance(wait_policy, six.string_types):
             # Try to parse the string
             try:
-                wait_cond = simple_eval(wait_condition,
-                                        functions=self.ALL_WAIT_CONDITIONS,
-                                        operators=self.ALL_WAIT_OPERATORS,
-                                        names=self.ALL_WAIT_NAMES)
+                wait_pol = simple_eval(wait_policy,
+                                       functions=self.ALL_WAIT_POLICIES,
+                                       operators=self.ALL_WAIT_OPERATORS,
+                                       names=self.ALL_WAIT_NAMES)
                 # Check that it is an instance of wait_base
-                if not isinstance(wait_cond, tenacity.wait.wait_base):
-                    raise ValueError(wait_condition + " doesn't yield a wait condition")
-                # Test that this is a correct wait condition by calling it.
+                if not isinstance(wait_pol, tenacity.wait.wait_base):
+                    raise ValueError(wait_policy + " doesn't yield a wait policy")
+                # Test that this is a correct wait policy by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
                 # if it seems that calling a stop condition doesn't modify it).
                 try:
-                    w = copy.deepcopy(wait_cond)
+                    w = copy.deepcopy(wait_pol)
                     w(tenacity.compat.make_retry_state(0, 0))
                 except Exception:
-                    raise ValueError(wait_condition + " doesn't yield a stop condition")
+                    raise ValueError(wait_policy + " doesn't yield a wait policy")
             except Exception as e:
-                raise ValueError("Error while parsing stop condition: %s" % e)
+                raise ValueError("Error while parsing wait policy: %s" % e)
         else:
-            raise TypeError("Expected tenacity.stop.wait_base or string, got %s" % type(wait_condition))
+            raise TypeError("Expected tenacity.stop.wait_base or string, got %s" % type(wait_policy))
 
         self.retryer = tenacity.Retrying(
             stop=stop_cond,
-            wait=wait_cond,
+            wait=wait_pol,
             retry_error_callback=self.return_last_value,
             retry=tenacity.retry_if_result(self.is_true),
             reraise=True
