@@ -258,6 +258,11 @@ class DownloadInterface(object):
                 # Check that it is an instance of stop_base
                 if not isinstance(stop_cond, tenacity.stop.stop_base):
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
+                # Test that this is a correct stop condition by calling it
+                try:
+                    stop_cond(tenacity.compat.make_retry_state(0, 0))
+                except:
+                    raise ValueError(stop_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
         else:
@@ -276,6 +281,11 @@ class DownloadInterface(object):
                 # Check that it is an instance of wait_base
                 if not isinstance(wait_cond, tenacity.wait.wait_base):
                     raise ValueError(wait_condition + " doesn't yield a wait condition")
+                # Test that this is a correct wait condition by calling it
+                try:
+                    wait_cond(tenacity.compat.make_retry_state(0, 0))
+                except:
+                    raise ValueError(wait_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
         else:
