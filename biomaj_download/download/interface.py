@@ -67,14 +67,14 @@ class DownloadInterface(object):
     # but the later raises error. Considering it has a name is slightly more
     # clear (since then we must write "stop_none" as we do when we use tenacity
     # directly). For consistency, we create a name for wait_none (as an
-     # instance of the class wait_none).
+    # instance of the class wait_none).
     #
 
     # Functions available when parsing stop condition: those are constructors
     # of stop conditions classes (then using them will create objects). Note
     # that there is an exception for stop_never.
     ALL_STOP_CONDITIONS = {
-        #"stop_never": tenacity.stop._stop_never,  # In case, we want to use it like a function (see above)
+        # "stop_never": tenacity.stop._stop_never,  # In case, we want to use it like a function (see above)
         "stop_when_event_set": tenacity.stop_when_event_set,
         "stop_after_attempt": tenacity.stop_after_attempt,
         "stop_after_delay": tenacity.stop_after_delay,
@@ -266,7 +266,7 @@ class DownloadInterface(object):
                 # Test that this is a correct stop condition by calling it
                 try:
                     stop_cond(tenacity.compat.make_retry_state(0, 0))
-                except:
+                except Exception:
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
@@ -289,7 +289,7 @@ class DownloadInterface(object):
                 # Test that this is a correct wait condition by calling it
                 try:
                     wait_cond(tenacity.compat.make_retry_state(0, 0))
-                except:
+                except Exception:
                     raise ValueError(wait_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
