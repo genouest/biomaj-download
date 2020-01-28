@@ -58,12 +58,17 @@ class DownloadInterface(object):
     # stop_after_attempt(1, 2) + stop_none.
     # Of course, trying to use those wait conditions will raise cryptic errors.
     # The situation is similar for stop conditions.
-    # For parsing, this is particularly confusing if we consider stop_none as a
-    # function since then both "stop_none" and "stop_none()" are parsed
-    # and evaluated correctly but the later raises error. Considering it has a
-    # a name is slightly more clear (since then we must write "stop_none" but
-    # the code use the object which makes sense).
     # See https://github.com/jd/tenacity/issues/211.
+    # To avoid such errors, we test the objects in _set_retryer.
+    #
+    # Another confusing issue is that stop_never is an object (instance of the
+    # class _stop_never). For parsing, if we consider stop_never as a
+    # function then both "stop_never" and "stop_never()" are parsed correctly
+    # but the later raises error. Considering it has a name is slightly more
+    # clear (since then we must write "stop_none" as we do when we use tenacity
+    # directly). For consistency, we create a name for wait_none (as an
+     # instance of the class wait_none).
+    #
 
     # Functions available when parsing stop condition: those are constructors
     # of stop conditions classes (then using them will create objects). Note

@@ -65,7 +65,7 @@ A common problem when downloading a large number of files is the handling of tem
 Since version 3.1.2, `biomaj-download` uses the [Tenacity library](https://github.com/jd/tenacity) which is designed to handle this.
 
 This mechanism is configurable through 2 downloader-specific options (see below): **stop_condition** and **wait_condition**.
-When working on python code, you can pass instances of `stop_base` and `wait_base` respectively.
+When working on python code, you can pass instances of Tenacity's `stop_base` and `wait_base` respectively.
 This includes classes defined in Tenacity or your own derived classes.
 
 For bank configuration those options also parse strings read from the configuration file.
@@ -75,9 +75,9 @@ The rules are straightforward:
   * All concrete stop and wait classes defined in Tenacity (i.e. classes inheriting from `stop_base` and `wait_base` respectively) can be used
     by calling their constructor with the expected parameters.
     For example, the string `"stop_after_attempt(5)"` will create the desired object.
-    You can use classes that allow to combine other stop or wait conditions (namely `wait_combine`, `stop_all` and `stop_any`).
 	Note that stop and wait classes that need no argument must be used as constants (i.e. use `"stop_never"` and not `"stop_never()"`).
-	Currently, this is the case for `"stop_never"` and `"wait_none"`.
+	Currently, this is the case for `"stop_never"` (as in Tenacity) and `"wait_none"` (this slightly differs from Tenacity where it is `"wait_none()"`).
+  * You can use classes that allow to combine other stop or wait conditions (namely `wait_combine`, `stop_all` and `stop_any`).
   * Operator `+` can be used to add wait conditions (similar to `wait_combine`).
   * Operators `&` and `|` can be used to compose stop conditions (similar to `wait_all` and `wait_none` respectively).
 
