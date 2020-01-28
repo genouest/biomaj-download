@@ -112,7 +112,8 @@ Examples (inspired by Tenacity doc):
   * `"stop_never | stop_after_attempt(5)"` will stop after 5 attempts (since `stop_never` never stops).
 
 Note that some protocols (e.g. FTP) classify errors as temporary or permanent (for example trying to download inexisting file).
-In our experience, so called permanent errors may well be temporary.
+More generally, we could distinguish permanent errors based on error codes, etc. and not retry in this case.
+However in our experience, so called permanent errors may well be temporary.
 Therefore downloaders always retry whatever the error.
 In some cases, this is a waste of time but generally this is worth it.
 
