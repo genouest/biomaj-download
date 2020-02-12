@@ -1,5 +1,4 @@
 import sys
-import os
 import re
 from datetime import datetime
 import hashlib
@@ -299,57 +298,47 @@ class CurlDownload(DownloadInterface):
         This method is designed to work for FTP(S), HTTP(S) and SFTP.
         """
         error = True
-        nbtry = 1
         # Forge URL of remote file
         file_url = self._file_url(rfile)
-        while(error is True and nbtry < 3):
 
-            try:
-                self.crl.setopt(pycurl.URL, file_url)
-            except Exception:
-                self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
+        try:
+            self.crl.setopt(pycurl.URL, file_url)
+        except Exception:
+            self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
 
-            # Create file and assign it to the pycurl object
-            fp = open(file_path, "wb")
-            self.crl.setopt(pycurl.WRITEFUNCTION, fp.write)
+        # Create file and assign it to the pycurl object
+        fp = open(file_path, "wb")
+        self.crl.setopt(pycurl.WRITEFUNCTION, fp.write)
 
-            # This is specific to HTTP
-            if self.method == 'POST':
-                # Form data must be provided already urlencoded.
-                postfields = urlencode(self.param)
-                # Sets request method to POST,
-                # Content-Type header to application/x-www-form-urlencoded
-                # and data to send in request body.
-                self.crl.setopt(pycurl.POSTFIELDS, postfields)
+        # This is specific to HTTP
+        if self.method == 'POST':
+            # Form data must be provided already urlencoded.
+            postfields = urlencode(self.param)
+            # Sets request method to POST,
+            # Content-Type header to application/x-www-form-urlencoded
+            # and data to send in request body.
+            self.crl.setopt(pycurl.POSTFIELDS, postfields)
 
-            # Try download
-            try:
-                self.crl.perform()
-                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-                if int(errcode) != self.ERRCODE_OK:
-                    error = True
-                    self.logger.error('Error while downloading ' + file_url + ' - ' + str(errcode))
-                else:
-                    error = False
-            except Exception as e:
-                self.logger.error('Could not get errcode:' + str(e))
+        # Try download
+        try:
+            self.crl.perform()
+            errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
+            if int(errcode) != self.ERRCODE_OK:
+                error = True
+                self.logger.error('Error while downloading ' + file_url + ' - ' + str(errcode))
+            else:
+                error = False
+        except Exception as e:
+            self.logger.error('Could not get errcode:' + str(e))
 
-            # Close file
-            fp.close()
+        # Close file
+        fp.close()
 
-            # Check that the archive is correct
-            if not error and not self.skip_check_uncompress:
-                archive_status = Utils.archive_check(file_path)
-                if not archive_status:
-                    self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
-                    error = True
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
+        if error:
+            return error
 
-            # Increment retry counter
-            nbtry += 1
-
-        return error
+        # Our part is done so call parent _download
+        return super(CurlDownload, self)._download(file_path, rfile)
 
     def list(self, directory=''):
         '''

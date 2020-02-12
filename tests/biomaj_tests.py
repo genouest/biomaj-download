@@ -1,5 +1,9 @@
 """
 Note that attributes 'network' and 'local_irods' are ignored for CI.
+
+To run 'local_irods' tests, you need an iRODS server on localhost (default port,
+user 'rods', password 'rods') and a zone /tempZone/home/rods. See
+UtilsForLocalIRODSTest.
 """
 from nose.plugins.attrib import attr
 
@@ -12,8 +16,11 @@ import stat
 
 from mock import patch
 
+from irods.session import iRODSSession
+
 from biomaj_core.config import BiomajConfig
 from biomaj_core.utils import Utils
+from biomaj_download.download.interface import DownloadInterface
 from biomaj_download.download.curl import CurlDownload, HTTPParse
 from biomaj_download.download.direct import DirectFTPDownload, DirectHTTPDownload
 from biomaj_download.download.localcopy  import LocalDownload
@@ -21,6 +28,7 @@ from biomaj_download.download.rsync import RSYNCDownload
 from biomaj_download.download.protocolirods import IRODSDownload
 
 import unittest
+import tenacity
 
 
 class UtilsForTest():
@@ -63,6 +71,11 @@ class UtilsForTest():
 
     if self.bank_properties is None:
       self.__copy_test_bank_properties()
+
+    # Create an invalid archive file (empty file). This is deleted by clean().
+    # See TestBiomajRSYNCDownload.test_rsync_download_skip_check_uncompress.
+    self.invalid_archive = os.path.join(self.test_dir, 'invalid.gz')
+    open(self.invalid_archive, 'w').close()
 
   def clean(self):
     """
@@ -130,6 +143,80 @@ class UtilsForTest():
           else:
             fout.write(line)
     fout.close()
+
+
+class UtilsForLocalIRODSTest(UtilsForTest):
+    """
+    This class is used to prepare 'local_irods' tests.
+    """
+    SERVER = "localhost"
+    PORT = 1247
+    ZONE = "tempZone"
+    USER = "rods"
+    PASSWORD = "rods"
+    COLLECTION = os.path.join("/" + ZONE, "home/rods/")  # Don't remove or add /
+
+    def __init__(self):
+        super(UtilsForLocalIRODSTest, self).__init__()
+        self._session = iRODSSession(host=self.SERVER, port=self.PORT,
+                                     user=self.USER, password=self.PASSWORD,
+                                     zone=self.ZONE)
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        # Copy some valid archives (bank/test.fasta.gz)
+        file_ = os.path.join(self.curdir, "bank/test.fasta.gz")
+        self._session.data_objects.put(file_, self.COLLECTION)
+        # Copy invalid.gz
+        self._session.data_objects.put(self.invalid_archive, self.COLLECTION)
+
+    def clean(self):
+        super(UtilsForLocalIRODSTest, self).clean()
+        # Remove files on iRODS (use force otherwise the files are put in trash)
+        # Remove test.fasta.gz
+        self._session.data_objects.unlink(os.path.join(self.COLLECTION, "test.fasta.gz"), force=True)
+        # Remove invalid.gz
+        self._session.data_objects.unlink(os.path.join(self.COLLECTION, "invalid.gz"), force=True)
+
+
+class TestDownloadInterface(unittest.TestCase):
+  """
+  Test of the interface.
+  """
+
+  def test_retry_parsing(self):
+    """
+    Test parsing of stop and wait conditions.
+    """
+    downloader = DownloadInterface()
+    # Test some garbage
+    d = dict(stop_condition="stop_after_attempts")  # no param
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(stop_condition="1 & 1")  # not a stop_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(stop_condition="stop_after_attempts(5) & 1")  # not a stop_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    # Test some garbage
+    d = dict(wait_policy="wait_random")  # no param
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(wait_policy="I love python")  # not a wait_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    d = dict(wait_policy="wait_random(5) + 3")  # not a wait_condition
+    self.assertRaises(ValueError, downloader.set_options, d)
+    # Test operators
+    d = dict(stop_condition="stop_never | stop_after_attempt(5)",
+             wait_policy="wait_none + wait_random(1, 2)")
+    downloader.set_options(d)
+    # Test wait_combine, wait_chain
+    d = dict(wait_policy="wait_combine(wait_fixed(3), wait_random(1, 2))")
+    downloader.set_options(d)
+    d = dict(wait_policy="wait_chain(wait_fixed(3), wait_random(1, 2))")
+    downloader.set_options(d)
+    # Test stop_any and stop_all
+    stop_condition = "stop_any(stop_after_attempt(5), stop_after_delay(10))"
+    d = dict(stop_condition=stop_condition)
+    downloader.set_options(d)
+    stop_condition = "stop_all(stop_after_attempt(5), stop_after_delay(10))"
+    d = dict(stop_condition=stop_condition)
+    downloader.set_options(d)
 
 
 class TestBiomajLocalDownload(unittest.TestCase):
@@ -581,6 +668,39 @@ class TestBiomajFTPDownload(unittest.TestCase):
     self.assertTrue(release['month']=='11')
     self.assertTrue(release['day']=='12')
 
+  def test_download_retry(self):
+    """
+    Try to download fake files to test retry.
+    """
+    n_attempts = 5
+    ftpd = CurlDownload("ftp", "speedtest.tele2.net", "/")
+    # Download a fake file
+    ftpd.set_files_to_download([
+          {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+           'size': 1, 'save_as': 'TOTO1KB'}
+    ])
+    ftpd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                          wait_condition=tenacity.wait.wait_none()))
+    self.assertRaisesRegexp(
+        Exception, "^CurlDownload:Download:Error:",
+        ftpd.download, self.utils.data_dir,
+    )
+    logging.debug(ftpd.retryer.statistics)
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    # Try to download another file to ensure that it retryies
+    ftpd.set_files_to_download([
+          {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+           'size': 1, 'save_as': 'TOTO1KB'}
+    ])
+    self.assertRaisesRegexp(
+        Exception, "^CurlDownload:Download:Error:",
+        ftpd.download, self.utils.data_dir,
+    )
+    self.assertTrue(len(ftpd.files_to_download) == 1)
+    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    ftpd.close()
+
   def test_ms_server(self):
       ftpd = CurlDownload("ftp", "test.rebex.net", "/")
       ftpd.set_credentials("demo:password")
@@ -751,6 +871,51 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.download(self.utils.data_dir)
         self.assertTrue(len(rsyncd.files_to_download) == 3)
 
+    def test_rsync_download_skip_check_uncompress(self):
+        """
+        Download the fake archive file with RSYNC but skip check.
+        """
+        rsyncd = RSYNCDownload(self.utils.test_dir + '/', "")
+        rsyncd.set_options(dict(skip_check_uncompress=True))
+        (file_list, dir_list) = rsyncd.list()
+        rsyncd.match([r'invalid.gz'], file_list, dir_list, prefix='')
+        rsyncd.download(self.utils.data_dir)
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+
+    def test_rsync_download_retry(self):
+        """
+        Try to download fake files to test retry.
+        """
+        n_attempts = 5
+        rsyncd = RSYNCDownload(self.utils.test_dir + '/', "")
+        rsyncd.set_options(dict(skip_check_uncompress=True))
+        # Download a fake file
+        rsyncd.set_files_to_download([
+              {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        rsyncd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                                wait_condition=tenacity.wait.wait_none()))
+        self.assertRaisesRegexp(
+            Exception, "^RSYNCDownload:Download:Error:",
+            rsyncd.download, self.utils.data_dir,
+        )
+        logging.debug(rsyncd.retryer.statistics)
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        # Try to download another file to ensure that it retryies
+        rsyncd.set_files_to_download([
+              {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        self.assertRaisesRegexp(
+            Exception, "^RSYNCDownload:Download:Error:",
+            rsyncd.download, self.utils.data_dir,
+        )
+        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        rsyncd.close()
+
 
 class iRodsResult(object):
 
@@ -852,18 +1017,83 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         (files_list, dir_list) = irodsd.list()
         self.assertTrue(len(files_list) != 0)
 
-    @attr('local_irods')
+
+@attr('local_irods')
+@attr('network')
+class TestBiomajLocalIRODSDownload(unittest.TestCase):
+    """
+    Test with a local iRODS server.
+    """
+
+    def setUp(self):
+        self.utils = UtilsForLocalIRODSTest()
+        self.curdir = os.path.dirname(os.path.realpath(__file__))
+        self.examples = os.path.join(self.curdir,'bank') + '/'
+        BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+
+    def tearDown(self):
+        self.utils.clean()
+
     def test_irods_download(self):
-        # To run this test, you need an iRODS server on localhost (default
-        # port, user 'rods', password 'rods'), and populate a zone
-        # /tempZone/home/rods with a file that matches r'^test.*\.gz$' (for
-        # instance, by copying tests/bank/test/test.fasta.gz).
-        irodsd = IRODSDownload("localhost", "/tempZone/home/rods")
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
         irodsd.set_param(dict(
-            user='rods',
-            password='rods',
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
         ))
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         irodsd.download(self.utils.data_dir)
         self.assertTrue(len(irodsd.files_to_download) == 1)
+
+    def test_irods_download_skip_check_uncompress(self):
+        """
+        Download the fake archive file with iRODS but skip check.
+        """
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
+        irodsd.set_options(dict(skip_check_uncompress=True))
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
+        ))
+        (file_list, dir_list) = irodsd.list()
+        irodsd.match([r'invalid.gz$'], file_list, dir_list, prefix='')
+        irodsd.download(self.utils.data_dir)
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+
+    def test_irods_download_retry(self):
+        """
+        Try to download fake files to test retry.
+        """
+        n_attempts = 5
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
+        irodsd.set_options(dict(skip_check_uncompress=True))
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
+        ))
+        # Download a fake file
+        irodsd.set_files_to_download([
+              {'name': 'TOTO.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        irodsd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
+                                wait_condition=tenacity.wait.wait_none()))
+        self.assertRaisesRegexp(
+            Exception, "^IRODSDownload:Download:Error:",
+            irodsd.download, self.utils.data_dir,
+        )
+        logging.debug(irodsd.retryer.statistics)
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        # Try to download another file to ensure that it retryies
+        irodsd.set_files_to_download([
+              {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
+               'size': 1, 'save_as': 'TOTO1KB'}
+        ])
+        self.assertRaisesRegexp(
+            Exception, "^IRODSDownload:Download:Error:",
+            irodsd.download, self.utils.data_dir,
+        )
+        self.assertTrue(len(irodsd.files_to_download) == 1)
+        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        irodsd.close()

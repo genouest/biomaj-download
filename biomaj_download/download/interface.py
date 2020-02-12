@@ -3,8 +3,15 @@ import logging
 import datetime
 import time
 import re
+import copy
+
+import six
+
+import tenacity
+from simpleeval import simple_eval, ast
 
 from biomaj_core.utils import Utils
+from biomaj_core.config import BiomajConfig
 
 
 class _FakeLock(object):
@@ -43,6 +50,96 @@ class DownloadInterface(object):
 
     files_num_threads = 4
 
+    #
+    # Constants to parse retryer
+    #
+    # Note that due to the current implementation of operators, tenacity allows
+    # nonsensical operations. For example the following snippets are valid:
+    # stop_after_attempt(1, 2) + 4
+    # stop_after_attempt(1, 2) + stop_none.
+    # Of course, trying to use those wait policies will raise cryptic errors.
+    # The situation is similar for stop conditions.
+    # See https://github.com/jd/tenacity/issues/211.
+    # To avoid such errors, we test the objects in _set_retryer.
+    #
+    # Another confusing issue is that stop_never is an object (instance of the
+    # class _stop_never). For parsing, if we consider stop_never as a
+    # function then both "stop_never" and "stop_never()" are parsed correctly
+    # but the later raises error. Considering it has a name is slightly more
+    # clear (since then we must write "stop_none" as we do when we use tenacity
+    # directly). For consistency, we create a name for wait_none (as an
+    # instance of the class wait_none).
+    #
+
+    # Functions available when parsing stop condition: those are constructors
+    # of stop conditions classes (then using them will create objects). Note
+    # that there is an exception for stop_never.
+    ALL_STOP_CONDITIONS = {
+        # "stop_never": tenacity.stop._stop_never,  # In case, we want to use it like a function (see above)
+        "stop_when_event_set": tenacity.stop_when_event_set,
+        "stop_after_attempt": tenacity.stop_after_attempt,
+        "stop_after_delay": tenacity.stop_after_delay,
+        "stop_any": tenacity.stop_any,  # Similar to |
+        "stop_all": tenacity.stop_all,  # Similar to &
+    }
+
+    # tenacity.stop_never is an instance of _stop_never, not a class so we
+    # import it as a name.
+    ALL_STOP_NAMES = {
+        "stop_never": tenacity.stop_never,
+    }
+
+    # Operators for stop conditions: | means to stop if one of the conditions
+    # is True, & means to stop if all the conditions are True.
+    ALL_STOP_OPERATORS = {
+        ast.BitOr: tenacity.stop.stop_base.__or__,
+        ast.BitAnd: tenacity.stop.stop_base.__and__,
+    }
+
+    # Functions available when parsing wait policy: those are constructors
+    # of wait policies classes (then using them will create objects). Note
+    # that there is an exception for wait_none.
+    ALL_WAIT_POLICIES = {
+        # "wait_none": tenacity.wait_none,  # In case, we want to use it like a function (see above)
+        "wait_fixed": tenacity.wait_fixed,
+        "wait_random": tenacity.wait_random,
+        "wait_incrementing": tenacity.wait_incrementing,
+        "wait_exponential": tenacity.wait_exponential,
+        "wait_random_exponential": tenacity.wait_random_exponential,
+        "wait_combine": tenacity.wait_combine,  # Sum of wait policies (similar to +)
+        "wait_chain": tenacity.wait_chain,  # Give a list of wait policies (one for each attempt)
+    }
+
+    # Create an instance of wait_none to use it like a constant.
+    ALL_WAIT_NAMES = {
+        "wait_none": tenacity.wait.wait_none()
+    }
+
+    # Operators for wait policies: + means to sum waiting times of wait
+    # policies.
+    ALL_WAIT_OPERATORS = {
+        ast.Add: tenacity.wait.wait_base.__add__
+    }
+
+    @staticmethod
+    def is_true(download_error):
+        """Method used by retryer to determine if we should retry to downlaod a
+        file based on the return value of method:`_download` (passed as the
+        argument): we must retry while this value is True.
+
+        See method:`_set_retryer`.
+        """
+        return download_error is True
+
+    @staticmethod
+    def return_last_value(retry_state):
+        """Method used by the retryer to determine the return value of the
+        retryer: we return the result of the last attempt.
+
+        See method:`_set_retryer`.
+        """
+        return retry_state.outcome.result()
+
     def __init__(self):
         # This variable defines the protocol as passed by the config file (i.e.
         # this is directftp for DirectFTPDownload). It is used by the workflow
@@ -70,6 +167,11 @@ class DownloadInterface(object):
         # Options
         self.options = {}  # This field is used to forge the download message
         self.skip_check_uncompress = False
+        # Construct default retryer (may be replaced in set_options)
+        self._set_retryer(
+            BiomajConfig.DEFAULTS["stop_condition"],
+            BiomajConfig.DEFAULTS["wait_policy"]
+        )
 
     #
     # Setters for downloader
@@ -138,6 +240,76 @@ class DownloadInterface(object):
         self.options = options
         if "skip_check_uncompress" in options:
             self.skip_check_uncompress = Utils.to_bool(options["skip_check_uncompress"])
+        # If stop_condition or wait_policy is specified, we reconstruct the retryer
+        if "stop_condition" or "wait_policy" in options:
+            stop_condition = options.get("stop_condition", BiomajConfig.DEFAULTS["stop_condition"])
+            wait_policy = options.get("wait_policy", BiomajConfig.DEFAULTS["wait_policy"])
+            self._set_retryer(stop_condition, wait_policy)
+
+    def _set_retryer(self, stop_condition, wait_policy):
+        """
+        Add a retryer to retry the current download if it fails.
+        """
+        # Try to construct stop condition
+        if isinstance(stop_condition, tenacity.stop.stop_base):
+            # Use the value directly
+            stop_cond = stop_condition
+        elif isinstance(stop_condition, six.string_types):
+            # Try to parse the string
+            try:
+                stop_cond = simple_eval(stop_condition,
+                                        functions=self.ALL_STOP_CONDITIONS,
+                                        operators=self.ALL_STOP_OPERATORS,
+                                        names=self.ALL_STOP_NAMES)
+                # Check that it is an instance of stop_base
+                if not isinstance(stop_cond, tenacity.stop.stop_base):
+                    raise ValueError(stop_condition + " doesn't yield a stop condition")
+                # Test that this is a correct stop condition by calling it.
+                # We use a deepcopy to be sure to not alter the object (even
+                # if it seems that calling a wait policy doesn't modify it).
+                try:
+                    s = copy.deepcopy(stop_cond)
+                    s(tenacity.compat.make_retry_state(0, 0))
+                except Exception:
+                    raise ValueError(stop_condition + " doesn't yield a stop condition")
+            except Exception as e:
+                raise ValueError("Error while parsing stop condition: %s" % e)
+        else:
+            raise TypeError("Expected tenacity.stop.stop_base or string, got %s" % type(stop_condition))
+        # Try to construct wait policy
+        if isinstance(wait_policy, tenacity.wait.wait_base):
+            # Use the value directly
+            wait_pol = wait_policy
+        elif isinstance(wait_policy, six.string_types):
+            # Try to parse the string
+            try:
+                wait_pol = simple_eval(wait_policy,
+                                       functions=self.ALL_WAIT_POLICIES,
+                                       operators=self.ALL_WAIT_OPERATORS,
+                                       names=self.ALL_WAIT_NAMES)
+                # Check that it is an instance of wait_base
+                if not isinstance(wait_pol, tenacity.wait.wait_base):
+                    raise ValueError(wait_policy + " doesn't yield a wait policy")
+                # Test that this is a correct wait policy by calling it.
+                # We use a deepcopy to be sure to not alter the object (even
+                # if it seems that calling a stop condition doesn't modify it).
+                try:
+                    w = copy.deepcopy(wait_pol)
+                    w(tenacity.compat.make_retry_state(0, 0))
+                except Exception:
+                    raise ValueError(wait_policy + " doesn't yield a wait policy")
+            except Exception as e:
+                raise ValueError("Error while parsing wait policy: %s" % e)
+        else:
+            raise TypeError("Expected tenacity.stop.wait_base or string, got %s" % type(wait_policy))
+
+        self.retryer = tenacity.Retrying(
+            stop=stop_cond,
+            wait=wait_pol,
+            retry_error_callback=self.return_last_value,
+            retry=tenacity.retry_if_result(self.is_true),
+            reraise=True
+        )
 
     #
     # File operations (match, list, download) and associated hook methods
@@ -310,9 +482,23 @@ class DownloadInterface(object):
     def _download(self, file_path, rfile):
         '''
         Download one file and return False in case of success and True
-        otherwise. This must be implemented in subclasses.
+        otherwise.
+
+        Subclasses that override this method must call this implementation to
+        perform test on archives.
+
+        Note that this method is executed inside a retryer.
         '''
-        raise NotImplementedError()
+        error = False
+        # Check that the archive is correct
+        if not self.skip_check_uncompress:
+            archive_status = Utils.archive_check(file_path)
+            if not archive_status:
+                self.logger.error('Archive is invalid or corrupted, deleting file and retrying download')
+                error = True
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        return error
 
     def _network_configuration(self):
         '''
@@ -360,7 +546,7 @@ class DownloadInterface(object):
             cur_files += 1
             start_time = datetime.datetime.now()
             start_time = time.mktime(start_time.timetuple())
-            error = self._download(file_path, rfile)
+            error = self.retryer(self._download, file_path, rfile)
             if error:
                 rfile['download_time'] = 0
                 rfile['error'] = True

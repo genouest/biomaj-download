@@ -23,7 +23,7 @@ config = {
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
     'version': '3.2.1',
-     'classifiers': [
+    'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
         #   4 - Beta
@@ -47,6 +47,8 @@ config = {
                          'biomaj_zipkin',
                          'pycurl',
                          'ftputil',
+                         'tenacity',
+                         'simpleeval',
                          'py-bcrypt',
                          'pika==0.13.0',
                          'redis',
@@ -57,7 +59,8 @@ config = {
                          'protobuf',
                          'requests',
                          'humanfriendly',
-                         'python-irodsclient'
+                         'python-irodsclient',
+                         'six'
                         ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',

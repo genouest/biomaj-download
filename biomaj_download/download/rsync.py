@@ -82,7 +82,11 @@ class RSYNCDownload(DownloadInterface):
         if err_code != 0:
             self.logger.error('Error while downloading ' + rfile["name"] + ' - ' + str(err_code))
             error = True
-        return(error)
+        if error:
+            return error
+
+        # Our part is done so call parent _download
+        return super(RSYNCDownload, self)._download(file_path, rfile)
 
     def test_stderr_rsync_error(self, stderr):
         stderr = str(stderr.decode('utf-8'))

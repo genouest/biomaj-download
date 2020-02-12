@@ -65,7 +65,7 @@ class IRODSDownload(DownloadInterface):
                                     user=self.user, password=self.password,
                                     zone=self.zone)
 
-    def _download(self, file_dir, rfile):
+    def _download(self, file_path, rfile):
         error = False
         self.logger.debug('IRODS:IRODS DOWNLOAD')
         try:
@@ -76,9 +76,14 @@ class IRODSDownload(DownloadInterface):
                 file_to_get = rfile['root'] + "/" + rfile['name']
             # Write the file to download in the wanted file_dir with the
             # python-irods iget
-            self.session.data_objects.get(file_to_get, file_dir)
+            self.session.data_objects.get(file_to_get, file_path)
         except iRODSException as e:
             error = True
             self.logger.error(self.__class__.__name__ + ":Download:Error:Can't get irods object " + file_to_get)
             self.logger.error(self.__class__.__name__ + ":Download:Error:" + repr(e))
-        return(error)
+
+        if error:
+            return error
+
+        # Our part is done so call parent _download
+        return super(IRODSDownload, self)._download(file_path, rfile)
