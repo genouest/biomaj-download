@@ -1,5 +1,8 @@
-3.2.1 UNRELEASED:
-
+3.2.1:
+ #20 Add a configurable mechanism to retry download when it fails
+ #24 Speed up IRODDownload
+ Introduce a method to perform configuration before network methods. Adapt implementation of generic methods and subclasses.
+ Resolve bug when the parser analyse also the Message Of The Day when it wants only list of file. (#23)
 3.1.2:
   #18 Add a protocol option to set CURLOPT_FTP_FILEMETHOD
   #19 Rename protocol options to options
