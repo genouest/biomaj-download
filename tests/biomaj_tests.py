@@ -428,6 +428,9 @@ class TestBiomajSFTPDownload(unittest.TestCase):
   def test_download(self):
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
     sftpd.set_credentials("demo:password")
+    sftpd.set_options({
+        "ssh_new_host": "add"
+    })
     (file_list, dir_list) = sftpd.list()
     sftpd.match([r'^readme.txt$'], file_list, dir_list)
     sftpd.download(self.utils.data_dir)
