@@ -193,7 +193,7 @@ class CurlDownload(DownloadInterface):
         # known_hosts file
         self.ssh_hosts_file = BiomajConfig.DEFAULTS["ssh_hosts_file"]
         # How to treat unknown host
-        self.ssh_new_host = pycurl.KHSTAT_REJECT
+        self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
 
     def _accept_new_hosts(self, known_key, found_key, match):
         return self.ssh_new_host
