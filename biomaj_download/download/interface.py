@@ -329,6 +329,8 @@ class DownloadInterface(object):
         if self.param:
             if 'param' not in rfile or not rfile['param']:
                 rfile['param'] = self.param
+        # Remove duplicate */* if any
+        rfile['name'] = re.sub('//+', '/', rfile['name'])
         self.files_to_download.append(rfile)
 
     def set_files_to_download(self, files):

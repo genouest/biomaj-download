@@ -15,3 +15,6 @@ biomaj_zipkin
 flake8
 humanfriendly
 python-irodsclient
+six
+simpleeval
+tenacity

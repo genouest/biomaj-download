@@ -201,9 +201,12 @@ class CurlDownload(DownloadInterface):
 
         # Configure TCP keepalive
         if self.tcp_keepalive:
-            self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
-            self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
-            self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+            try:
+                self.crl.setopt(pycurl.TCP_KEEPALIVE, True)
+                self.crl.setopt(pycurl.TCP_KEEPIDLE, self.tcp_keepalive * 2)
+                self.crl.setopt(pycurl.TCP_KEEPINTVL, self.tcp_keepalive)
+            except Exception as e:
+                self.logger.exception("TCP keepalive option failed: " + str(e))
 
         # Configure SSL verification (on some platforms, disabling
         # SSL_VERIFYPEER implies disabling SSL_VERIFYHOST so we set
