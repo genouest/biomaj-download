@@ -352,7 +352,8 @@ class CurlDownload(DownloadInterface):
         This is a generic method for HTTP and FTP. The protocol-specific parts
         are done in _<protocol>_parse_result.
         '''
-        dir_url = self.url + self.rootdir + directory
+        dirbase = re.sub('//+', '/', self.rootdir + directory)
+        dir_url = self.url + dirbase
         self.logger.debug('Download:List:' + dir_url)
 
         self._network_configuration()
