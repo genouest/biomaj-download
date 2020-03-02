@@ -195,8 +195,18 @@ class CurlDownload(DownloadInterface):
         # How to treat unknown host
         self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
 
-    def _accept_new_hosts(self, known_keys, found_key, match):
-        return self.ssh_new_host
+    def _accept_new_hosts(self, known_key, found_key, match):
+        # Key found in file: we can accept it
+        # Don't use KHSTAT_FINE_ADD_TO_FILE because the key would be duplicated
+        # See https://github.com/curl/curl/issues/4953.
+        if match == pycurl.KHMATCH_OK:
+            return pycurl.KHSTAT_FINE
+        # Key not found in file: use the ssh_new_host option
+        elif match == pycurl.KHMATCH_MISSING:
+            return self.ssh_new_host
+        # Key missmatch: the best option is to reject it
+        else:
+            return pycurl.KHSTAT_REJECT
 
     def _network_configuration(self):
         """
