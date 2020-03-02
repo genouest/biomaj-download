@@ -11,6 +11,8 @@ import ftputil
 import humanfriendly
 
 from biomaj_core.utils import Utils
+from biomaj_core.config import BiomajConfig
+
 from biomaj_download.download.interface import DownloadInterface
 
 if sys.version_info[0] < 3:
@@ -120,6 +122,13 @@ class CurlDownload(DownloadInterface):
         "singlecwd": pycurl.FTPMETHOD_SINGLECWD,
     }
 
+    # Valid values for ssh_new_host options as string and int
+    VALID_SSH_NEW_HOST = {
+        "reject": pycurl.KHSTAT_REJECT,
+        "accept": pycurl.KHSTAT_FINE,
+        "add": pycurl.KHSTAT_FINE_ADD_TO_FILE,
+    }
+
     def __init__(self, curl_protocol, host, rootdir, http_parse=None):
         """
         Initialize a CurlDownloader.
@@ -181,6 +190,23 @@ class CurlDownload(DownloadInterface):
         self.tcp_keepalive = 0
         # FTP method (cURL --ftp-method option)
         self.ftp_method = pycurl.FTPMETHOD_DEFAULT  # Use cURL default
+        # known_hosts file
+        self.ssh_hosts_file = BiomajConfig.DEFAULTS["ssh_hosts_file"]
+        # How to treat unknown host
+        self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
+
+    def _accept_new_hosts(self, known_key, found_key, match):
+        # Key found in file: we can accept it
+        # Don't use KHSTAT_FINE_ADD_TO_FILE because the key would be duplicated
+        # See https://github.com/curl/curl/issues/4953.
+        if match == pycurl.KHMATCH_OK:
+            return pycurl.KHSTAT_FINE
+        # Key not found in file: use the ssh_new_host option
+        elif match == pycurl.KHMATCH_MISSING:
+            return self.ssh_new_host
+        # Key missmatch: the best option is to reject it
+        else:
+            return pycurl.KHSTAT_REJECT
 
     def _network_configuration(self):
         """
@@ -198,6 +224,10 @@ class CurlDownload(DownloadInterface):
 
         if self.credentials is not None:
             self.crl.setopt(pycurl.USERPWD, self.credentials)
+
+        # Hosts file & function to decide for new hosts
+        self.crl.setopt(pycurl.SSH_KNOWNHOSTS, self.ssh_hosts_file)
+        self.crl.setopt(pycurl.SSH_KEYFUNCTION, self._accept_new_hosts)
 
         # Configure TCP keepalive
         if self.tcp_keepalive:
@@ -282,6 +312,13 @@ class CurlDownload(DownloadInterface):
             if raw_val not in self.VALID_FTP_FILEMETHOD:
                 raise ValueError("Invalid value for ftp_method")
             self.ftp_method = self.VALID_FTP_FILEMETHOD[raw_val]
+        if "ssh_hosts_file" in options:
+            self.ssh_hosts_file = options["ssh_hosts_file"]
+        if "ssh_new_host" in options:
+            raw_val = options["ssh_new_host"].lower()
+            if raw_val not in self.VALID_SSH_NEW_HOST:
+                raise ValueError("Invalid value for ssh_new_host")
+            self.ssh_new_host = self.VALID_SSH_NEW_HOST[raw_val]
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)

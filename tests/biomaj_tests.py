@@ -421,6 +421,8 @@ class TestBiomajSFTPDownload(unittest.TestCase):
 
   def setUp(self):
     self.utils = UtilsForTest()
+    # Temporary host key file in test dir (so this is claned)
+    (_, self.khfile) = tempfile.mkstemp(dir=self.utils.test_dir)
 
   def tearDown(self):
     self.utils.clean()
@@ -428,6 +430,10 @@ class TestBiomajSFTPDownload(unittest.TestCase):
   def test_download(self):
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
     sftpd.set_credentials("demo:password")
+    sftpd.set_options({
+        "ssh_hosts_file": self.khfile,
+        "ssh_new_host": "add"
+    })
     (file_list, dir_list) = sftpd.list()
     sftpd.match([r'^readme.txt$'], file_list, dir_list)
     sftpd.download(self.utils.data_dir)
