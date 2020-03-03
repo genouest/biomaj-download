@@ -117,6 +117,27 @@ However in our experience, so called permanent errors may well be temporary.
 Therefore downloaders always retry whatever the error.
 In some cases, this is a waste of time but generally this is worth it.
 
+# Host keys
+
+When using the `sftp` protocol, `biomaj-download` must check the host key.
+Those keys are stored in a file (for instance `~/.ssh/known_hosts`).
+
+Two options are available to configure this:
+
+  - **ssh_hosts_file** which sets the file to use
+  - **ssh_new_host** which sets what to do for a new host
+
+When the host and the key are found in the file, the connection is accepted.
+If the host is found but the key missmatches, the connection is rejected
+(this usually indicates a problem or a change of configuration on the remote server).
+When the host is not found, the decision depends on the value of **ssh_new_host**:
+
+  - `reject` means that the connection is rejected
+  - `accept` means that the connection is accepted
+  - `add` means that the connection is accepted and the key is added to the file
+
+See the description of options below.
+
 # Download options
 
 Since version 3.0.26, you can use the `set_options` method to pass a dictionary of downloader-specific options.
@@ -167,6 +188,18 @@ The following list shows some options and their effect (the option to set is the
     * effect: Sets the method to use to reach a file on a FTP(S) server (`nocwd` and `singlecwd` are usually faster but not always supported).
     * default: `default` (which is `multicwd` at the time of this writing)
     * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option.
+  * **ssh_hosts_file**:
+    * parameter: path of the known hosts file.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
+    * effect: sets the file used to read/store host keys for `SFTP`.
+    * default: `~/.ssh/known_hosts` (where `~` is the home directory of the current user).
+    * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KNOWNHOSTS.html) for the corresponding cURL option and the option below.
+  * **ssh_new_host**:
+    * parameter: one of `reject`, `accept`, `add`.
+    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
+    * effect: sets the policy to use for an unknown host.
+    * default: `reject` (i.e. refuse new hosts - you must add them in the file for instance with `ssh` or `sftp`).
+    * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KEYFUNCTION.html) for the corresponding cURL option and the option above.
 
 Those options can be set in bank properties.
 See file `global.properties.example` in [biomaj module](https://github.com/genouest/biomaj).
