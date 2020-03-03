@@ -63,8 +63,8 @@ Prometheus endpoint metrics are exposed via /metrics on web server
 
 A common problem when downloading a large number of files is the handling of temporary failures (network issues, server too busy to answer, etc.).
 Since version 3.1.2, `biomaj-download` uses the [Tenacity library](https://github.com/jd/tenacity) which is designed to handle this.
+This mechanism is configurable through 2 downloader-specific options (see [Download options](#download-options)): **stop_condition** and **wait_policy**.
 
-This mechanism is configurable through 2 downloader-specific options (see below): **stop_condition** and **wait_policy**.
 When working on python code, you can pass instances of Tenacity's `stop_base` and `wait_base` respectively.
 This includes classes defined in Tenacity or your own derived classes.
 
@@ -117,56 +117,88 @@ However in our experience, so called permanent errors may well be temporary.
 Therefore downloaders always retry whatever the error.
 In some cases, this is a waste of time but generally this is worth it.
 
+# Host keys
+
+When using the `sftp` protocol, `biomaj-download` must check the host key.
+Those keys are stored in a file (for instance `~/.ssh/known_hosts`).
+
+Two options are available to configure this:
+
+  - **ssh_hosts_file** which sets the file to use
+  - **ssh_new_host** which sets what to do for a new host
+
+When the host and the key are found in the file, the connection is accepted.
+If the host is found but the key missmatches, the connection is rejected
+(this usually indicates a problem or a change of configuration on the remote server).
+When the host is not found, the decision depends on the value of **ssh_new_host**:
+
+  - `reject` means that the connection is rejected
+  - `accept` means that the connection is accepted
+  - `add` means that the connection is accepted and the key is added to the file
+
+See the description of the options in [Download options](#download-options).
+
 # Download options
 
 Since version 3.0.26, you can use the `set_options` method to pass a dictionary of downloader-specific options.
 The following list shows some options and their effect (the option to set is the key and the parameter is the associated value):
 
   * **stop_condition**:
-    * parameter: an instance of Tenacity `stop_base` or a string (see above).
-    * downloader(s): all (except LocalDownloader).
+    * parameter: an instance of Tenacity `stop_base` or a string (see [Retrying](#retrying)).
+    * downloader(s): all (except `LocalDownload`).
     * effect: sets the condition on which we should stop retrying to download a file.
-    * default: .
+    * default: `stop_after_attempt(3)` (i.e. stop after 3 attempts).
   * **wait_policy**:
-    * parameter: an instance of Tenacity `wait_base` or a string (see above).
-    * downloader(s): all (except LocalDownloader).
-    * effect: sets the wait policy between download trials.
-    * default: .
+    * parameter: an instance of Tenacity `wait_base` or a string (see [Retrying](#retrying)).
+    * downloader(s): all (except `LocalDownload`).
+    * effect: sets the wait policy between download attempts.
+    * default: `wait_fixed(3)` (i.e. wait 3 seconds between attempts).
   * **skip_check_uncompress**:
     * parameter: bool.
-    * downloader(s): all (except LocalDownloader).
-    * effect: If true, don't test the archives after download.
+    * downloader(s): all (except `LocalDownload`).
+    * effect: if true, don't test the archives after download.
     * default: false (i.e. test the archives).
   * **ssl_verifyhost**:
     * parameter: bool.
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
-    * effect: If false, don't check that the name of the remote server is the same than in the SSL certificate.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
+    * effect: if false, don't check that the name of the remote server is the same than in the SSL certificate.
     * default: true (i.e. check host name).
-    * note: It's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html) for the corresponding cURL option.
+    * note: it's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html) for the corresponding cURL option.
   * **ssl_verifypeer**:
     * parameter: bool.
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
-    * effect: If false, don't check the authenticity of the peer's certificate.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
+    * effect: if false, don't check the authenticity of the peer's certificate.
     * default: true (i.e. check authenticity).
-    * note: It's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html) for the corresponding cURL option.
+    * note: it's generally a bad idea to disable this verification. However some servers are badly configured. See [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html) for the corresponding cURL option.
   * **ssl_server_cert**:
-    * parameter: filename of the certificate.
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
-    * effect: Pass a file holding one or more certificates to verify the peer with.
+    * parameter: path of the certificate file.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
+    * effect: use the certificate(s) in this file to verify the peer with.
     * default: use OS certificates.
-    * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html) for the corresponding cURL option.
-  * **tcp_keepalive**:
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html) for the corresponding cURL option.
     * parameter: int.
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
-    * effect: Sets the interval, in seconds, that the operating system will wait between sending keepalive probes.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
+    * effect: sets the interval, in seconds, that the operating system will wait between sending keepalive probes.
     * default: cURL default (60s at the time of this writing).
-    * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPINTVL.html) for the corresponding cURL option.
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPINTVL.html) for the corresponding cURL option.
   * **ftp_method**:
     * parameter: one of `default`, `multicwd`, `nocwd`, `singlecwd` (case insensitive).
-    * downloader(s): `CurlDownloader` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`).
-    * effect: Sets the method to use to reach a file on a FTP(S) server (`nocwd` and `singlecwd` are usually faster but not always supported).
-    * default: `default` (which is `multicwd` at the time of this writing)
-    * note: See [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `FTP(S)`.
+    * effect: sets the method used to reach a file on a FTP(S) server (`nocwd` and `singlecwd` are usually faster but not always supported).
+    * default: `default` (which is `multicwd` at the time of this writing as in cURL).
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option.
+  * **ssh_hosts_file**:
+    * parameter: path of the known hosts file.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
+    * effect: sets the file used to read/store host keys for `SFTP`.
+    * default: `~/.ssh/known_hosts` (where `~` is the home directory of the current user).
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KNOWNHOSTS.html) for the corresponding cURL option and the option below.
+  * **ssh_new_host**:
+    * parameter: one of `reject`, `accept`, `add`.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
+    * effect: sets the policy to use for an unknown host.
+    * default: `reject` (i.e. refuse new hosts - you must add them in the file for instance with `ssh` or `sftp`).
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KEYFUNCTION.html) for the corresponding cURL option and the option above.
 
 Those options can be set in bank properties.
 See file `global.properties.example` in [biomaj module](https://github.com/genouest/biomaj).
