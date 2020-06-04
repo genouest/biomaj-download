@@ -407,8 +407,15 @@ class CurlDownload(DownloadInterface):
         # Try to list
         try:
             self.crl.perform()
+            errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
+            if int(errcode) != self.ERRCODE_OK:
+                msg = 'Error while listing ' + dir_url + ' - ' + str(errcode)
+                self.logger.error(msg)
+                raise Exception(msg)
         except Exception as e:
-            self.logger.error('Could not get errcode:' + str(e))
+            msg = 'Error while listing ' + dir_url + ' - ' + str(e)
+            self.logger.error(msg)
+            raise e
 
         # Figure out what encoding was sent with the response, if any.
         # Check against lowercased header name.
