@@ -708,13 +708,13 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
 
   def test_ms_server(self):
-      ftpd = CurlDownload("ftp", "test.rebex.net", "/")
-      ftpd.set_credentials("demo:password")
-      (file_list, dir_list) = ftpd.list()
-      ftpd.match(["^readme.txt$"], file_list, dir_list)
-      ftpd.download(self.utils.data_dir)
-      ftpd.close()
-      self.assertTrue(len(ftpd.files_to_download) == 1)
+    ftpd = CurlDownload("ftp", "test.rebex.net", "/")
+    ftpd.set_credentials("demo:password")
+    (file_list, dir_list) = ftpd.list()
+    ftpd.match(["^readme.txt$"], file_list, dir_list)
+    ftpd.download(self.utils.data_dir)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download) == 1)
 
   def test_download_tcp_keepalive(self):
       """
