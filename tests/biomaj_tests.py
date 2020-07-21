@@ -242,14 +242,14 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.close()
     self.assertTrue(len(file_list) > 1)
 
-  def test_local_list(self):
+  def test_local_list_error(self):
     locald = LocalDownload("/tmp/foo/")
     (file_list, dir_list) = locald.list()
     # Check that we raise an exception and log a message
-     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-       with self.assertRaises(Exception):
-         (file_list, dir_list) = locald.list()
-         self.assertRegexp(cm.output, "^Error while listing")
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = locald.list()
+        self.assertRegexp(cm.output, "^Error while listing")
     locald.close()
 
   def test_local_download(self):
