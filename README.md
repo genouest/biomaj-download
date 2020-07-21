@@ -7,6 +7,8 @@ Microservice to manage the downloads of biomaj.
 A protobuf interface is available in biomaj_download/message/message_pb2.py to exchange messages between BioMAJ and the download service.
 Messages go through RabbitMQ (to be installed).
 
+Python3 support only, python2 support is dropped
+
 # Protobuf
 
 To compile protobuf, in biomaj_download/message:
