@@ -242,6 +242,16 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.close()
     self.assertTrue(len(file_list) > 1)
 
+  def test_local_list(self):
+    locald = LocalDownload("/tmp/foo/")
+    (file_list, dir_list) = locald.list()
+    # Check that we raise an exception and log a message
+     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+       with self.assertRaises(Exception):
+         (file_list, dir_list) = locald.list()
+         self.assertRegexp(cm.output, "^Error while listing")
+    locald.close()
+
   def test_local_download(self):
     locald = LocalDownload(self.examples)
     (file_list, dir_list) = locald.list()
@@ -312,6 +322,18 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = httpd.list()
     httpd.close()
     self.assertTrue(len(file_list) == 1)
+
+  def test_http_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/foo/', self.http_parse)
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = httpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
 
   def test_http_list_dateregexp(self):
     #self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
@@ -426,6 +448,29 @@ class TestBiomajSFTPDownload(unittest.TestCase):
 
   def tearDown(self):
     self.utils.clean()
+
+  def test_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/toto")
+    sftpd.set_credentials("demo:password")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = sftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    sftpd.close()
+    # Test with wrong password
+    sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
+    sftpd.set_credentials("demo:badpassword")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = sftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    sftpd.close()
 
   def test_download(self):
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
@@ -603,6 +648,29 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(file_list) > 1)
 
+  def test_ftp_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    ftpd = CurlDownload("ftp", "test.rebex.net", "/toto")
+    ftpd.set_credentials("demo:password")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
+    # Test with wrong password
+    ftpd = CurlDownload("ftp", "test.rebex.net", "/")
+    ftpd.set_credentials("demo:badpassword")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
+
   @attr('test')
   def test_download(self):
     ftpd = CurlDownload('ftp', 'speedtest.tele2.net', '/')
@@ -766,6 +834,29 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(file_list) == 1)
 
+  def test_ftps_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    ftpd = CurlDownload("ftps", "test.rebex.net", "/toto")
+    ftpd.set_credentials("demo:password")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
+    # Test with wrong password
+    ftpd = CurlDownload("ftps", "test.rebex.net", "/")
+    ftpd.set_credentials("demo:badpassword")
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
+
   def test_download(self):
     ftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
     ftpd.set_credentials("demo:password")
@@ -839,6 +930,17 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         self.assertTrue(len(files_list) != 0)
+
+    def test_rsync_list_error(self):
+        # Access a non-existent directory
+        rsyncd = RSYNCDownload("/tmp/foo/", "")
+        (files_list, dir_list) = rsyncd.list()
+        self.assertTrue(len(files_list) != 0)
+        # Check that we raise an exception and log a message
+        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+            with self.assertRaises(Exception):
+                (file_list, dir_list) = rsyncd.list()
+                self.assertRegexp(cm.output, "^Error while listing")
 
     def test_rsync_match(self):
         rsyncd = RSYNCDownload(self.examples, "")
