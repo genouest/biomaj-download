@@ -331,7 +331,12 @@ class CurlDownload(DownloadInterface):
     def _file_url(self, rfile):
         # rfile['root'] is set to self.rootdir if needed but may be different.
         # We don't use os.path.join because rfile['name'] may starts with /
-        return self.url + '/' + rfile['root'] + rfile['name']
+        url = self.url + '/' + rfile['root'] + rfile['name']
+        url_elts = url.split('://')
+        if len(url_elts) == 2:
+            url_elts[1] = re.sub("/{2,}", "/", url_elts[1])
+            return '://'.join(url_elts)
+        return re.sub("/{2,}", "/", url)
 
     def _download(self, file_path, rfile):
         """

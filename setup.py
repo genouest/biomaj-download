@@ -22,7 +22,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.2.1',
+    'version': '3.2.2',
     'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -40,7 +40,7 @@ config = {
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4'
+        'Programming Language :: Python :: 3.6'
     ],
     'install_requires': [
                          'biomaj_core',
