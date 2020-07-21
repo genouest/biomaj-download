@@ -892,7 +892,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download) == 1)
 
-  def test_download_ssl_certficate(self):
+  def test_download_ssl_certificate(self):
     # This server is misconfigured but we use its certificate
     # The hostname is wrong so we disable host verification
     SERVER = "demo.wftpserver.com"
