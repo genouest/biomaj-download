@@ -159,15 +159,15 @@ class CurlDownload(DownloadInterface):
         if self.curl_protocol in self.FTP_PROTOCOL_FAMILY:
             self.protocol_family = "ftp"
             self._parse_result = self._ftp_parse_result
-            self.ERRCODE_OK = 226
+            self.ERRCODE_OK = [221, 226]
         elif self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
             self.protocol_family = "http"
             self._parse_result = self._http_parse_result
-            self.ERRCODE_OK = 200
+            self.ERRCODE_OK = [200]
         elif self.curl_protocol in self.SFTP_PROTOCOL_FAMILY:
             self.protocol_family = "sftp"
             self._parse_result = self._ftp_parse_result
-            self.ERRCODE_OK = 0
+            self.ERRCODE_OK = [0]
         else:  # Should not happen since we check before
             raise ValueError("Unknown protocol")
         self.rootdir = rootdir
@@ -368,7 +368,7 @@ class CurlDownload(DownloadInterface):
         try:
             self.crl.perform()
             errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-            if int(errcode) != self.ERRCODE_OK:
+            if int(errcode) not in self.ERRCODE_OK:
                 error = True
                 self.logger.error('Error while downloading ' + file_url + ' - ' + str(errcode))
             else:
@@ -413,7 +413,7 @@ class CurlDownload(DownloadInterface):
         try:
             self.crl.perform()
             errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-            if int(errcode) != self.ERRCODE_OK:
+            if int(errcode) not in self.ERRCODE_OK:
                 msg = 'Error while listing ' + dir_url + ' - ' + str(errcode)
                 self.logger.error(msg)
                 raise Exception(msg)
