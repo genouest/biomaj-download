@@ -23,7 +23,6 @@ import re
 import hashlib
 import sys
 import os
-import re
 
 from biomaj_download.download.curl import CurlDownload
 from biomaj_core.utils import Utils
@@ -85,7 +84,6 @@ class DirectFTPDownload(CurlDownload):
         url_elts = url.split('://')
         url_elts[1] = re.sub("/{2,}", "/", url_elts[1])
         return '://'.join(url_elts)
-
 
     def list(self, directory=''):
         '''
