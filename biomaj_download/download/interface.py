@@ -357,7 +357,6 @@ class DownloadInterface(object):
         :type submatch: bool
         '''
         self.logger.debug('Download:File:RegExp:' + str(patterns))
-
         if dir_list is None:
             dir_list = []
 
@@ -406,6 +405,7 @@ class DownloadInterface(object):
                             rfile['name'] = prefix + '/' + rfile['name']
                         self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
+
         if not submatch and len(self.files_to_download) == 0:
             raise Exception('no file found matching expressions')
 

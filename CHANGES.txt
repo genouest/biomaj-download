@@ -1,3 +1,6 @@
+3.2.2
+ #31 fix URL with multiple slashes
+ Update demo password for ftps web site tests
 3.2.1:
  #26 Accept new keys for SFTP servers  (Closes #25)
  Strip extra slash characters in remote file list (due to regexp parsing)

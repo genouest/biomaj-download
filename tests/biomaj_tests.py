@@ -779,7 +779,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     # This server is misconfigured hence we disable all SSL verification
     SERVER = "demo.wftpserver.com"
     DIRECTORY = "/download/"
-    CREDENTIALS = "demo-user:demo-user"
+    CREDENTIALS = "demo:demo"
     ftpd = CurlDownload(self.PROTOCOL, SERVER, DIRECTORY)
     ftpd.set_options(dict(ssl_verifyhost="False", ssl_verifypeer="False"))
     ftpd.set_credentials(CREDENTIALS)
@@ -791,7 +791,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     # This server is misconfigured hence we disable all SSL verification
     SERVER = "demo.wftpserver.com"
     DIRECTORY = "/download/"
-    CREDENTIALS = "demo-user:demo-user"
+    CREDENTIALS = "demo:demo"
     ftpd = CurlDownload(self.PROTOCOL, SERVER, DIRECTORY)
     ftpd.set_options(dict(ssl_verifyhost="False", ssl_verifypeer="False"))
     ftpd.set_credentials(CREDENTIALS)
@@ -806,7 +806,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     # The hostname is wrong so we disable host verification
     SERVER = "demo.wftpserver.com"
     DIRECTORY = "/download/"
-    CREDENTIALS = "demo-user:demo-user"
+    CREDENTIALS = "demo:demo"
     ftpd = CurlDownload(self.PROTOCOL, SERVER, DIRECTORY)
     curdir = os.path.dirname(os.path.realpath(__file__))
     cert_file = os.path.join(curdir, "caert.demo.wftpserver.com.pem")

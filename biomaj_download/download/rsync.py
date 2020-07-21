@@ -51,7 +51,7 @@ class RSYNCDownload(DownloadInterface):
         url = rfile['root'] + "/" + rfile['name']
         if not self.local_mode:
             url = self.server + ":" + url
-        return url
+        return re.sub("/{2,}", "/", url)
 
     def _network_configuration(self):
         '''
@@ -69,7 +69,7 @@ class RSYNCDownload(DownloadInterface):
             cmd = str(self.real_protocol) + " " + str(self.credentials) + "@" + url + " " + str(file_path)
         else:
             cmd = str(self.real_protocol) + " " + url + " " + str(file_path)
-        self.logger.debug('RSYNC:RSYNC DOwNLOAD:' + cmd)
+        self.logger.debug('RSYNC:RSYNC DOWNLOAD:' + cmd)
         # Launch the command (we are in offline_dir)
         try:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
