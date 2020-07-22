@@ -2,7 +2,6 @@
 # standard_library.install_aliases()
 # from builtins import str
 import re
-import os
 import subprocess
 
 from biomaj_download.download.interface import DownloadInterface
