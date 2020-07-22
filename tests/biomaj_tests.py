@@ -244,7 +244,6 @@ class TestBiomajLocalDownload(unittest.TestCase):
 
   def test_local_list_error(self):
     locald = LocalDownload("/tmp/foo/")
-    (file_list, dir_list) = locald.list()
     # Check that we raise an exception and log a message
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
@@ -934,8 +933,6 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
     def test_rsync_list_error(self):
         # Access a non-existent directory
         rsyncd = RSYNCDownload("/tmp/foo/", "")
-        (files_list, dir_list) = rsyncd.list()
-        self.assertTrue(len(files_list) != 0)
         # Check that we raise an exception and log a message
         with self.assertLogs(logger="biomaj", level="ERROR") as cm:
             with self.assertRaises(Exception):
