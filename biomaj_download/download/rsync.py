@@ -120,8 +120,9 @@ class RSYNCDownload(DownloadInterface):
         except ExceptionRsync as e:
             self.logger.error("RsyncError:" + str(e))
         if err_code != 0:
-            self.logger.error('Error while listing ' + str(err_code))
-            return(rfiles, rdirs)
+            msg = 'Error while listing ' + remote + ' - ' + str(err_code)
+            self.logger.error(msg)
+            raise Exception(msg)
         list_rsync = str(list_rsync.decode('utf-8'))
         lines = list_rsync.rstrip().split("\n")
         for line in lines:
