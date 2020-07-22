@@ -506,6 +506,21 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(file_list) == 1)
 
+  def test_ftp_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    file_list = ['/toto/debian/doc/mailing-lists.txt']
+    ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
+    ftpd.set_files_to_download(file_list)
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
+
   def test_download(self):
     file_list = ['/debian/doc/mailing-lists.txt']
     ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
@@ -574,6 +589,21 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     self.assertTrue(len(file_list) == 1)
     self.assertTrue(file_list[0]['size']!=0)
     self.assertFalse(fyear == ftpd.files_to_download[0]['year'] and fmonth == ftpd.files_to_download[0]['month'] and fday == ftpd.files_to_download[0]['day'])
+
+  def test_http_list_error(self):
+    """
+    Test that errors in list are correctly caught.
+    """
+    # Test access to non-existent directory
+    file_list = ['/toto/debian/README.html']
+    ftpd = DirectHTTPDownload('http', 'ftp2.fr.debian.org', '')
+    ftpd.set_files_to_download(file_list)
+    # Check that we raise an exception and log a message
+    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+      with self.assertRaises(Exception):
+        (file_list, dir_list) = ftpd.list()
+        self.assertRegexp(cm.output, "^Error while listing")
+    ftpd.close()
 
   def test_download(self):
     file_list = ['/debian/README.html']

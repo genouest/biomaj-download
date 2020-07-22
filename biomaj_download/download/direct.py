@@ -103,16 +103,20 @@ class DirectFTPDownload(CurlDownload):
             self.crl.setopt(pycurl.OPT_FILETIME, True)
             self.crl.setopt(pycurl.NOBODY, True)
 
-            # Very old servers may not support the MDTM commands. Therefore,
-            # cURL will raise an error. In that case, we simply skip the rest
-            # of the function as it was done before. Download will work however.
-            # Note that if the file does not exist, it will be skipped too
-            # (that was the case before too). Of course, download will fail in
-            # this case.
+            # Note that very old servers may not support the MDTM commands.
+            # Therefore, cURL will raise an error (although we probably can
+            # download the file).
             try:
                 self.crl.perform()
-            except Exception:
-                continue
+                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
+                if int(errcode) not in self.ERRCODE_OK:
+                    msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
+                    self.logger.error(msg)
+                    raise Exception(msg)
+            except Exception as e:
+                msg = 'Error while listing ' + file_url + ' - ' + str(e)
+                self.logger.error(msg)
+                raise e
 
             timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
             dt = datetime.datetime.fromtimestamp(timestamp)
@@ -171,7 +175,17 @@ class DirectHTTPDownload(DirectFTPDownload):
             output = BytesIO()
             self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
 
-            self.crl.perform()
+            try:
+                self.crl.perform()
+                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
+                if int(errcode) not in self.ERRCODE_OK:
+                    msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
+                    self.logger.error(msg)
+                    raise Exception(msg)
+            except Exception as e:
+                msg = 'Error while listing ' + file_url + ' - ' + str(e)
+                self.logger.error(msg)
+                raise e
 
             # Figure out what encoding was sent with the response, if any.
             # Check against lowercased header name.
