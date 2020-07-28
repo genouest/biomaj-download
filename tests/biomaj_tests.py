@@ -390,19 +390,17 @@ class TestBiomajHTTPSDownload(unittest.TestCase):
     self.utils.clean()
 
   def test_download(self):
-    self.utils = UtilsForTest()
-    self.http_parse = HTTPParse(
+    http_parse = HTTPParse(
         "<a[\s]+href=\"([\w\-\.]+\">[\w\-\.]+.tar.gz)<\/a>[\s]+([0-9]{2}-[A-Za-z]{3}-[0-9]{4}[\s][0-9]{2}:[0-9]{2})[\s]+([0-9]+[A-Za-z])",
         "<a[\s]+href=\"[\w\-\.]+\">([\w\-\.]+.tar.gz)<\/a>[\s]+([0-9]{2}-[A-Za-z]{3}-[0-9]{4}[\s][0-9]{2}:[0-9]{2})[\s]+([0-9]+[A-Za-z])",
         1,
         2,
         1,
         2,
-        None,
+        "%%d-%%b-%%Y %%H:%%M",
         3
     )
-    self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
-    httpd = CurlDownload('https', 'mirrors.edge.kernel.org', '/pub/software/scm/git/debian/', self.http_parse)
+    httpd = CurlDownload('https', 'mirrors.edge.kernel.org', '/pub/software/scm/git/debian/', http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^git-core-0.99.6.tar.gz$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
