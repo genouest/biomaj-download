@@ -4,6 +4,7 @@
  #31 fix URL with multiple slashes
  Update demo password for ftps web site tests
  Remove python2 support
+
 3.2.1:
  #26 Accept new keys for SFTP servers  (Closes #25)
  Strip extra slash characters in remote file list (due to regexp parsing)
@@ -11,43 +12,59 @@
  #24 Speed up IRODDownload
  Introduce a method to perform configuration before network methods. Adapt implementation of generic methods and subclasses.
  Resolve bug when the parser analyse also the Message Of The Day when it wants only list of file. (#23)
+
 3.1.2:
   #18 Add a protocol option to set CURLOPT_FTP_FILEMETHOD
   #19 Rename protocol options to options
   Fix copy of production files instead of download when files are in subdirectories
+
 3.1.1:
   #17 Support MDTM command in directftp
+
 3.1.0:
   #16 Don't change name after download in DirectHTTPDownloader
   PR #7 Refactor downloaders (*WARNING* breaks API)
+
 3.0.27:
   Fix previous release broken with a bug in direct protocols
+
 3.0.26:
   Change default download timeout to 1h
   #12 Allow FTPS protocol
   #14 Add mechanism for protocol specific options
+
 3.0.25:
   Allow to use hardlinks in LocalDownload
+
 3.0.24:
   Remove debug logs
+
 3.0.23:
   Support spaces in remote file names
+
 3.0.22:
   Fix **/* remote.files parsing
+
 3.0.21:
   Fix traefik labels
+
 3.0.20:
   Update pika dependency release
   Add tags for traefik support
+
 3.0.19:
   Check archives after download
   Fix python regexps syntax (deprecation)
+
 3.0.18:
   Rename protobuf and use specific package to avoid conflicts
+
 3.0.17:
   Regenerate protobuf message desc, failing on python3
+
 3.0.16:
   Add missing req in setup.py
+
 3.0.15:
   Fix progress download control where could have infinite loop
   Add irods download
