@@ -1,4 +1,6 @@
-3.2.2
+3.2.3 [UNRELEASED]:
+
+3.2.2:
  #31 fix URL with multiple slashes
  Update demo password for ftps web site tests
  Remove python2 support
