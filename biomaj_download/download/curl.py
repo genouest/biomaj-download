@@ -194,6 +194,10 @@ class CurlDownload(DownloadInterface):
         self.ssh_hosts_file = BiomajConfig.DEFAULTS["ssh_hosts_file"]
         # How to treat unknown host
         self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
+        # Allow redirections
+        # TODO: Should we use BiomajConfig.DEFAULTS or hardcode constants ?
+        #       What about previsous options ?
+        self.allow_redirections = bool(BiomajConfig.DEFAULTS["allow_redirections"])
 
     def _accept_new_hosts(self, known_key, found_key, match):
         # Key found in file: we can accept it
@@ -254,6 +258,9 @@ class CurlDownload(DownloadInterface):
 
         # Configure ftp method
         self.crl.setopt(pycurl.FTP_FILEMETHOD, self.ftp_method)
+
+        # Configure redirections
+        self.crl.setopt(pycurl.FOLLOWLOCATION, self.allow_redirections)
 
         # Configure timeouts
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
@@ -319,6 +326,8 @@ class CurlDownload(DownloadInterface):
             if raw_val not in self.VALID_SSH_NEW_HOST:
                 raise ValueError("Invalid value for ssh_new_host")
             self.ssh_new_host = self.VALID_SSH_NEW_HOST[raw_val]
+        if "allow_redirections" in options:
+            self.allow_redirections = Utils.to_bool(options["allow_redirections"])
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)

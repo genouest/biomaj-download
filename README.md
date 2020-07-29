@@ -201,6 +201,12 @@ The following list shows some options and their effect (the option to set is the
     * effect: sets the policy to use for an unknown host.
     * default: `reject` (i.e. refuse new hosts - you must add them in the file for instance with `ssh` or `sftp`).
     * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KEYFUNCTION.html) for the corresponding cURL option and the option above.
+  * *allow_redirections*:
+    * parameter: bool.
+    * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `HTTPS(S)`.
+    * effect: sets the policy for `HTTP` redirections.
+    * default: `true` (i.e. follow redirections).
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_FOLLOWLOCATION.html) for the corresponding cURL option.
 
 Those options can be set in bank properties.
 See file `global.properties.example` in [biomaj module](https://github.com/genouest/biomaj).
