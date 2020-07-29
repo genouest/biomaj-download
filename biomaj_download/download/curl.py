@@ -195,8 +195,8 @@ class CurlDownload(DownloadInterface):
         # How to treat unknown host
         self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
         # Allow redirections
-        # TODO: Should we use BiomajConfig.DEFAULTS or hardcode constants ?
-        #       What about previsous options ?
+        # TODO: Should we use BiomajConfig.DEFAULTS or hard-code value ?
+        #       What about previous options ?
         self.allow_redirections = bool(BiomajConfig.DEFAULTS["allow_redirections"])
 
     def _accept_new_hosts(self, known_key, found_key, match):
