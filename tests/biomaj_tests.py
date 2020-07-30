@@ -293,14 +293,16 @@ class TestBiomajHTTPDownload(unittest.TestCase):
   def setUp(self):
     self.utils = UtilsForTest()
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
+    # Create an HTTPParse object used for most tests from the config file testhttp
     self.config = BiomajConfig('testhttp')
-    self.http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
+    self.http_parse = HTTPParse(
+        self.config.get('http.parse.dir.line'),
         self.config.get('http.parse.file.line'),
         int(self.config.get('http.group.dir.name')),
         int(self.config.get('http.group.dir.date')),
         int(self.config.get('http.group.file.name')),
         int(self.config.get('http.group.file.date')),
-        self.config.get('http.group.file.date_format', None),
+        self.config.get('http.group.file.date_format'),
         int(self.config.get('http.group.file.size'))
     )
 
@@ -314,25 +316,23 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(file_list) == 1)
 
   def test_http_list_dateregexp(self):
-    #self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
-    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
     self.assertTrue(len(file_list) == 1)
 
   def test_http_download_no_size(self):
-    self.http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
+    # Create a custom http_parse without size
+    http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
         self.config.get('http.parse.file.line'),
         int(self.config.get('http.group.dir.name')),
         int(self.config.get('http.group.dir.date')),
         int(self.config.get('http.group.file.name')),
         int(self.config.get('http.group.file.date')),
-        self.config.get('http.group.file.date_format', None),
+        self.config.get('http.group.file.date_format'),
         -1
     )
-    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
-    httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
@@ -340,16 +340,17 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download_no_date(self):
-    self.http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
+    # Create a custom http_parse without date
+    http_parse = HTTPParse(self.config.get('http.parse.dir.line'),
         self.config.get('http.parse.file.line'),
         int(self.config.get('http.group.dir.name')),
         int(self.config.get('http.group.dir.date')),
         int(self.config.get('http.group.file.name')),
         -1,
-        self.config.get('http.group.file.date_format', None),
+        None,
         int(self.config.get('http.group.file.size'))
     )
-    httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
+    httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
@@ -357,7 +358,6 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download(self):
-    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     print(str(file_list))
@@ -367,7 +367,6 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     self.assertTrue(len(httpd.files_to_download) == 1)
 
   def test_http_download_in_subdir(self):
-    self.http_parse.file_date_format = "%%Y-%%m-%%d %%H:%%M"
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^dists/README$'], file_list, dir_list)
@@ -390,19 +389,17 @@ class TestBiomajHTTPSDownload(unittest.TestCase):
     self.utils.clean()
 
   def test_download(self):
-    self.utils = UtilsForTest()
-    self.http_parse = HTTPParse(
+    http_parse = HTTPParse(
         "<a[\s]+href=\"([\w\-\.]+\">[\w\-\.]+.tar.gz)<\/a>[\s]+([0-9]{2}-[A-Za-z]{3}-[0-9]{4}[\s][0-9]{2}:[0-9]{2})[\s]+([0-9]+[A-Za-z])",
         "<a[\s]+href=\"[\w\-\.]+\">([\w\-\.]+.tar.gz)<\/a>[\s]+([0-9]{2}-[A-Za-z]{3}-[0-9]{4}[\s][0-9]{2}:[0-9]{2})[\s]+([0-9]+[A-Za-z])",
         1,
         2,
         1,
         2,
-        None,
+        "%%d-%%b-%%Y %%H:%%M",
         3
     )
-    self.http_parse.file_date_format = "%%d-%%b-%%Y %%H:%%M"
-    httpd = CurlDownload('https', 'mirrors.edge.kernel.org', '/pub/software/scm/git/debian/', self.http_parse)
+    httpd = CurlDownload('https', 'mirrors.edge.kernel.org', '/pub/software/scm/git/debian/', http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^git-core-0.99.6.tar.gz$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
