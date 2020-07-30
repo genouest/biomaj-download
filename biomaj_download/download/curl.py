@@ -1,9 +1,10 @@
-import sys
 import re
 from datetime import datetime
 import hashlib
 import time
 import stat
+from urllib.parse import urlencode
+from io import BytesIO
 
 import pycurl
 import ftputil
@@ -14,58 +15,6 @@ from biomaj_core.utils import Utils
 from biomaj_core.config import BiomajConfig
 
 from biomaj_download.download.interface import DownloadInterface
-
-if sys.version_info[0] < 3:
-    from urllib import urlencode
-else:
-    from urllib.parse import urlencode
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
-
-# We use stat.filemode to convert from mode octal value to string.
-# In python < 3.3, stat.filmode is not defined.
-# This code is copied from the current implementation of stat.filemode.
-if 'filemode' not in stat.__dict__:
-    _filemode_table = (
-        ((stat.S_IFLNK,                "l"),    # noqa: E241
-         (stat.S_IFREG,                "-"),    # noqa: E241
-         (stat.S_IFBLK,                "b"),    # noqa: E241
-         (stat.S_IFDIR,                "d"),    # noqa: E241
-         (stat.S_IFCHR,                "c"),    # noqa: E241
-         (stat.S_IFIFO,                "p")),   # noqa: E241
-        ((stat.S_IRUSR,                "r"),),  # noqa: E241
-        ((stat.S_IWUSR,                "w"),),  # noqa: E241
-        ((stat.S_IXUSR | stat.S_ISUID, "s"),    # noqa: E241
-         (stat.S_ISUID,                "S"),    # noqa: E241
-         (stat.S_IXUSR,                "x")),   # noqa: E241
-        ((stat.S_IRGRP,                "r"),),  # noqa: E241
-        ((stat.S_IWGRP,                "w"),),  # noqa: E241
-        ((stat.S_IXGRP | stat.S_ISGID, "s"),    # noqa: E241
-         (stat.S_ISGID,                "S"),    # noqa: E241
-         (stat.S_IXGRP,                "x")),   # noqa: E241
-        ((stat.S_IROTH,                "r"),),  # noqa: E241
-        ((stat.S_IWOTH,                "w"),),  # noqa: E241
-        ((stat.S_IXOTH | stat.S_ISVTX, "t"),    # noqa: E241
-         (stat.S_ISVTX,                "T"),    # noqa: E241
-         (stat.S_IXOTH,                "x"))    # noqa: E241
-    )
-
-    def _filemode(mode):
-        """Convert a file's mode to a string of the form '-rwxrwxrwx'."""
-        perm = []
-        for table in _filemode_table:
-            for bit, char in table:
-                if mode & bit == bit:
-                    perm.append(char)
-                    break
-            else:
-                perm.append("-")
-        return "".join(perm)
-
-    stat.filemode = _filemode
 
 
 class HTTPParse(object):
