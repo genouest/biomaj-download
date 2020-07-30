@@ -1,4 +1,5 @@
 3.2.3 [UNRELEASED]:
+  #30: raise errors when something in list() fail
 
 3.2.2:
   #31 fix URL with multiple slashes
