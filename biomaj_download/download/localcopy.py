@@ -60,7 +60,12 @@ class LocalDownload(DownloadInterface):
         rfiles = []
         rdirs = []
 
-        files = [f for f in os.listdir(self.rootdir + directory)]
+        try:
+            files = [f for f in os.listdir(self.rootdir + directory)]
+        except Exception as e:
+            msg = 'Error while listing ' + self.rootdir + ' - ' + str(e)
+            self.logger.error(msg)
+            raise e
         for file_in_files in files:
             rfile = {}
             fstat = os.stat(os.path.join(self.rootdir + directory, file_in_files))
