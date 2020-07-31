@@ -2,7 +2,6 @@
 # standard_library.install_aliases()
 # from builtins import str
 import re
-import os
 import subprocess
 
 from biomaj_download.download.interface import DownloadInterface
@@ -33,12 +32,6 @@ class RSYNCDownload(DownloadInterface):
         else:
             self.server = None
             self.rootdir = server
-        # give a working directory to run rsync
-        if self.local_mode:
-            try:
-                os.chdir(self.rootdir)
-            except TypeError:
-                self.logger.error("RSYNC:Could not find local dir " + self.rootdir)
 
     def _append_file_to_download(self, rfile):
         if 'root' not in rfile or not rfile['root']:
@@ -126,8 +119,9 @@ class RSYNCDownload(DownloadInterface):
         except ExceptionRsync as e:
             self.logger.error("RsyncError:" + str(e))
         if err_code != 0:
-            self.logger.error('Error while listing ' + str(err_code))
-            return(rfiles, rdirs)
+            msg = 'Error while listing ' + remote + ' - ' + str(err_code)
+            self.logger.error(msg)
+            raise Exception(msg)
         list_rsync = str(list_rsync.decode('utf-8'))
         lines = list_rsync.rstrip().split("\n")
         for line in lines:
