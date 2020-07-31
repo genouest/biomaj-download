@@ -190,14 +190,14 @@ class CurlDownload(DownloadInterface):
         self.tcp_keepalive = 0
         # FTP method (cURL --ftp-method option)
         self.ftp_method = pycurl.FTPMETHOD_DEFAULT  # Use cURL default
+        # TODO: Don't store default values in BiomajConfig.DEFAULTS for
+        # ssh_hosts_file and ssh_new_hosts
         # known_hosts file
         self.ssh_hosts_file = BiomajConfig.DEFAULTS["ssh_hosts_file"]
         # How to treat unknown host
         self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
         # Allow redirections
-        # TODO: Should we use BiomajConfig.DEFAULTS or hard-code value ?
-        #       What about previous options ?
-        self.allow_redirections = bool(BiomajConfig.DEFAULTS["allow_redirections"])
+        self.allow_redirections = True
 
     def _accept_new_hosts(self, known_key, found_key, match):
         # Key found in file: we can accept it

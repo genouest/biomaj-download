@@ -167,6 +167,8 @@ class DownloadInterface(object):
         # Options
         self.options = {}  # This field is used to forge the download message
         self.skip_check_uncompress = False
+        # TODO: Don't store default values in BiomajConfig.DEFAULTS for
+        # wait_policy and stop_condition
         # Construct default retryer (may be replaced in set_options)
         self._set_retryer(
             BiomajConfig.DEFAULTS["stop_condition"],
