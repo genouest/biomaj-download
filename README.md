@@ -150,11 +150,13 @@ The following list shows some options and their effect (the option to set is the
     * downloader(s): all (except `LocalDownload`).
     * effect: sets the condition on which we should stop retrying to download a file.
     * default: `stop_after_attempt(3)` (i.e. stop after 3 attempts).
+    * note: introduced in version 3.2.1.
   * **wait_policy**:
     * parameter: an instance of Tenacity `wait_base` or a string (see [Retrying](#retrying)).
     * downloader(s): all (except `LocalDownload`).
     * effect: sets the wait policy between download attempts.
     * default: `wait_fixed(3)` (i.e. wait 3 seconds between attempts).
+    * note: introduced in version 3.2.1.
   * **skip_check_uncompress**:
     * parameter: bool.
     * downloader(s): all (except `LocalDownload`).
@@ -188,19 +190,19 @@ The following list shows some options and their effect (the option to set is the
     * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `FTP(S)`.
     * effect: sets the method used to reach a file on a FTP(S) server (`nocwd` and `singlecwd` are usually faster but not always supported).
     * default: `default` (which is `multicwd` at the time of this writing as in cURL).
-    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option.
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_FTP_FILEMETHOD.html) for the corresponding cURL option; introduced in version 3.1.2.
   * **ssh_hosts_file**:
     * parameter: path of the known hosts file.
     * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
     * effect: sets the file used to read/store host keys for `SFTP`.
     * default: `~/.ssh/known_hosts` (where `~` is the home directory of the current user).
-    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KNOWNHOSTS.html) for the corresponding cURL option and the option below.
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KNOWNHOSTS.html) for the corresponding cURL option and the option below; introduced in version 3.2.1.
   * **ssh_new_host**:
     * parameter: one of `reject`, `accept`, `add`.
     * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `SFTP`.
     * effect: sets the policy to use for an unknown host.
     * default: `reject` (i.e. refuse new hosts - you must add them in the file for instance with `ssh` or `sftp`).
-    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KEYFUNCTION.html) for the corresponding cURL option and the option above.
+    * note: see [here](https://curl.haxx.se/libcurl/c/CURLOPT_SSH_KEYFUNCTION.html) for the corresponding cURL option and the option above; introduced in version 3.2.1.
   * *allow_redirections*:
     * parameter: bool.
     * downloader(s): `CurlDownload` (and derived classes: `DirectFTPDownload`, `DirectHTTPDownload`) - only used for `HTTPS(S)`.
