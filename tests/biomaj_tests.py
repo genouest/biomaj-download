@@ -414,11 +414,10 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd = CurlDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/', http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^Build_number$'], file_list, dir_list)
-    httpd.download(self.utils.data_dir)
-    # Check that we have been redirected to HTTPS by inspecting the cURL object
-    import pycurl
-    self.assertTrue(httpd.crl.getinfo(pycurl.EFFECTIVE_URL).startswith("https://"))
-    self.assertTrue(httpd.crl.getinfo(pycurl.REDIRECT_COUNT) == 1)
+    # Check that we have been redirected to HTTPS by inspecting logs
+    with self.assertLogs(logger="biomaj", level="INFO") as cm:
+      httpd.download(self.utils.data_dir)
+      self.assertRegex(cm.output[0], "Download was redirected to https://")
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
     # Second test: block redirections
@@ -700,9 +699,10 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     httpd = DirectHTTPDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/')
     httpd.set_files_to_download(['Build_number'])
     httpd.download(self.utils.data_dir)
-    # Check that we have been redirected to HTTPS by inspecting the cURL object
-    import pycurl
-    self.assertTrue(httpd.crl.getinfo(pycurl.EFFECTIVE_URL).startswith("https://"))
+    # Check that we have been redirected to HTTPS by inspecting logs
+    with self.assertLogs(logger="biomaj", level="INFO") as cm:
+      httpd.download(self.utils.data_dir)
+      self.assertRegex(cm.output[0], "Download was redirected to https://")
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
     # Second test: block redirections
