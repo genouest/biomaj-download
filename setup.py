@@ -60,8 +60,7 @@ config = {
                          'protobuf',
                          'requests',
                          'humanfriendly',
-                         'python-irodsclient',
-                         'six'
+                         'python-irodsclient'
                         ],
     'tests_require': ['nose', 'mock'],
     'test_suite': 'nose.collector',

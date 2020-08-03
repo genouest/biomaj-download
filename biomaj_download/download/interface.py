@@ -5,8 +5,6 @@ import time
 import re
 import copy
 
-import six
-
 import tenacity
 from simpleeval import simple_eval, ast
 
@@ -256,7 +254,7 @@ class DownloadInterface(object):
         if isinstance(stop_condition, tenacity.stop.stop_base):
             # Use the value directly
             stop_cond = stop_condition
-        elif isinstance(stop_condition, six.string_types):
+        elif isinstance(stop_condition, str):
             # Try to parse the string
             try:
                 stop_cond = simple_eval(stop_condition,
@@ -282,7 +280,7 @@ class DownloadInterface(object):
         if isinstance(wait_policy, tenacity.wait.wait_base):
             # Use the value directly
             wait_pol = wait_policy
-        elif isinstance(wait_policy, six.string_types):
+        elif isinstance(wait_policy, str):
             # Try to parse the string
             try:
                 wait_pol = simple_eval(wait_policy,

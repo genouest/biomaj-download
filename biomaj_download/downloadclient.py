@@ -3,16 +3,12 @@ import requests
 import logging
 import uuid
 import time
-import sys
+from queue import Queue
+
 import pika
 
 from biomaj_download.download.downloadthreads import DownloadThread
 from biomaj_download.message import downmessage_pb2
-
-if sys.version_info[0] < 3:
-    from Queue import Queue
-else:
-    from queue import Queue
 
 
 class DownloadClient(DownloadService):

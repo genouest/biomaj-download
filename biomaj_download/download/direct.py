@@ -21,21 +21,12 @@ import datetime
 import pycurl
 import re
 import hashlib
-import sys
 import os
+from urllib.parse import urlencode
+from io import BytesIO
 
 from biomaj_download.download.curl import CurlDownload
 from biomaj_core.utils import Utils
-
-if sys.version_info[0] < 3:
-    from urllib import urlencode
-else:
-    from urllib.parse import urlencode
-
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
 
 
 class DirectFTPDownload(CurlDownload):
