@@ -334,6 +334,16 @@ class CurlDownload(DownloadInterface):
         except Exception as e:
             self.logger.error('Could not get errcode:' + str(e))
 
+        # Check if we were redirected
+        if self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
+            n_redirect = self.crl.getinfo(pycurl.REDIRECT_COUNT)
+            if n_redirect:
+                real_url = self.crl.getinfo(pycurl.EFFECTIVE_URL)
+                redirect_time = self.crl.getinfo(pycurl.REDIRECT_TIME)
+                msg_fmt = 'Download was redirected to %s (%i redirection(s), took %ss)'
+                msg = msg_fmt % (real_url, n_redirect, redirect_time)
+                self.logger.info(msg)
+
         # Close file
         fp.close()
 
@@ -379,6 +389,16 @@ class CurlDownload(DownloadInterface):
             msg = 'Error while listing ' + dir_url + ' - ' + str(e)
             self.logger.error(msg)
             raise e
+
+        # Check if we were redirected
+        if self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
+            n_redirect = self.crl.getinfo(pycurl.REDIRECT_COUNT)
+            if n_redirect:
+                real_url = self.crl.getinfo(pycurl.EFFECTIVE_URL)
+                redirect_time = self.crl.getinfo(pycurl.REDIRECT_TIME)
+                msg_fmt = 'Download was redirected to %s (%i redirection(s), took %ss)'
+                msg = msg_fmt % (real_url, n_redirect, redirect_time)
+                self.logger.info(msg)
 
         # Figure out what encoding was sent with the response, if any.
         # Check against lowercased header name.
