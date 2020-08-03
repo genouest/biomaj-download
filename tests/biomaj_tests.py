@@ -781,7 +781,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ])
     ftpd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                           wait_condition=tenacity.wait.wait_none()))
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         Exception, "^CurlDownload:Download:Error:",
         ftpd.download, self.utils.data_dir,
     )
@@ -793,7 +793,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
           {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
            'size': 1, 'save_as': 'TOTO1KB'}
     ])
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         Exception, "^CurlDownload:Download:Error:",
         ftpd.download, self.utils.data_dir,
     )
@@ -871,7 +871,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+        self.assertRegex(cm.output, "^Error while listing")
     ftpd.close()
     # Test with wrong password
     ftpd = CurlDownload("ftps", "test.rebex.net", "/")
@@ -880,7 +880,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+        self.assertRegex(cm.output, "^Error while listing")
     ftpd.close()
 
   def test_download(self):
@@ -1028,7 +1028,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         ])
         rsyncd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^RSYNCDownload:Download:Error:",
             rsyncd.download, self.utils.data_dir,
         )
@@ -1040,7 +1040,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^RSYNCDownload:Download:Error:",
             rsyncd.download, self.utils.data_dir,
         )
@@ -1210,7 +1210,7 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         ])
         irodsd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^IRODSDownload:Download:Error:",
             irodsd.download, self.utils.data_dir,
         )
@@ -1222,7 +1222,7 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^IRODSDownload:Download:Error:",
             irodsd.download, self.utils.data_dir,
         )
