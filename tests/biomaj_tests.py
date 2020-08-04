@@ -439,7 +439,7 @@ class TestBiomajSFTPDownload(unittest.TestCase):
 
   def setUp(self):
     self.utils = UtilsForTest()
-    # Temporary host key file in test dir (so this is claned)
+    # Temporary host key file in test dir (so this is cleaned)
     (_, self.khfile) = tempfile.mkstemp(dir=self.utils.test_dir)
 
   def tearDown(self):
