@@ -116,12 +116,14 @@ class RSYNCDownload(DownloadInterface):
             self.test_stderr_rsync_message(err)
             self.test_stderr_rsync_error(err)
             err_code = p.returncode
+            if err_code != 0:
+                msg = 'Error while listing ' + remote + ' - ' + str(err_code)
+                self.logger.error(msg)
+                raise Exception(msg)
         except ExceptionRsync as e:
-            self.logger.error("RsyncError:" + str(e))
-        if err_code != 0:
-            msg = 'Error while listing ' + remote + ' - ' + str(err_code)
+            msg = 'Error while listing ' + remote + ' - ' + str(e)
             self.logger.error(msg)
-            raise Exception(msg)
+            raise e
         list_rsync = str(list_rsync.decode('utf-8'))
         lines = list_rsync.rstrip().split("\n")
         for line in lines:
