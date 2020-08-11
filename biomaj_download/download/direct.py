@@ -107,7 +107,7 @@ class DirectFTPDownload(CurlDownload):
             except Exception as e:
                 msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
                 self.logger.error(msg)
-                #raise e
+                # raise e
                 continue
 
             timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
@@ -177,7 +177,7 @@ class DirectHTTPDownload(DirectFTPDownload):
             except Exception as e:
                 msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
                 self.logger.error(msg)
-                #raise e
+                # raise e
                 continue
 
             # Figure out what encoding was sent with the response, if any.
