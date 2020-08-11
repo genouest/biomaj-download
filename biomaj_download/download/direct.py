@@ -105,9 +105,10 @@ class DirectFTPDownload(CurlDownload):
                     self.logger.error(msg)
                     raise Exception(msg)
             except Exception as e:
-                msg = 'Error while listing ' + file_url + ' - ' + str(e)
+                msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
                 self.logger.error(msg)
-                raise e
+                #raise e
+                continue
 
             timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
             dt = datetime.datetime.fromtimestamp(timestamp)
@@ -174,9 +175,10 @@ class DirectHTTPDownload(DirectFTPDownload):
                     self.logger.error(msg)
                     raise Exception(msg)
             except Exception as e:
-                msg = 'Error while listing ' + file_url + ' - ' + str(e)
+                msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
                 self.logger.error(msg)
-                raise e
+                #raise e
+                continue
 
             # Figure out what encoding was sent with the response, if any.
             # Check against lowercased header name.
