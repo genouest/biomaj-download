@@ -178,8 +178,8 @@ class DirectHTTPDownload(DirectFTPDownload):
                 self.crl.perform()
                 errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
                 if errcode == 405:  # HEAD not supported
-                  msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
-                  self.logger.info(msg)
+                    msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
+                    self.logger.info(msg)
                 elif errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
