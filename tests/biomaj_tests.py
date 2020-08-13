@@ -596,8 +596,6 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     """
     Test that errors in list are correctly caught.
     """
-    self.skipTest("skip as HEAD may not work in direct GET/POST")
-    return
     # Test access to non-existent directory
     file_list = ['/toto/debian/README.html']
     ftpd = DirectHTTPDownload('http', 'ftp2.fr.debian.org', '')

@@ -149,6 +149,13 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         self._network_configuration()
         # Specific configuration
+        # With those options, cURL will issue a HEAD request. Note this may
+        # not be supported especially reousrces that are accessed using POST.
+        # Therefore, we explicitely handle this case (HTTP reutrn code 405)
+        # here.
+        # Note that in many cases (even with HEAD), there is no Last-Modified
+        # date in headers (Content-Length is usually present) since this is
+        # usually dynamic content.
         self.crl.setopt(pycurl.HEADER, True)
         self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
@@ -169,16 +176,18 @@ class DirectHTTPDownload(DirectFTPDownload):
 
             try:
                 self.crl.perform()
-                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-                if int(errcode) not in self.ERRCODE_OK:
+                errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
+                if errcode == 405:  # HEAD not supported
+                  msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
+                  self.logger.info(msg)
+                elif errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
                     raise Exception(msg)
             except Exception as e:
-                msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
+                msg = 'Error while listing ' + file_url + ' - ' + str(e)
                 self.logger.error(msg)
-                # raise e
-                continue
+                raise e
 
             # Figure out what encoding was sent with the response, if any.
             # Check against lowercased header name.
