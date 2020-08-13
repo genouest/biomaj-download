@@ -104,7 +104,7 @@ class DirectFTPDownload(CurlDownload):
             # download the file).
             try:
                 self.crl.perform()
-                errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))      
+                errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
                 if errcode != 350 and errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
