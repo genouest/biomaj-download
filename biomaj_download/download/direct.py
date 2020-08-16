@@ -155,13 +155,13 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         self._network_configuration()
         # Specific configuration
-        # With those options, cURL will issue a HEAD request. Note this may
-        # not be supported especially reousrces that are accessed using POST.
-        # Therefore, we explicitely handle this case (HTTP reutrn code 405)
-        # here.
-        # Note that in many cases (even with HEAD), there is no Last-Modified
-        # date in headers (Content-Length is usually present) since this is
-        # usually dynamic content.
+        # With those options, cURL will issue a HEAD request. This may not be
+        # supported especially resources that are accessed using POST (HTTP
+        # return code 405). Therefore, we explicitely handle this case in this
+        # method.
+        # Note that in many cases, there is no Last-Modified field in headers
+        # since this is usually dynamic content (Content-Length is usually
+        # present).
         self.crl.setopt(pycurl.HEADER, True)
         self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
@@ -183,7 +183,7 @@ class DirectHTTPDownload(DirectFTPDownload):
             try:
                 self.crl.perform()
                 errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
-                if errcode == 405:  # HEAD not supported by the server.
+                if errcode == 405:  # HEAD not supported by the server for this URL.
                     msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
                     self.logger.info(msg)
                 elif errcode not in self.ERRCODE_OK:
