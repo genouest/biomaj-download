@@ -83,9 +83,12 @@ class DirectFTPDownload(CurlDownload):
         self._network_configuration()
         # Specific configuration
         # With those options, cURL will issue a sequence of commands (SIZE,
-        # MDTM) to get the file size and last moditification time without
-        # and then REST. This usually ends with code 350. Therefore we
+        # MDTM) to get the file size and last modification time and then issue
+        # a REST command. This usually ends with code 350. Therefore we
         # explicitly handle this in this method.
+        # Note that very old servers may not support the MDTM command.
+        # Therefore, cURL will raise an error (although we can probably
+        # download the file).
         self.crl.setopt(pycurl.OPT_FILETIME, True)
         self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
@@ -99,12 +102,11 @@ class DirectFTPDownload(CurlDownload):
                 self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
             self.crl.setopt(pycurl.URL, file_url)
 
-            # Note that very old servers may not support the MDTM commands.
-            # Therefore, cURL will raise an error (although we probably can
-            # download the file).
             try:
                 self.crl.perform()
                 errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
+                # As explained, 350 is correct. We check against ERRCODE_OK
+                # just in case.
                 if errcode != 350 and errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
@@ -181,7 +183,7 @@ class DirectHTTPDownload(DirectFTPDownload):
             try:
                 self.crl.perform()
                 errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
-                if errcode == 405:  # HEAD not supported
+                if errcode == 405:  # HEAD not supported by the server.
                     msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
                     self.logger.info(msg)
                 elif errcode not in self.ERRCODE_OK:
