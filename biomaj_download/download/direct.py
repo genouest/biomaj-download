@@ -186,6 +186,7 @@ class DirectHTTPDownload(DirectFTPDownload):
                 if errcode == 405:  # HEAD not supported by the server for this URL.
                     msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
                     self.logger.info(msg)
+                    continue
                 elif errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
