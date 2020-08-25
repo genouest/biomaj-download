@@ -1240,3 +1240,27 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         self.assertTrue(len(irodsd.files_to_download) == 1)
         self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
         irodsd.close()
+
+    def test_irods_list_error(self):
+        # Non-existing collection
+        irodsd = IRODSDownload(self.utils.SERVER, "fake_collection")
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
+        ))
+        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+            with self.assertRaises(Exception):
+                (file_list, dir_list) = irodsd.list()
+            # Test log message format (we assume that there is only 1 message)
+            self.assertRegex(cm.output[0], "Error while listing")
+        # Test with wrong password
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password="badpassword",
+        ))
+        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+            with self.assertRaises(Exception):
+                (file_list, dir_list) = irodsd.list()
+            # Test log message format (we assume that there is only 1 message)
+            self.assertRegex(cm.output[0], "Error while listing")
