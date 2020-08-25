@@ -156,12 +156,12 @@ class DirectHTTPDownload(DirectFTPDownload):
         self._network_configuration()
         # Specific configuration
         # With those options, cURL will issue a HEAD request. This may not be
-        # supported especially resources that are accessed using POST (HTTP
-        # return code 405). Therefore, we explicitely handle this case in this
-        # method.
-        # Note that in many cases, there is no Last-Modified field in headers
-        # since this is usually dynamic content (Content-Length is usually
-        # present).
+        # supported especially on resources that are accessed using POST. In
+        # this case, HTTP will return code 405. We explicitely handle this case
+        # in this method.
+        # Note also that in many cases, there is no Last-Modified field in
+        # headers since this is usually dynamic content (Content-Length is
+        # usually present).
         self.crl.setopt(pycurl.HEADER, True)
         self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
@@ -183,7 +183,10 @@ class DirectHTTPDownload(DirectFTPDownload):
             try:
                 self.crl.perform()
                 errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
-                if errcode == 405:  # HEAD not supported by the server for this URL.
+                if errcode == 405:
+                    # HEAD not supported by the server for this URL so we can
+                    # skip the rest of the loop (we won't have metadata about
+                    # the file but biomaj should be fine).
                     msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
                     self.logger.info(msg)
                     continue
