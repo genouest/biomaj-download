@@ -248,7 +248,8 @@ class TestBiomajLocalDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = locald.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     locald.close()
 
   def test_local_download(self):
@@ -334,7 +335,8 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = httpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
 
   def test_http_list_dateregexp(self):
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
@@ -439,7 +441,7 @@ class TestBiomajSFTPDownload(unittest.TestCase):
 
   def setUp(self):
     self.utils = UtilsForTest()
-    # Temporary host key file in test dir (so this is claned)
+    # Temporary host key file in test dir (so this is cleaned)
     (_, self.khfile) = tempfile.mkstemp(dir=self.utils.test_dir)
 
   def tearDown(self):
@@ -456,7 +458,8 @@ class TestBiomajSFTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = sftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     sftpd.close()
     # Test with wrong password
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
@@ -465,7 +468,8 @@ class TestBiomajSFTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = sftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     sftpd.close()
 
   def test_download(self):
@@ -515,7 +519,8 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
 
   def test_download(self):
@@ -591,8 +596,6 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     """
     Test that errors in list are correctly caught.
     """
-    self.skipTest("skip as HEAD may not work in direct GET/POST")
-    return
     # Test access to non-existent directory
     file_list = ['/toto/debian/README.html']
     ftpd = DirectHTTPDownload('http', 'ftp2.fr.debian.org', '')
@@ -601,7 +604,8 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
 
   def test_download(self):
@@ -687,7 +691,8 @@ class TestBiomajFTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
     # Test with wrong password
     ftpd = CurlDownload("ftp", "test.rebex.net", "/")
@@ -696,7 +701,8 @@ class TestBiomajFTPDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
 
   @attr('test')
@@ -783,7 +789,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ])
     ftpd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                           wait_condition=tenacity.wait.wait_none()))
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         Exception, "^CurlDownload:Download:Error:",
         ftpd.download, self.utils.data_dir,
     )
@@ -795,7 +801,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
           {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
            'size': 1, 'save_as': 'TOTO1KB'}
     ])
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         Exception, "^CurlDownload:Download:Error:",
         ftpd.download, self.utils.data_dir,
     )
@@ -873,7 +879,8 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
     # Test with wrong password
     ftpd = CurlDownload("ftps", "test.rebex.net", "/")
@@ -882,7 +889,8 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     with self.assertLogs(logger="biomaj", level="ERROR") as cm:
       with self.assertRaises(Exception):
         (file_list, dir_list) = ftpd.list()
-        self.assertRegexp(cm.output, "^Error while listing")
+      # Test log message format (we assume that there is only 1 message)
+      self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
 
   def test_download(self):
@@ -966,7 +974,8 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         with self.assertLogs(logger="biomaj", level="ERROR") as cm:
             with self.assertRaises(Exception):
                 (file_list, dir_list) = rsyncd.list()
-                self.assertRegexp(cm.output, "^Error while listing")
+            # Test log message format (we assume that there is only 1 message)
+            self.assertRegex(cm.output[0], "Error while listing")
 
     def test_rsync_match(self):
         rsyncd = RSYNCDownload(self.examples, "")
@@ -1030,7 +1039,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         ])
         rsyncd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^RSYNCDownload:Download:Error:",
             rsyncd.download, self.utils.data_dir,
         )
@@ -1042,7 +1051,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^RSYNCDownload:Download:Error:",
             rsyncd.download, self.utils.data_dir,
         )
@@ -1212,7 +1221,7 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         ])
         irodsd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^IRODSDownload:Download:Error:",
             irodsd.download, self.utils.data_dir,
         )
@@ -1224,10 +1233,34 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             Exception, "^IRODSDownload:Download:Error:",
             irodsd.download, self.utils.data_dir,
         )
         self.assertTrue(len(irodsd.files_to_download) == 1)
         self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
         irodsd.close()
+
+    def test_irods_list_error(self):
+        # Non-existing collection
+        irodsd = IRODSDownload(self.utils.SERVER, "fake_collection")
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password=self.utils.PASSWORD,
+        ))
+        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+            with self.assertRaises(Exception):
+                (file_list, dir_list) = irodsd.list()
+            # Test log message format (we assume that there is only 1 message)
+            self.assertRegex(cm.output[0], "Error while listing")
+        # Test with wrong password
+        irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
+        irodsd.set_param(dict(
+            user=self.utils.USER,
+            password="badpassword",
+        ))
+        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
+            with self.assertRaises(Exception):
+                (file_list, dir_list) = irodsd.list()
+            # Test log message format (we assume that there is only 1 message)
+            self.assertRegex(cm.output[0], "Error while listing")

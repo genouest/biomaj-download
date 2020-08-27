@@ -81,6 +81,16 @@ class DirectFTPDownload(CurlDownload):
         FTP protocol does not give us the possibility to get file date from remote url
         '''
         self._network_configuration()
+        # Specific configuration
+        # With those options, cURL will issue a sequence of commands (SIZE,
+        # MDTM) to get the file size and last modification time and then issue
+        # a REST command. This usually ends with code 350. Therefore we
+        # explicitly handle this in this method.
+        # Note that very old servers may not support the MDTM command.
+        # Therefore, cURL will raise an error (although we can probably
+        # download the file).
+        self.crl.setopt(pycurl.OPT_FILETIME, True)
+        self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
             if self.save_as is None:
                 self.save_as = os.path.basename(rfile['name'])
@@ -91,24 +101,20 @@ class DirectFTPDownload(CurlDownload):
             except Exception:
                 self.crl.setopt(pycurl.URL, file_url.encode('ascii', 'ignore'))
             self.crl.setopt(pycurl.URL, file_url)
-            self.crl.setopt(pycurl.OPT_FILETIME, True)
-            self.crl.setopt(pycurl.NOBODY, True)
 
-            # Note that very old servers may not support the MDTM commands.
-            # Therefore, cURL will raise an error (although we probably can
-            # download the file).
             try:
                 self.crl.perform()
-                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-                if int(errcode) not in self.ERRCODE_OK:
+                errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
+                # As explained, 350 is correct. We check against ERRCODE_OK
+                # just in case.
+                if errcode != 350 and errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
                     raise Exception(msg)
             except Exception as e:
-                msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
+                msg = 'Error while listing ' + file_url + ' - ' + str(e)
                 self.logger.error(msg)
-                # raise e
-                continue
+                raise e
 
             timestamp = self.crl.getinfo(pycurl.INFO_FILETIME)
             dt = datetime.datetime.fromtimestamp(timestamp)
@@ -149,6 +155,13 @@ class DirectHTTPDownload(DirectFTPDownload):
         '''
         self._network_configuration()
         # Specific configuration
+        # With those options, cURL will issue a HEAD request. This may not be
+        # supported especially on resources that are accessed using POST. In
+        # this case, HTTP will return code 405. We explicitely handle this case
+        # in this method.
+        # Note also that in many cases, there is no Last-Modified field in
+        # headers since this is usually dynamic content (Content-Length is
+        # usually present).
         self.crl.setopt(pycurl.HEADER, True)
         self.crl.setopt(pycurl.NOBODY, True)
         for rfile in self.files_to_download:
@@ -169,16 +182,22 @@ class DirectHTTPDownload(DirectFTPDownload):
 
             try:
                 self.crl.perform()
-                errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
-                if int(errcode) not in self.ERRCODE_OK:
+                errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
+                if errcode == 405:
+                    # HEAD not supported by the server for this URL so we can
+                    # skip the rest of the loop (we won't have metadata about
+                    # the file but biomaj should be fine).
+                    msg = 'Listing ' + file_url + ' not supported. This is fine, continuing.'
+                    self.logger.info(msg)
+                    continue
+                elif errcode not in self.ERRCODE_OK:
                     msg = 'Error while listing ' + file_url + ' - ' + str(errcode)
                     self.logger.error(msg)
                     raise Exception(msg)
             except Exception as e:
-                msg = 'Error while listing ' + file_url + ' - ' + str(e) + ', this is fine, continuing'
+                msg = 'Error while listing ' + file_url + ' - ' + str(e)
                 self.logger.error(msg)
-                # raise e
-                continue
+                raise e
 
             # Figure out what encoding was sent with the response, if any.
             # Check against lowercased header name.
