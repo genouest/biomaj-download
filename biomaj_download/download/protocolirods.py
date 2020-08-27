@@ -40,24 +40,33 @@ class IRODSDownload(DownloadInterface):
         rdirs = []
         rfile = {}
         date = None
-        query = self.session.query(DataObject.name, DataObject.size,
-                                   DataObject.owner_name, DataObject.modify_time)
-        results = query.filter(User.name == self.user).get_results()
-        for result in results:
-            # Avoid duplication
-            if rfile != {} and rfile['name'] == str(result[DataObject.name]) \
-               and date == str(result[DataObject.modify_time]).split(" ")[0].split('-'):
-                continue
-            rfile = {}
-            date = str(result[DataObject.modify_time]).split(" ")[0].split('-')
-            rfile['permissions'] = "-rwxr-xr-x"
-            rfile['size'] = int(result[DataObject.size])
-            rfile['month'] = int(date[1])
-            rfile['day'] = int(date[2])
-            rfile['year'] = int(date[0])
-            rfile['name'] = str(result[DataObject.name])
-            rfiles.append(rfile)
-        self.session.cleanup()
+        # Note that iRODS raise errors when trying to use the results
+        # and not after query(). Therefore, the whole loop is inside
+        # try/catch.
+        try:
+            query = self.session.query(DataObject.name, DataObject.size,
+                                       DataObject.owner_name, DataObject.modify_time)
+            results = query.filter(User.name == self.user).get_results()
+            for result in results:
+                # Avoid duplication
+                if rfile != {} and rfile['name'] == str(result[DataObject.name]) \
+                   and date == str(result[DataObject.modify_time]).split(" ")[0].split('-'):
+                    continue
+                rfile = {}
+                date = str(result[DataObject.modify_time]).split(" ")[0].split('-')
+                rfile['permissions'] = "-rwxr-xr-x"
+                rfile['size'] = int(result[DataObject.size])
+                rfile['month'] = int(date[1])
+                rfile['day'] = int(date[2])
+                rfile['year'] = int(date[0])
+                rfile['name'] = str(result[DataObject.name])
+                rfiles.append(rfile)
+        except Exception as e:
+            msg = 'Error while listing ' + self.remote_dir + ' - ' + repr(e)
+            self.logger.error(msg)
+            raise e
+        finally:
+            self.session.cleanup()
         return (rfiles, rdirs)
 
     def _network_configuration(self):

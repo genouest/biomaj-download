@@ -1,6 +1,7 @@
 3.2.3 [UNRELEASED]:
   #30: raise errors when something in list() fail
-  #35: allow redirections (closes #33) 
+  DirectHTTP(s)/DirectFTP(s): do not raise error on list step as HEAD may not be supported
+  #35: allow redirections (closes #33)
 
 3.2.2:
   #31 fix URL with multiple slashes
