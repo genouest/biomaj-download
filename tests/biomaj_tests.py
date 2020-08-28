@@ -419,11 +419,11 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     # Check that we have been redirected to HTTPS by inspecting logs
     with self.assertLogs(logger="biomaj", level="INFO") as cm:
       httpd.download(self.utils.data_dir)
-       # Test log message format (we assume that there is only 1 message)
+      # Test log message format (we assume that there is only 1 message)
       self.assertRegex(cm.output[0], "Download was redirected to https://")
     httpd.close()
     self.assertTrue(len(httpd.files_to_download) == 1)
-    # Second test: block redirections
+    # Second test: disable redirections (hence listing fails)
     httpd = CurlDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/', http_parse)
     httpd.set_options({
       "allow_redirections": False
