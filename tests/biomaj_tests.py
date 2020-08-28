@@ -430,8 +430,6 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     })
     with self.assertRaises(Exception):
       (file_list, dir_list) = httpd.list()
-      httpd.match([r'^Build_number$'], file_list, dir_list)
-      httpd.download(self.utils.data_dir)
     httpd.close()
 
 
