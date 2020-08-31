@@ -139,10 +139,14 @@ class CurlDownload(DownloadInterface):
         self.tcp_keepalive = 0
         # FTP method (cURL --ftp-method option)
         self.ftp_method = pycurl.FTPMETHOD_DEFAULT  # Use cURL default
+        # TODO: Don't store default values in BiomajConfig.DEFAULTS for
+        # ssh_hosts_file and ssh_new_hosts
         # known_hosts file
         self.ssh_hosts_file = BiomajConfig.DEFAULTS["ssh_hosts_file"]
         # How to treat unknown host
         self.ssh_new_host = self.VALID_SSH_NEW_HOST[BiomajConfig.DEFAULTS["ssh_new_host"]]
+        # Allow redirections
+        self.allow_redirections = True
 
     def _accept_new_hosts(self, known_key, found_key, match):
         # Key found in file: we can accept it
@@ -203,6 +207,9 @@ class CurlDownload(DownloadInterface):
 
         # Configure ftp method
         self.crl.setopt(pycurl.FTP_FILEMETHOD, self.ftp_method)
+
+        # Configure redirections
+        self.crl.setopt(pycurl.FOLLOWLOCATION, self.allow_redirections)
 
         # Configure timeouts
         self.crl.setopt(pycurl.CONNECTTIMEOUT, 300)
@@ -268,6 +275,8 @@ class CurlDownload(DownloadInterface):
             if raw_val not in self.VALID_SSH_NEW_HOST:
                 raise ValueError("Invalid value for ssh_new_host")
             self.ssh_new_host = self.VALID_SSH_NEW_HOST[raw_val]
+        if "allow_redirections" in options:
+            self.allow_redirections = Utils.to_bool(options["allow_redirections"])
 
     def _append_file_to_download(self, rfile):
         # Add url and root to the file if needed (for safety)
@@ -325,6 +334,16 @@ class CurlDownload(DownloadInterface):
         except Exception as e:
             self.logger.error('Could not get errcode:' + str(e))
 
+        # Check if we were redirected
+        if self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
+            n_redirect = self.crl.getinfo(pycurl.REDIRECT_COUNT)
+            if n_redirect:
+                real_url = self.crl.getinfo(pycurl.EFFECTIVE_URL)
+                redirect_time = self.crl.getinfo(pycurl.REDIRECT_TIME)
+                msg_fmt = 'Download was redirected to %s (%i redirection(s), took %ss)'
+                msg = msg_fmt % (real_url, n_redirect, redirect_time)
+                self.logger.info(msg)
+
         # Close file
         fp.close()
 
@@ -370,6 +389,16 @@ class CurlDownload(DownloadInterface):
             msg = 'Error while listing ' + dir_url + ' - ' + str(e)
             self.logger.error(msg)
             raise e
+
+        # Check if we were redirected
+        if self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
+            n_redirect = self.crl.getinfo(pycurl.REDIRECT_COUNT)
+            if n_redirect:
+                real_url = self.crl.getinfo(pycurl.EFFECTIVE_URL)
+                redirect_time = self.crl.getinfo(pycurl.REDIRECT_TIME)
+                msg_fmt = 'Download was redirected to %s (%i redirection(s), took %ss)'
+                msg = msg_fmt % (real_url, n_redirect, redirect_time)
+                self.logger.info(msg)
 
         # Figure out what encoding was sent with the response, if any.
         # Check against lowercased header name.
