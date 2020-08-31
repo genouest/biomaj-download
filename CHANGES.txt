@@ -1,4 +1,4 @@
-3.2.3 [UNRELEASED]:
+3.2.3:
   #30: raise errors when something in list() fail
   DirectHTTP(s)/DirectFTP(s): do not raise error on list step as HEAD may not be supported
   #35: allow redirections (closes #33)
