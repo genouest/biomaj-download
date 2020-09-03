@@ -298,6 +298,9 @@ class CurlDownload(DownloadInterface):
 
     def _download(self, file_path, rfile):
         """
+        Download one file and return False in case of success and True
+        otherwise.
+
         This method is designed to work for FTP(S), HTTP(S) and SFTP.
         """
         error = True
@@ -322,7 +325,9 @@ class CurlDownload(DownloadInterface):
             # and data to send in request body.
             self.crl.setopt(pycurl.POSTFIELDS, postfields)
 
-        # Try download
+        # Try download (we don't raise errors here since its the return value
+        # ('error') that matters for the calling method; this is set to True
+        # only in case of success).
         try:
             self.crl.perform()
             errcode = self.crl.getinfo(pycurl.RESPONSE_CODE)
@@ -332,7 +337,7 @@ class CurlDownload(DownloadInterface):
             else:
                 error = False
         except Exception as e:
-            self.logger.error('Could not get errcode:' + str(e))
+            self.logger.error('Error while downloading ' + file_url + ' - ' + str(e))
 
         # Check if we were redirected
         if self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:

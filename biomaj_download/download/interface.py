@@ -486,8 +486,8 @@ class DownloadInterface(object):
         Download one file and return False in case of success and True
         otherwise.
 
-        Subclasses that override this method must call this implementation to
-        perform test on archives.
+        Subclasses that override this method must call this implementation
+        at the end to perform test on archives.
 
         Note that this method is executed inside a retryer.
         '''
