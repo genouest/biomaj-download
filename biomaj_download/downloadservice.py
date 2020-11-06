@@ -85,7 +85,7 @@ class DownloadService(object):
         self.bank = None
         self.download_callback = None
         with open(config_file, 'r') as ymlfile:
-            self.config = yaml.load(ymlfile)
+            self.config = yaml.load(ymlfile, Loader=yaml.FullLoader)
             Utils.service_config_override(self.config)
 
         Zipkin.set_config(self.config)

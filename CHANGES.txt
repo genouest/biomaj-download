@@ -1,6 +1,6 @@
 3.2.4 [UNRELEASED]:
   Minor python doc and error message updates
-
+  Suppress yaml warnings
 3.2.3:
   #30: raise errors when something in list() fail
   DirectHTTP(s)/DirectFTP(s): do not raise error on list step as HEAD may not be supported

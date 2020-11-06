@@ -18,7 +18,7 @@ if 'BIOMAJ_CONFIG' in os.environ:
 
 config = None
 with open(config_file, 'r') as ymlfile:
-    config = yaml.load(ymlfile)
+    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
     Utils.service_config_override(config)
 
 
