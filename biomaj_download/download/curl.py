@@ -96,6 +96,19 @@ class CurlDownload(DownloadInterface):
         """
         DownloadInterface.__init__(self)
         self.logger.debug('Download')
+
+        # Check for ssh support
+        curl_opts_info = pycurl.version_info()
+        curl_opts = []
+        for opt in curl_opts_info:
+            if isinstance(opt, tuple):
+                for o in opt:
+                    curl_opts.append(o)
+            else:
+                curl_opts.append(opt)
+        if 'sftp' not in curl_opts:
+            CurlDownload.ALL_PROTOCOLS = CurlDownload.FTP_PROTOCOL_FAMILY + CurlDownload.HTTP_PROTOCOL_FAMILY
+            self.logger.warning("sftp not supported by curl: %s" % str(curl_opts_info))
         # Initialize curl_protocol.
         # Note that we don't change that field in set_protocol since this
         # method uses the protocol from the configuration file. It's not clear
@@ -179,8 +192,9 @@ class CurlDownload(DownloadInterface):
             self.crl.setopt(pycurl.USERPWD, self.credentials)
 
         # Hosts file & function to decide for new hosts
-        self.crl.setopt(pycurl.SSH_KNOWNHOSTS, self.ssh_hosts_file)
-        self.crl.setopt(pycurl.SSH_KEYFUNCTION, self._accept_new_hosts)
+        if self.curl_protocol in self.SFTP_PROTOCOL_FAMILY:
+            self.crl.setopt(pycurl.SSH_KNOWNHOSTS, self.ssh_hosts_file)
+            self.crl.setopt(pycurl.SSH_KEYFUNCTION, self._accept_new_hosts)
 
         # Configure TCP keepalive
         if self.tcp_keepalive:
