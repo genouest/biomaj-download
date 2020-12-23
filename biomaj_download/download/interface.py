@@ -454,7 +454,6 @@ class DownloadInterface(object):
             for dfile in self.files_to_download:
                 if index < len(new_or_modified_files) and \
                         dfile['name'] == new_or_modified_files[index][0]:
-
                     new_files_to_download.append(dfile)
                     index += 1
                 else:

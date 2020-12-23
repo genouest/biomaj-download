@@ -36,29 +36,38 @@ class DirectFTPDownload(CurlDownload):
 
     ALL_PROTOCOLS = ["ftp", "ftps"]
 
-    def _append_file_to_download(self, filename):
+    def _append_file_to_download(self, rfile):
         '''
         Initialize the files in list with today as last-modification date.
         Size is also preset to zero.
         '''
-        today = datetime.date.today()
-        rfile = {}
-        rfile['root'] = self.rootdir
-        rfile['permissions'] = ''
-        rfile['group'] = ''
-        rfile['user'] = ''
-        rfile['size'] = 0
-        rfile['month'] = today.month
-        rfile['day'] = today.day
-        rfile['year'] = today.year
-        if filename.endswith('/'):
-            rfile['name'] = filename[:-1]
+        filename = None
+        # workaround to handle file dict info or file name
+        # this is dirty, we expect to handle dicts now,
+        # biomaj workflow should fix this
+        if isinstance(rfile, dict):
+            filename = rfile['name']
         else:
-            rfile['name'] = filename
-        rfile['hash'] = None
+            # direct protocol send directly some filename
+            filename = rfile
+        today = datetime.date.today()
+        new_rfile = {}
+        new_rfile['root'] = self.rootdir
+        new_rfile['permissions'] = ''
+        new_rfile['group'] = ''
+        new_rfile['user'] = ''
+        new_rfile['size'] = 0
+        new_rfile['month'] = today.month
+        new_rfile['day'] = today.day
+        new_rfile['year'] = today.year
+        if filename.endswith('/'):
+            new_rfile['name'] = filename[:-1]
+        else:
+            new_rfile['name'] = filename
+        new_rfile['hash'] = None
         # Use self.save_as even if we use it in list(). This is important.
-        rfile['save_as'] = self.save_as
-        super(DirectFTPDownload, self)._append_file_to_download(rfile)
+        new_rfile['save_as'] = self.save_as
+        super(DirectFTPDownload, self)._append_file_to_download(new_rfile)
 
     def set_files_to_download(self, files_to_download):
         if len(files_to_download) > 1:

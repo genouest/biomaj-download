@@ -667,7 +667,6 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
       my_json = json.loads(content)
       self.assertTrue(my_json['args']['key1'] == 'value1')
 
-  @attr('test')
   def test_download_save_as(self):
     file_list = ['/debian/README.html']
     ftpd = DirectHTTPDownload('http', 'ftp2.fr.debian.org', '')
@@ -766,7 +765,6 @@ class TestBiomajFTPDownload(unittest.TestCase):
       self.assertRegex(cm.output[0], "Error while listing")
     ftpd.close()
 
-  @attr('test')
   def test_download(self):
     ftpd = CurlDownload('ftp', 'speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
@@ -824,6 +822,21 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.close()
     self.assertTrue(len(ftpd.files_to_download)==2)
     self.assertTrue(len(ftpd.files_to_copy)==2)
+
+  @attr('test')
+  def test_download_or_copy_directhttp(self):
+    ftpd = DirectHTTPDownload('https', 'ftp.fr.debian.org', '/debian/')
+    ftpd.files_to_download = [
+          {'name':'/test1', 'year': '2013', 'month': '11', 'day': '10', 'size': 10},
+    ]
+    available_files = [
+        {'name':'/test1', 'year': '2020', 'month': '11', 'day': '10', 'size': 10},
+      # {"root": "/", "permissions": "", "group": "", "user": "", "size": 23723408, "month": 6, "day": 19, "year": 2018, "name": "/common/downloads/release-38/Pfalciparum3D7/fasta/data/PlasmoDB-38_Pfalciparum3D7_Genome.fasta", "hash": "e58669a71eacff7a9dcceed04a8ecdd1", "save_as": "PlasmoDB-38_Pfalciparum3D7_Genome.fasta", "url": "https://plasmodb.org"}
+    ]
+    ftpd.download_or_copy(available_files, '/biomaj', False)
+    ftpd.close()
+    self.assertTrue(len(ftpd.files_to_download)==1)
+    self.assertTrue(len(ftpd.files_to_copy)==0)
 
   def test_get_more_recent_file(self):
     files = [
