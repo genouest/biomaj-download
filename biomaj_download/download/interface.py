@@ -377,18 +377,19 @@ class DownloadInterface(object):
                             rfile['name'] = prefix + '/' + rfile['name']
                         self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
+                    # return
                 for direlt in dir_list:
                     subdir = direlt['name']
                     self.logger.debug('Download:File:Subdir:Check:' + subdir)
                     if pattern == '**/*':
                         (subfile_list, subdirs_list) = self.list(prefix + '/' + subdir + '/')
                         self.match([pattern], subfile_list, subdirs_list, prefix + '/' + subdir, True)
-                        for rfile in file_list:
-                            if pattern == '**/*' or re.match(pattern, rfile['name']):
-                                if prefix != '':
-                                    rfile['name'] = prefix + '/' + rfile['name']
-                                self._append_file_to_download(rfile)
-                                self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
+                        #for rfile in file_list:
+                        #    if pattern == '**/*' or re.match(pattern, rfile['name']):
+                        #        if prefix != '':
+                        #            rfile['name'] = prefix + '/' + rfile['name']
+                        #        self._append_file_to_download(rfile)
+                        #        self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
                     else:
                         if re.match(subdirs_pattern[0], subdir):
                             self.logger.debug('Download:File:Subdir:Match:' + subdir)
