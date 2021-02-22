@@ -377,7 +377,6 @@ class DownloadInterface(object):
                             rfile['name'] = prefix + '/' + rfile['name']
                         self._append_file_to_download(rfile)
                         self.logger.debug('Download:File:MatchRegExp:' + rfile['name'])
-                    return
                 for direlt in dir_list:
                     subdir = direlt['name']
                     self.logger.debug('Download:File:Subdir:Check:' + subdir)
