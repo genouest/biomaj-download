@@ -1,3 +1,6 @@
+3.2.6:
+  Disabled test with tenacity, compat.make_retry_state removed from lib
+
 3.2.5:
   Fix regex handling for **/*
 

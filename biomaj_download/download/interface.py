@@ -264,14 +264,15 @@ class DownloadInterface(object):
                 # Check that it is an instance of stop_base
                 if not isinstance(stop_cond, tenacity.stop.stop_base):
                     raise ValueError(stop_condition + " doesn't yield a stop condition")
+                # Disabled test, compat.make_retry_state removed from lib
                 # Test that this is a correct stop condition by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
                 # if it seems that calling a wait policy doesn't modify it).
-                try:
-                    s = copy.deepcopy(stop_cond)
-                    s(tenacity.compat.make_retry_state(0, 0))
-                except Exception:
-                    raise ValueError(stop_condition + " doesn't yield a stop condition")
+                #try:
+                #    s = copy.deepcopy(stop_cond)
+                #    s(tenacity.compat.make_retry_state(0, 0))
+                #except Exception:
+                #    raise ValueError(stop_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
         else:
@@ -290,14 +291,15 @@ class DownloadInterface(object):
                 # Check that it is an instance of wait_base
                 if not isinstance(wait_pol, tenacity.wait.wait_base):
                     raise ValueError(wait_policy + " doesn't yield a wait policy")
+                # Disabled test, compat.make_retry_state removed from lib
                 # Test that this is a correct wait policy by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
                 # if it seems that calling a stop condition doesn't modify it).
-                try:
-                    w = copy.deepcopy(wait_pol)
-                    w(tenacity.compat.make_retry_state(0, 0))
-                except Exception:
-                    raise ValueError(wait_policy + " doesn't yield a wait policy")
+                #try:
+                #    w = copy.deepcopy(wait_pol)
+                #    w(tenacity.compat.make_retry_state(0, 0))
+                #except Exception:
+                #    raise ValueError(wait_policy + " doesn't yield a wait policy")
             except Exception as e:
                 raise ValueError("Error while parsing wait policy: %s" % e)
         else:
