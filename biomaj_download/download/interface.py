@@ -3,7 +3,7 @@ import logging
 import datetime
 import time
 import re
-import copy
+# import copy
 
 import tenacity
 from simpleeval import simple_eval, ast
@@ -268,10 +268,10 @@ class DownloadInterface(object):
                 # Test that this is a correct stop condition by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
                 # if it seems that calling a wait policy doesn't modify it).
-                #try:
+                # try:
                 #    s = copy.deepcopy(stop_cond)
                 #    s(tenacity.compat.make_retry_state(0, 0))
-                #except Exception:
+                # except Exception:
                 #    raise ValueError(stop_condition + " doesn't yield a stop condition")
             except Exception as e:
                 raise ValueError("Error while parsing stop condition: %s" % e)
@@ -295,10 +295,10 @@ class DownloadInterface(object):
                 # Test that this is a correct wait policy by calling it.
                 # We use a deepcopy to be sure to not alter the object (even
                 # if it seems that calling a stop condition doesn't modify it).
-                #try:
+                # try:
                 #    w = copy.deepcopy(wait_pol)
                 #    w(tenacity.compat.make_retry_state(0, 0))
-                #except Exception:
+                # except Exception:
                 #    raise ValueError(wait_policy + " doesn't yield a wait policy")
             except Exception as e:
                 raise ValueError("Error while parsing wait policy: %s" % e)
