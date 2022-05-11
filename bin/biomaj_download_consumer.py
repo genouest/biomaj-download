@@ -6,8 +6,12 @@ import os
 import logging
 
 import requests
-import yaml
 import consul
+import yaml
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
 from biomaj_download.downloadservice import DownloadService
 from biomaj_core.utils import Utils
@@ -18,7 +22,7 @@ if 'BIOMAJ_CONFIG' in os.environ:
 
 config = None
 with open(config_file, 'r') as ymlfile:
-    config = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    config = yaml.load(ymlfile, Loader=Loader)
     Utils.service_config_override(config)
 
 

@@ -1,3 +1,6 @@
+3.2.7
+  Normalize pyyaml setup with other biomaj components
+
 3.2.6:
   Disabled test with tenacity, compat.make_retry_state removed from lib
 
