@@ -121,7 +121,7 @@ class CurlDownload(DownloadInterface):
         if self.curl_protocol in self.FTP_PROTOCOL_FAMILY:
             self.protocol_family = "ftp"
             self._parse_result = self._ftp_parse_result
-            self.ERRCODE_OK = [221, 226]
+            self.ERRCODE_OK = [221, 226, 257]
         elif self.curl_protocol in self.HTTP_PROTOCOL_FAMILY:
             self.protocol_family = "http"
             self._parse_result = self._http_parse_result
