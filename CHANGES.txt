@@ -1,3 +1,6 @@
+3.2.8:
+  Accept 257 error code for ftp
+
 3.2.7
   Normalize pyyaml setup with other biomaj components
 
