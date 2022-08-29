@@ -512,7 +512,6 @@ class CurlDownload(DownloadInterface):
                 rdirs.append(rfile)
 
         files = re.findall(self.http_parse.file_line, result)
-
         if files is not None and len(files) > 0:
             for foundfile in files:
                 rfile = {}

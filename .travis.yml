@@ -18,11 +18,11 @@ addons:
       - libgnutls-dev
 install:
 - pip install -r requirements.txt
-- pip install coverage nose
+- pip install coverage pytest
 - pip install python-coveralls
 - python setup.py -q install
 script:
-- nosetests -a '!network,!local_irods'
+- LOCAL_IRODS=0 NETWORK=0 pytest -v tests/biomaj_tests.py
 - flake8 --ignore E501 biomaj_download/*.py biomaj_download/download
 deploy:
   provider: pypi

@@ -22,7 +22,7 @@ config = {
     'url': 'http://biomaj.genouest.org',
     'download_url': 'http://biomaj.genouest.org',
     'author_email': 'olivier.sallou@irisa.fr',
-    'version': '3.2.8',
+    'version': '3.2.9',
     'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -62,8 +62,7 @@ config = {
                          'humanfriendly',
                          'python-irodsclient'
                         ],
-    'tests_require': ['nose', 'mock'],
-    'test_suite': 'nose.collector',
+    'tests_require': ['pytest', 'mock'],
     'packages': find_packages(),
     'include_package_data': True,
     'scripts': ['bin/biomaj_download_consumer.py'],

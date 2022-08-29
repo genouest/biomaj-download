@@ -23,15 +23,14 @@ To compile protobuf, in biomaj_download/message:
 
 To run the test suite, use:
 
-    nosetests -a '!local_irods' tests/biomaj_tests.py
+    LOCAL_IRODS=0 pytest -v tests/biomaj_tests.py
 
 This command skips the test that need a local iRODS server.
 
 Some test might fail due to network connection. You can skip them with:
 
-    nosetests -a '!network' tests/biomaj_tests.py
+    NETWORK=0 pytest -v tests/biomaj_tests.py
 
-(To skip the local iRODS test and the network tests, use `-a '!network,!local_irods'`).
 
 # Run
 

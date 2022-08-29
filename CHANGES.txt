@@ -1,3 +1,6 @@
+3.2.9:
+  Replace nose by pytest for unit testing
+
 3.2.8:
   Accept 257 error code for ftp
 

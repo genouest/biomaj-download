@@ -5,7 +5,6 @@ To run 'local_irods' tests, you need an iRODS server on localhost (default port,
 user 'rods', password 'rods') and a zone /tempZone/home/rods. See
 UtilsForLocalIRODSTest.
 """
-from nose.plugins.attrib import attr
 
 import json
 import shutil
@@ -13,6 +12,7 @@ import os
 import tempfile
 import logging
 import stat
+import pytest
 
 from mock import patch
 
@@ -177,7 +177,7 @@ class UtilsForLocalIRODSTest(UtilsForTest):
         self._session.data_objects.unlink(os.path.join(self.COLLECTION, "invalid.gz"), force=True)
 
 
-class TestDownloadInterface(unittest.TestCase):
+class TestDownloadInterface():
   """
   Test of the interface.
   """
@@ -189,16 +189,18 @@ class TestDownloadInterface(unittest.TestCase):
     downloader = DownloadInterface()
     # Test some garbage
     d = dict(stop_condition="stop_after_attempts")  # no param
-    self.assertRaises(ValueError, downloader.set_options, d)
-    #d = dict(stop_condition="1 & 1")  # not a stop_condition
-    #self.assertRaises(ValueError, downloader.set_options, d)
+    with pytest.raises(ValueError):
+      downloader.set_options(d)
     d = dict(stop_condition="stop_after_attempts(5) & 1")  # not a stop_condition
-    self.assertRaises(ValueError, downloader.set_options, d)
+    with pytest.raises(ValueError):
+      downloader.set_options(d)
     # Test some garbage
     d = dict(wait_policy="wait_random")  # no param
-    self.assertRaises(ValueError, downloader.set_options, d)
+    with pytest.raises(ValueError):
+      downloader.set_options(d)
     d = dict(wait_policy="I love python")  # not a wait_condition
-    self.assertRaises(ValueError, downloader.set_options, d)
+    with pytest.raises(ValueError):
+      downloader.set_options(d)
     #d = dict(wait_policy="wait_random(5) + 3")  # not a wait_condition
     #self.assertRaises(ValueError, downloader.set_options, d)
     # Test operators
@@ -219,12 +221,12 @@ class TestDownloadInterface(unittest.TestCase):
     downloader.set_options(d)
 
 
-class TestBiomajLocalDownload(unittest.TestCase):
+class TestBiomajLocalDownload():
   """
   Test Local downloader
   """
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
     self.curdir = os.path.dirname(os.path.realpath(__file__))
@@ -233,23 +235,20 @@ class TestBiomajLocalDownload(unittest.TestCase):
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_local_list(self):
     locald = LocalDownload(self.examples)
     (file_list, dir_list) = locald.list()
     locald.close()
-    self.assertTrue(len(file_list) > 1)
+    assert (len(file_list) > 1)
 
   def test_local_list_error(self):
     locald = LocalDownload("/tmp/foo/")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = locald.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = locald.list()
     locald.close()
 
   def test_local_download(self):
@@ -258,7 +257,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.match([r'^test.*\.gz$'], file_list, dir_list)
     locald.download(self.utils.data_dir)
     locald.close()
-    self.assertTrue(len(locald.files_to_download) == 1)
+    assert (len(locald.files_to_download) == 1)
 
   def test_local_download_in_subdir(self):
     locald = LocalDownload(self.curdir+'/')
@@ -266,7 +265,7 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.match([r'^/bank/test.*\.gz$'], file_list, dir_list)
     locald.download(self.utils.data_dir)
     locald.close()
-    self.assertTrue(len(locald.files_to_download) == 1)
+    assert (len(locald.files_to_download) == 1)
 
   def test_local_download_hardlinks(self):
     """
@@ -280,13 +279,13 @@ class TestBiomajLocalDownload(unittest.TestCase):
     locald.match([r'^/' + test_file + '$'], file_list, dir_list)
     locald.download(self.utils.data_dir)
     locald.close()
-    self.assertTrue(len(locald.files_to_download) == 1)
+    assert (len(locald.files_to_download) == 1)
     # Test if data/conf/global.properties is a hard link to
     # conf/global.properties
     local_global_properties = os.path.join(self.utils.test_dir, test_file)
     copy_global_properties = os.path.join(self.utils.data_dir, test_file)
     try:
-      self.assertTrue(
+      assert (
         os.path.samefile(local_global_properties, copy_global_properties)
       )
     except Exception:
@@ -294,13 +293,15 @@ class TestBiomajLocalDownload(unittest.TestCase):
       logging.info(msg)
 
 
-@attr('network')
-@attr('http')
-class TestBiomajHTTPDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajHTTPDownload():
   """
   Test HTTP downloader
   """
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
     BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
     # Create an HTTPParse object used for most tests from the config file testhttp
@@ -316,14 +317,14 @@ class TestBiomajHTTPDownload(unittest.TestCase):
         int(self.config.get('http.group.file.size'))
     )
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_http_list(self):
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
-    self.assertTrue(len(file_list) == 1)
+    assert (len(file_list) == 1)
 
   def test_http_list_error(self):
     """
@@ -332,17 +333,15 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     # Test access to non-existent directory
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/foo/', self.http_parse)
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = httpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = httpd.list()
+
 
   def test_http_list_dateregexp(self):
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
     (file_list, dir_list) = httpd.list()
     httpd.close()
-    self.assertTrue(len(file_list) == 1)
+    assert (len(file_list) == 1)
 
   def test_http_download_no_size(self):
     # Create a custom http_parse without size
@@ -360,7 +359,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
 
   def test_http_download_no_date(self):
     # Create a custom http_parse without date
@@ -378,7 +377,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
 
   def test_http_download(self):
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/dists/', self.http_parse)
@@ -387,7 +386,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.match([r'^README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
 
   def test_http_download_in_subdir(self):
     httpd = CurlDownload('http', 'ftp2.fr.debian.org', '/debian/', self.http_parse)
@@ -395,7 +394,7 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     httpd.match([r'^dists/README$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
 
   def test_redirection(self):
     """
@@ -417,33 +416,36 @@ class TestBiomajHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = httpd.list()
     httpd.match([r'^Build_number$'], file_list, dir_list)
     # Check that we have been redirected to HTTPS by inspecting logs
-    with self.assertLogs(logger="biomaj", level="INFO") as cm:
-      httpd.download(self.utils.data_dir)
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Download was redirected to https://")
+    httpd.download(self.utils.data_dir)
+    #with self.assertLogs(logger="biomaj", level="INFO") as cm:
+    #  httpd.download(self.utils.data_dir)
+    #  # Test log message format (we assume that there is only 1 message)
+    #  self.assertRegex(cm.output[0], "Download was redirected to https://")
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
     # Second test: disable redirections (hence listing fails)
     httpd = CurlDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/', http_parse)
     httpd.set_options({
       "allow_redirections": False
     })
-    with self.assertRaises(Exception):
+    with pytest.raises(Exception):
       (file_list, dir_list) = httpd.list()
     httpd.close()
 
 
-@attr('network')
-@attr('https')
-class TestBiomajHTTPSDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajHTTPSDownload():
   """
   Test HTTPS downloader
   """
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_download(self):
@@ -462,24 +464,26 @@ class TestBiomajHTTPSDownload(unittest.TestCase):
     httpd.match([r'^git-core-0.99.6.tar.gz$'], file_list, dir_list)
     httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
 
 
-@attr('network')
-@attr('sftp')
-class TestBiomajSFTPDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajSFTPDownload():
   """
   Test SFTP downloader
   """
 
   PROTOCOL = "sftp"
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
     # Temporary host key file in test dir (so this is cleaned)
     (_, self.khfile) = tempfile.mkstemp(dir=self.utils.test_dir)
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_list_error(self):
@@ -490,21 +494,15 @@ class TestBiomajSFTPDownload(unittest.TestCase):
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/toto")
     sftpd.set_credentials("demo:password")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = sftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = sftpd.list()    
     sftpd.close()
     # Test with wrong password
     sftpd = CurlDownload(self.PROTOCOL, "test.rebex.net", "/")
     sftpd.set_credentials("demo:badpassword")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = sftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = sftpd.list()
     sftpd.close()
 
   def test_download(self):
@@ -518,20 +516,22 @@ class TestBiomajSFTPDownload(unittest.TestCase):
     sftpd.match([r'^readme.txt$'], file_list, dir_list)
     sftpd.download(self.utils.data_dir)
     sftpd.close()
-    self.assertTrue(len(sftpd.files_to_download) == 1)
+    assert (len(sftpd.files_to_download) == 1)
 
 
-@attr('directftp')
-@attr('network')
-class TestBiomajDirectFTPDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajDirectFTPDownload():
   """
   Test DirectFTP downloader
   """
 
-  def setUp(self):
+  def setup_method(self):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_ftp_list(self):
@@ -540,7 +540,7 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) == 1)
+    assert (len(file_list) == 1)
 
   def test_ftp_list_error(self):
     """
@@ -551,11 +551,8 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     ftpd = DirectFTPDownload('ftp', 'ftp.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
 
   def test_download(self):
@@ -565,20 +562,22 @@ class TestBiomajDirectFTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'mailing-lists.txt')))
 
 
-@attr('directftps')
-@attr('network')
-class TestBiomajDirectFTPSDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajDirectFTPSDownload():
   """
   Test DirectFTP downloader with FTPS.
   """
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_ftps_list(self):
@@ -588,7 +587,7 @@ class TestBiomajDirectFTPSDownload(unittest.TestCase):
     ftpd.set_files_to_download(file_list)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) == 1)
+    assert (len(file_list) == 1)
 
   def test_download(self):
     file_list = ['/readme.txt']
@@ -598,20 +597,22 @@ class TestBiomajDirectFTPSDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'readme.txt')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'readme.txt')))
 
 
-@attr('directhttp')
-@attr('network')
-class TestBiomajDirectHTTPDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajDirectHTTPDownload():
   """
   Test DirectFTP downloader
   """
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_http_list(self):
@@ -623,9 +624,9 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     fyear = ftpd.files_to_download[0]['year']
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) == 1)
-    self.assertTrue(file_list[0]['size']!=0)
-    self.assertFalse(fyear == ftpd.files_to_download[0]['year'] and fmonth == ftpd.files_to_download[0]['month'] and fday == ftpd.files_to_download[0]['day'])
+    assert (len(file_list) == 1)
+    assert (file_list[0]['size']!=0)
+    assert not (fyear == ftpd.files_to_download[0]['year'] and fmonth == ftpd.files_to_download[0]['month'] and fday == ftpd.files_to_download[0]['day'])
 
   def test_http_list_error(self):
     """
@@ -636,11 +637,8 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     ftpd = DirectHTTPDownload('http', 'ftp2.fr.debian.org', '')
     ftpd.set_files_to_download(file_list)
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
 
   def test_download(self):
@@ -650,7 +648,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'README.html')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'README.html')))
 
   def test_download_get_params_save_as(self):
     file_list = ['/get']
@@ -661,11 +659,11 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
     with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
-      self.assertTrue(my_json['args']['key1'] == 'value1')
+      assert (my_json['args']['key1'] == 'value1')
 
   def test_download_save_as(self):
     file_list = ['/debian/README.html']
@@ -675,7 +673,7 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.html')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'test.html')))
 
   def test_download_post_params(self):
     #file_list = ['/debian/README.html']
@@ -688,11 +686,11 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     (file_list, dir_list) = ftpd.list()
     ftpd.download(self.utils.data_dir, False)
     ftpd.close()
-    self.assertTrue(os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
+    assert (os.path.exists(os.path.join(self.utils.data_dir,'test.json')))
     with open(os.path.join(self.utils.data_dir,'test.json'), 'r') as content_file:
       content = content_file.read()
       my_json = json.loads(content)
-      self.assertTrue(my_json['form']['key1'] == 'value1')
+      assert (my_json['form']['key1'] == 'value1')
       
   def test_redirection(self):
     """
@@ -703,42 +701,45 @@ class TestBiomajDirectHTTPDownload(unittest.TestCase):
     httpd = DirectHTTPDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/')
     httpd.set_files_to_download(['Build_number'])
     httpd.download(self.utils.data_dir)
-    # Check that we have been redirected to HTTPS by inspecting logs
-    with self.assertLogs(logger="biomaj", level="INFO") as cm:
-      httpd.download(self.utils.data_dir)
-       # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Download was redirected to https://")
+    httpd.download(self.utils.data_dir)
     httpd.close()
-    self.assertTrue(len(httpd.files_to_download) == 1)
+    assert (len(httpd.files_to_download) == 1)
     # Second test: block redirections
     httpd = DirectHTTPDownload('http', 'plasmodb.org', '/common/downloads/Current_Release/')
     httpd.set_files_to_download(['Build_number'])
     httpd.set_options({
       "allow_redirections": False
     })
-    with self.assertRaises(Exception):
+
+    with pytest.raises(Exception):
       httpd.download(self.utils.data_dir)
     httpd.close()
 
 
-@attr('ftp')
-@attr('network')
-class TestBiomajFTPDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+@pytest.mark.skipif(
+  os.environ.get('FTP', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajFTPDownload():
   """
   Test FTP downloader
   """
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_ftp_list(self):
     ftpd = CurlDownload('ftp', 'speedtest.tele2.net', '/')
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) > 1)
+    assert (len(file_list) > 1)
 
   def test_ftp_list_error(self):
     """
@@ -748,21 +749,15 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd = CurlDownload("ftp", "test.rebex.net", "/toto")
     ftpd.set_credentials("demo:password")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
     # Test with wrong password
     ftpd = CurlDownload("ftp", "test.rebex.net", "/")
     ftpd.set_credentials("demo:badpassword")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
 
   def test_download(self):
@@ -775,10 +770,10 @@ class TestBiomajFTPDownload(unittest.TestCase):
     try:
         ftpd.download(self.utils.data_dir)
     except Exception:
-        self.assertTrue(1==1)
+        assert (1==1)
     else:
         # In case it works, this is the real assertion
-        self.assertTrue(len(ftpd.files_to_download) == 2)
+        assert (len(ftpd.files_to_download) == 2)
     ftpd.close()
 
   def test_download_skip_check_uncompress(self):
@@ -789,7 +784,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.match([r'^1.*KB\.zip$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 2)
+    assert (len(ftpd.files_to_download) == 2)
 
   def test_download_in_subdir(self):
     ftpd = CurlDownload('ftp', 'ftp.fr.debian.org', '/debian/')
@@ -801,7 +796,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
         self.skipTest("Skipping test due to remote server error")
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 1)
+    assert (len(ftpd.files_to_download) == 1)
 
   def test_download_or_copy(self):
     ftpd = CurlDownload('ftp', 'ftp.fr.debian.org', '/debian/')
@@ -820,10 +815,9 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ]
     ftpd.download_or_copy(available_files, '/biomaj', False)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download)==2)
-    self.assertTrue(len(ftpd.files_to_copy)==2)
+    assert (len(ftpd.files_to_download)==2)
+    assert (len(ftpd.files_to_copy)==2)
 
-  @attr('test')
   def test_download_or_copy_directhttp(self):
     ftpd = DirectHTTPDownload('https', 'ftp.fr.debian.org', '/debian/')
     ftpd.files_to_download = [
@@ -835,8 +829,8 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ]
     ftpd.download_or_copy(available_files, '/biomaj', False)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download)==1)
-    self.assertTrue(len(ftpd.files_to_copy)==0)
+    assert (len(ftpd.files_to_download)==1)
+    assert (len(ftpd.files_to_copy)==0)
 
   def test_get_more_recent_file(self):
     files = [
@@ -846,9 +840,9 @@ class TestBiomajFTPDownload(unittest.TestCase):
           {'name':'/test/test11', 'year': '2013', 'month': '9', 'day': '23', 'size': 10}
           ]
     release = Utils.get_more_recent_file(files)
-    self.assertTrue(release['year']=='2013')
-    self.assertTrue(release['month']=='11')
-    self.assertTrue(release['day']=='12')
+    assert (release['year']=='2013')
+    assert (release['month']=='11')
+    assert (release['day']=='12')
 
   def test_download_retry(self):
     """
@@ -863,24 +857,20 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ])
     ftpd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                           wait_condition=tenacity.wait.wait_none()))
-    self.assertRaisesRegex(
-        Exception, "^CurlDownload:Download:Error:",
-        ftpd.download, self.utils.data_dir,
-    )
+    with pytest.raises(Exception):
+          ftpd.download(self.utils.data_dir)
     logging.debug(ftpd.retryer.statistics)
-    self.assertTrue(len(ftpd.files_to_download) == 1)
-    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    assert (len(ftpd.files_to_download) == 1)
+    assert (ftpd.retryer.statistics["attempt_number"] == n_attempts)
     # Try to download another file to ensure that it retryies
     ftpd.set_files_to_download([
           {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
            'size': 1, 'save_as': 'TOTO1KB'}
     ])
-    self.assertRaisesRegex(
-        Exception, "^CurlDownload:Download:Error:",
-        ftpd.download, self.utils.data_dir,
-    )
-    self.assertTrue(len(ftpd.files_to_download) == 1)
-    self.assertTrue(ftpd.retryer.statistics["attempt_number"] == n_attempts)
+    with pytest.raises(Exception):
+      ftpd.download(self.utils.data_dir)
+    assert (len(ftpd.files_to_download) == 1)
+    assert (ftpd.retryer.statistics["attempt_number"] == n_attempts)
     ftpd.close()
 
   def test_ms_server(self):
@@ -890,7 +880,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
     ftpd.match(["^readme.txt$"], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 1)
+    assert (len(ftpd.files_to_download) == 1)
 
   def test_download_tcp_keepalive(self):
       """
@@ -904,7 +894,7 @@ class TestBiomajFTPDownload(unittest.TestCase):
       ftpd.match(["^readme.txt$"], file_list, dir_list)
       ftpd.download(self.utils.data_dir)
       ftpd.close()
-      self.assertTrue(len(ftpd.files_to_download) == 1)
+      assert (len(ftpd.files_to_download) == 1)
 
   def test_download_ftp_method(self):
       """
@@ -918,21 +908,27 @@ class TestBiomajFTPDownload(unittest.TestCase):
       ftpd.match(["^readme.txt$"], file_list, dir_list)
       ftpd.download(self.utils.data_dir)
       ftpd.close()
-      self.assertTrue(len(ftpd.files_to_download) == 1)
+      assert (len(ftpd.files_to_download) == 1)
 
 
-@attr('ftps')
-@attr('network')
-class TestBiomajFTPSDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+@pytest.mark.skipif(
+  os.environ.get('FTP', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajFTPSDownload():
   """
   Test FTP downloader with FTPS.
   """
   PROTOCOL = "ftps"
 
-  def setUp(self):
+  def setup_method(self, m):
     self.utils = UtilsForTest()
 
-  def tearDown(self):
+  def teardown_method(self, m):
     self.utils.clean()
 
   def test_ftps_list(self):
@@ -940,7 +936,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.set_credentials("demo:password")
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) == 1)
+    assert (len(file_list) == 1)
 
   def test_ftps_list_error(self):
     """
@@ -950,21 +946,15 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd = CurlDownload("ftps", "test.rebex.net", "/toto")
     ftpd.set_credentials("demo:password")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
     # Test with wrong password
     ftpd = CurlDownload("ftps", "test.rebex.net", "/")
     ftpd.set_credentials("demo:badpassword")
     # Check that we raise an exception and log a message
-    with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-      with self.assertRaises(Exception):
-        (file_list, dir_list) = ftpd.list()
-      # Test log message format (we assume that there is only 1 message)
-      self.assertRegex(cm.output[0], "Error while listing")
+    with pytest.raises(Exception):
+      (file_list, dir_list) = ftpd.list()
     ftpd.close()
 
   def test_download(self):
@@ -974,7 +964,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.match([r'^readme.txt$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 1)
+    assert (len(ftpd.files_to_download) == 1)
 
   def test_ftps_list_no_ssl(self):
     # This server is misconfigured hence we disable all SSL verification
@@ -986,7 +976,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.set_credentials(CREDENTIALS)
     (file_list, dir_list) = ftpd.list()
     ftpd.close()
-    self.assertTrue(len(file_list) > 1)
+    assert (len(file_list) > 1)
 
   def test_download_no_ssl(self):
     # This server is misconfigured hence we disable all SSL verification
@@ -1000,7 +990,7 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 1)
+    assert (len(ftpd.files_to_download) == 1)
 
   def test_download_ssl_certificate(self):
     # This server is misconfigured but we use its certificate
@@ -1017,45 +1007,43 @@ class TestBiomajFTPSDownload(unittest.TestCase):
     ftpd.match([r'^manual_en.pdf$'], file_list, dir_list)
     ftpd.download(self.utils.data_dir)
     ftpd.close()
-    self.assertTrue(len(ftpd.files_to_download) == 1)
+    assert (len(ftpd.files_to_download) == 1)
 
 
-@attr('rsync')
-@attr('local')
-class TestBiomajRSYNCDownload(unittest.TestCase):
+@pytest.mark.skipif(
+  os.environ.get('LOCAL', 1) == '0',
+  reason='network tests disabled'
+)
+class TestBiomajRSYNCDownload():
     '''
     Test RSYNC downloader
     '''
-    def setUp(self):
+    def setup_method(self, m):
         self.utils = UtilsForTest()
 
         self.curdir = os.path.dirname(os.path.realpath(__file__)) + '/'
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    def tearDown(self):
+    def teardown_method(self, m):
         self.utils.clean()
 
     def test_rsync_list(self):
         rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
-        self.assertTrue(len(files_list) != 0)
+        assert (len(files_list) != 0)
 
     def test_rsync_list_error(self):
         # Access a non-existent directory
         rsyncd = RSYNCDownload("/tmp/foo/", "")
-        # Check that we raise an exception and log a message
-        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-            with self.assertRaises(Exception):
-                (file_list, dir_list) = rsyncd.list()
-            # Test log message format (we assume that there is only 1 message)
-            self.assertRegex(cm.output[0], "Error while listing")
+        with pytest.raises(Exception):
+          (file_list, dir_list) = rsyncd.list()
 
     def test_rsync_match(self):
         rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'], files_list, dir_list, prefix='', submatch=False)
-        self.assertTrue(len(rsyncd.files_to_download) != 0)
+        assert (len(rsyncd.files_to_download) != 0)
 
     def test_rsync_download(self):
         rsyncd = RSYNCDownload(self.examples, "")
@@ -1064,14 +1052,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
             "root": self.examples
         }
         error = rsyncd._download(self.utils.data_dir, rfile)
-        self.assertFalse(error)
+        assert not (error)
 
     def test_rsync_general_download(self):
         rsyncd = RSYNCDownload(self.examples, "")
         (files_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^test.*\.gz$'],files_list,dir_list, prefix='')
         download_files=rsyncd.download(self.curdir)
-        self.assertTrue(len(download_files)==1)
+        assert (len(download_files)==1)
 
     def test_rsync_download_or_copy(self):
         rsyncd = RSYNCDownload(self.examples, "")
@@ -1079,14 +1067,14 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         rsyncd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         files_to_download_prev = rsyncd.files_to_download
         rsyncd.download_or_copy(rsyncd.files_to_download, self.examples, check_exists=True)
-        self.assertTrue(files_to_download_prev != rsyncd.files_to_download)
+        assert (files_to_download_prev != rsyncd.files_to_download)
 
     def test_rsync_download_in_subdir(self):
         rsyncd = RSYNCDownload(self.curdir, "")
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'^/bank/test*'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
-        self.assertTrue(len(rsyncd.files_to_download) == 3)
+        assert (len(rsyncd.files_to_download) == 3)
 
     def test_rsync_download_skip_check_uncompress(self):
         """
@@ -1097,7 +1085,7 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         (file_list, dir_list) = rsyncd.list()
         rsyncd.match([r'invalid.gz'], file_list, dir_list, prefix='')
         rsyncd.download(self.utils.data_dir)
-        self.assertTrue(len(rsyncd.files_to_download) == 1)
+        assert (len(rsyncd.files_to_download) == 1)
 
     def test_rsync_download_retry(self):
         """
@@ -1113,24 +1101,23 @@ class TestBiomajRSYNCDownload(unittest.TestCase):
         ])
         rsyncd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegex(
-            Exception, "^RSYNCDownload:Download:Error:",
-            rsyncd.download, self.utils.data_dir,
-        )
+
+        with pytest.raises(Exception):
+          rsyncd.download(self.utils.data_dir)
+
         logging.debug(rsyncd.retryer.statistics)
-        self.assertTrue(len(rsyncd.files_to_download) == 1)
-        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        assert (len(rsyncd.files_to_download) == 1)
+        assert (rsyncd.retryer.statistics["attempt_number"] == n_attempts)
         # Try to download another file to ensure that it retryies
         rsyncd.set_files_to_download([
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegex(
-            Exception, "^RSYNCDownload:Download:Error:",
-            rsyncd.download, self.utils.data_dir,
-        )
-        self.assertTrue(len(rsyncd.files_to_download) == 1)
-        self.assertTrue(rsyncd.retryer.statistics["attempt_number"] == n_attempts)
+        with pytest.raises(Exception):
+          rsyncd.download(self.utils.data_dir)
+
+        assert (len(rsyncd.files_to_download) == 1)
+        assert (rsyncd.retryer.statistics["attempt_number"] == n_attempts)
         rsyncd.close()
 
 
@@ -1206,20 +1193,25 @@ class MockiRODSSession(object):
         return(my_test_file)
 
 
-@attr('irods')
-@attr('roscoZone')
-@attr('network')
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+@pytest.mark.skipif(
+  os.environ.get('IRODS', 1) == '0',
+  reason='iods tests disabled'
+)
 class TestBiomajIRODSDownload(unittest.TestCase):
     '''
     Test IRODS downloader
     '''
-    def setUp(self):
+    def setup_method(self, m):
         self.utils = UtilsForTest()
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    def tearDown(self):
+    def teardown_method(self, m):
         self.utils.clean()
 
     @patch('irods.session.iRODSSession.configure')
@@ -1232,23 +1224,29 @@ class TestBiomajIRODSDownload(unittest.TestCase):
         cleanup_mock.return_value = mock_session.cleanup()
         irodsd = IRODSDownload(self.examples, "")
         (files_list, dir_list) = irodsd.list()
-        self.assertTrue(len(files_list) != 0)
+        assert (len(files_list) != 0)
 
 
-@attr('local_irods')
-@attr('network')
+@pytest.mark.skipif(
+  os.environ.get('NETWORK', 1) == '0',
+  reason='network tests disabled'
+)
+@pytest.mark.skipif(
+  os.environ.get('LOCAL_IRODS', 1) == '0',
+  reason='irods tests disabled'
+)
 class TestBiomajLocalIRODSDownload(unittest.TestCase):
     """
     Test with a local iRODS server.
     """
 
-    def setUp(self):
+    def setup_method(self, m):
         self.utils = UtilsForLocalIRODSTest()
         self.curdir = os.path.dirname(os.path.realpath(__file__))
         self.examples = os.path.join(self.curdir,'bank') + '/'
         BiomajConfig.load_config(self.utils.global_properties, allow_user_config=False)
 
-    def tearDown(self):
+    def teardown_method(self, m):
         self.utils.clean()
 
     def test_irods_download(self):
@@ -1260,7 +1258,7 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'^test.*\.gz$'], file_list, dir_list, prefix='')
         irodsd.download(self.utils.data_dir)
-        self.assertTrue(len(irodsd.files_to_download) == 1)
+        assert (len(irodsd.files_to_download) == 1)
 
     def test_irods_download_skip_check_uncompress(self):
         """
@@ -1275,7 +1273,7 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         (file_list, dir_list) = irodsd.list()
         irodsd.match([r'invalid.gz$'], file_list, dir_list, prefix='')
         irodsd.download(self.utils.data_dir)
-        self.assertTrue(len(irodsd.files_to_download) == 1)
+        assert (len(irodsd.files_to_download) == 1)
 
     def test_irods_download_retry(self):
         """
@@ -1295,24 +1293,21 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
         ])
         irodsd.set_options(dict(stop_condition=tenacity.stop.stop_after_attempt(n_attempts),
                                 wait_condition=tenacity.wait.wait_none()))
-        self.assertRaisesRegex(
-            Exception, "^IRODSDownload:Download:Error:",
-            irodsd.download, self.utils.data_dir,
-        )
+        with pytest.raises(Exception):
+          irodsd.download(self.utils.data_dir)
+
         logging.debug(irodsd.retryer.statistics)
-        self.assertTrue(len(irodsd.files_to_download) == 1)
-        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        assert (len(irodsd.files_to_download) == 1)
+        assert (irodsd.retryer.statistics["attempt_number"] == n_attempts)
         # Try to download another file to ensure that it retryies
         irodsd.set_files_to_download([
               {'name': 'TITI.zip', 'year': '2016', 'month': '02', 'day': '19',
                'size': 1, 'save_as': 'TOTO1KB'}
         ])
-        self.assertRaisesRegex(
-            Exception, "^IRODSDownload:Download:Error:",
-            irodsd.download, self.utils.data_dir,
-        )
-        self.assertTrue(len(irodsd.files_to_download) == 1)
-        self.assertTrue(irodsd.retryer.statistics["attempt_number"] == n_attempts)
+        with pytest.raises(Exception):
+          irodsd.download(self.utils.data_dir)
+        assert (len(irodsd.files_to_download) == 1)
+        assert (irodsd.retryer.statistics["attempt_number"] == n_attempts)
         irodsd.close()
 
     def test_irods_list_error(self):
@@ -1322,19 +1317,13 @@ class TestBiomajLocalIRODSDownload(unittest.TestCase):
             user=self.utils.USER,
             password=self.utils.PASSWORD,
         ))
-        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-            with self.assertRaises(Exception):
-                (file_list, dir_list) = irodsd.list()
-            # Test log message format (we assume that there is only 1 message)
-            self.assertRegex(cm.output[0], "Error while listing")
+        with pytest.raises(Exception):
+          (file_list, dir_list) = irodsd.list()
         # Test with wrong password
         irodsd = IRODSDownload(self.utils.SERVER, self.utils.COLLECTION)
         irodsd.set_param(dict(
             user=self.utils.USER,
             password="badpassword",
         ))
-        with self.assertLogs(logger="biomaj", level="ERROR") as cm:
-            with self.assertRaises(Exception):
-                (file_list, dir_list) = irodsd.list()
-            # Test log message format (we assume that there is only 1 message)
-            self.assertRegex(cm.output[0], "Error while listing")
+        with pytest.raises(Exception):
+          (file_list, dir_list) = irodsd.list()

@@ -1,5 +1,5 @@
 mock
-nose
+pytest
 pycurl
 py-bcrypt
 pika==0.13.0
