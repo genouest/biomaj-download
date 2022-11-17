@@ -1,3 +1,6 @@
+3.2.11:
+  fix direct handler in case of plugin usage
+
 3.2.10:
   Regenerate proto messages
 

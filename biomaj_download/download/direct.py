@@ -47,6 +47,8 @@ class DirectFTPDownload(CurlDownload):
         # biomaj workflow should fix this
         if isinstance(rfile, dict):
             filename = rfile['name']
+            if self.save_as is None and rfile.get('save_as', None):
+                self.save_as = rfile['save_as']
         else:
             # direct protocol send directly some filename
             filename = rfile
