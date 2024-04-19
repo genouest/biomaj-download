@@ -14,6 +14,10 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
+
 config = {
     'description': 'BioMAJ download service',
     'long_description': README + '\n\n' + CHANGES,
@@ -43,25 +47,7 @@ config = {
         'Programming Language :: Python :: 3.6'
     ],
     'python_requires': '>=3.6, <4',
-    'install_requires': [
-                         'biomaj_core',
-                         'biomaj_zipkin',
-                         'pycurl',
-                         'ftputil',
-                         'tenacity',
-                         'simpleeval',
-                         'py-bcrypt',
-                         'pika==0.13.0',
-                         'redis',
-                         'PyYAML',
-                         'flask',
-                         'python-consul',
-                         'prometheus_client>=0.0.18',
-                         'protobuf',
-                         'requests',
-                         'humanfriendly',
-                         'python-irodsclient'
-                        ],
+    'install_requires': requirements,
     'tests_require': ['pytest', 'mock'],
     'packages': find_packages(),
     'include_package_data': True,

@@ -17,3 +17,4 @@ humanfriendly
 python-irodsclient
 simpleeval
 tenacity
+ftputil
