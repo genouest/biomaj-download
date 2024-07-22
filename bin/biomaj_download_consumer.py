@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 '''
 Message consumer for download requests
 '''
