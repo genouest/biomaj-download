@@ -14,7 +14,7 @@ import logging
 import stat
 import pytest
 
-from mock import patch
+from unittest.mock import patch
 
 from irods.session import iRODSSession
 
