@@ -209,7 +209,7 @@ class DownloadClient(DownloadService):
                         for i in range(max_submit):
                             if self.download_pool:
                                 logging.debug('Workflow:wf_download:RemoteDownload:RequestNewFile')
-                                operation = self.download_pool.pop()
+                                operation = self.download_pool.pop(0)
                                 self.ask_download(operation)
                                 nb_submitted += 1
 
