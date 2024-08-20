@@ -26,7 +26,7 @@ config = {
     'url': 'https://biomaj.genouest.org',
     'download_url': 'https://biomaj.genouest.org',
     'author_email': 'support@genouest.org',
-    'version': '3.2.11',
+    'version': '3.2.12',
     'classifiers': [
         # How mature is this project? Common values are
         #   3 - Alpha
