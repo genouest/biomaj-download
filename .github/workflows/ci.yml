@@ -51,7 +51,7 @@ jobs:
 
   pypi:
     runs-on: ubuntu-latest
-    needs: [lint, test, pkg_build]
+    needs: [lint, test]
     name: Deploy release to Pypi
     environment:
       name: release
