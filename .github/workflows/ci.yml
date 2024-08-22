@@ -18,7 +18,8 @@ jobs:
     - name: Flake8
       run: flake8 --ignore=E501,W504 biomaj_download/*.py biomaj_download/download
     - name: Install Protoc
-      uses: arduino/setup-protoc@v3
+      uses: arduino/setup-protoc@v3  with:
+        version: "3.27.2"
     - name: Check that protobuf-compiler has been run
       run: |
         cd biomaj_download/message
