@@ -13,11 +13,15 @@ Python3 support only, python2 support is dropped
 
 ## Protobuf
 
-To compile protobuf, in biomaj_download/message:
+If you make changes to protobuf code, you need to compile it to python code:
 
 ```bash
-cd biomaj_download/message/
-protoc --python_out=. downmessage.proto
+cd /tmp/protoc/
+PB_REL="https://github.com/protocolbuffers/protobuf/releases"
+curl -LO $PB_REL/download/v23.2/protoc-23.2-linux-x86_64.zip  # Version used by GitHub Actions currently
+unzip protoc-23.2-linux-x86_64.zip
+cd ..../biomaj_download/message/
+/tmp/protoc/bin/protoc --python_out=. downmessage.proto
 ```
 
 ## Development
