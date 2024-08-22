@@ -3,7 +3,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-from distutils.command.install import install
 import os
 
 
