@@ -21,6 +21,7 @@ jobs:
       uses: arduino/setup-protoc@v3
       with:
         version: "19.6"
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Check that protobuf-compiler has been run
       run: |
         cd biomaj_download/message
