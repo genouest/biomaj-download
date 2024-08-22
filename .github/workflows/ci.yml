@@ -23,6 +23,8 @@ jobs:
       run: |
         cd biomaj_download/message
         protoc --python_out=. downmessage.proto
+        git status --porcelain
+        git diff
         if [[ `git status --porcelain` ]]; then
           echo "Protobuf-compiler has not been run, please do it and commit the modifed python files"
           exit 1
