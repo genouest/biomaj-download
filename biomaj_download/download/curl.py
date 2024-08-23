@@ -1,4 +1,5 @@
 import re
+import requests
 from datetime import datetime
 import hashlib
 import time
@@ -327,62 +328,13 @@ class CurlDownload(DownloadInterface):
 
     def _head_size_call(self, full_url):
         # Now do a HEAD call on this url
-        size = 0
-
-        self._network_configuration()
-        self.crl.setopt(pycurl.HEADER, True)
-        self.crl.setopt(pycurl.NOBODY, True)
-
         try:
-            self.crl.setopt(pycurl.URL, full_url)
+            size_response = requests.head(full_url, allow_redirects=True)
+            size = int(size_response.headers.get('content-length', 0))
+            return size
+
         except Exception:
-            self.crl.setopt(pycurl.URL, full_url.encode('ascii', 'ignore'))
-
-        output = BytesIO()
-        self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
-
-        try:
-            self.crl.perform()
-            errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
-            if errcode == 405:
-                # HEAD not supported by the server for this URL so we can skip
-                return 0
-            elif errcode not in self.ERRCODE_OK:
-                msg = 'Error while listing ' + full_url + ' - ' + str(errcode)
-                self.logger.error(msg)
-                raise Exception(msg)
-        except Exception as e:
-            msg = 'Error while listing ' + full_url + ' - ' + str(e)
-            self.logger.error(msg)
-            raise e
-
-        # Figure out what encoding was sent with the response, if any.
-        # Check against lowercased header name.
-        encoding = None
-        if 'content-type' in self.headers:
-            content_type = self.headers['content-type'].lower()
-            match = re.search(r'charset=(\S+)', content_type)
-            if match:
-                encoding = match.group(1)
-        if encoding is None:
-            # Default encoding for HTML is iso-8859-1.
-            # Other content types may have different default encoding,
-            # or in case of binary data, may have no encoding at all.
-            encoding = 'iso-8859-1'
-
-        # lets get the output in a string
-        result = output.getvalue().decode(encoding)
-        lines = re.split(r'[\n\r]+', result)
-        for line in lines:
-            parts = line.split(':')
-            if parts[0].strip() == 'Content-Length':
-                # Not sure if Content-Length is always in bytes
-                try:
-                    size = int(parts[1].strip())
-                except Exception:
-                    size = 0
-                return size
-        return size
+            return 0
 
     def _file_url(self, rfile):
         # rfile['root'] is set to self.rootdir if needed but may be different.
