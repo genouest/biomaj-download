@@ -328,8 +328,26 @@ class CurlDownload(DownloadInterface):
 
     def _head_size_call(self, full_url):
         # Now do a HEAD call on this url
+
+        auth = ()
+        proxies = {}
+
+        if self.credentials is not None:
+            auth = tuple(self.credentials.split(":"))
+
+        if self.proxy is not None:
+            proxy = self.proxy
+            if not self.proxy.startswith("http"):
+                proxy = 'http://' + self.proxy
+            if self.proxy_auth is not None:
+                # Don't really want to manage properly the various schemes
+                proxy.replace('http://', 'http://{}@'.format(self.proxy_auth))
+                proxy.replace('https://', 'https://{}@'.format(self.proxy_auth))
+            proxies['http'] = proxy
+            proxies['https'] = proxy
+
         try:
-            size_response = requests.head(full_url, allow_redirects=True)
+            size_response = requests.head(full_url, allow_redirects=True, auth=auth, proxies=proxies)
             size = int(size_response.headers.get('content-length', 0))
             return size
 
