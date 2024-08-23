@@ -298,7 +298,91 @@ class CurlDownload(DownloadInterface):
             rfile['url'] = self.url
         if 'root' not in rfile or not rfile['root']:
             rfile['root'] = self.rootdir
+
+        if rfile.get('modified_size'):
+            # Size parsed is inacurate. Try to get a more accurate size with a HEAD query
+            try:
+                self.logger.debug('Trying to get a more accurate size for ' + rfile['name'])
+                head_size = self._estimate_size(rfile)
+                if head_size:
+                    rfile['size'] = head_size
+            except Exception as e:
+                self.logger.error('Exception while trying to get a more accurate size for ' + rfile['name'] + ' - ' + str(e))
+
         super(CurlDownload, self)._append_file_to_download(rfile)
+
+    def _estimate_size(self, rfile):
+        # Cannot reuse _file_url, since we did not cleanup the name yet
+        # Mostly pasted for the same stuff in direct download
+        name = re.sub('//+', '/', rfile['name'])
+        url = self.url + '/' + rfile['root'] + name
+        url_elts = url.split('://')
+        if len(url_elts) == 2:
+            url_elts[1] = re.sub("/{2,}", "/", url_elts[1])
+            full_url = '://'.join(url_elts)
+        else:
+            full_url = re.sub("/{2,}", "/", url)
+
+        return self._head_size_call(full_url)
+
+    def _head_size_call(self, full_url):
+        # Now do a HEAD call on this url
+        size = 0
+
+        self._network_configuration()
+        self.crl.setopt(pycurl.HEADER, True)
+        self.crl.setopt(pycurl.NOBODY, True)
+
+        try:
+            self.crl.setopt(pycurl.URL, full_url)
+        except Exception:
+            self.crl.setopt(pycurl.URL, full_url.encode('ascii', 'ignore'))
+
+        output = BytesIO()
+        self.crl.setopt(pycurl.WRITEFUNCTION, output.write)
+
+        try:
+            self.crl.perform()
+            errcode = int(self.crl.getinfo(pycurl.RESPONSE_CODE))
+            if errcode == 405:
+                # HEAD not supported by the server for this URL so we can skip
+                return 0
+            elif errcode not in self.ERRCODE_OK:
+                msg = 'Error while listing ' + full_url + ' - ' + str(errcode)
+                self.logger.error(msg)
+                raise Exception(msg)
+        except Exception as e:
+            msg = 'Error while listing ' + full_url + ' - ' + str(e)
+            self.logger.error(msg)
+            raise e
+
+        # Figure out what encoding was sent with the response, if any.
+        # Check against lowercased header name.
+        encoding = None
+        if 'content-type' in self.headers:
+            content_type = self.headers['content-type'].lower()
+            match = re.search(r'charset=(\S+)', content_type)
+            if match:
+                encoding = match.group(1)
+        if encoding is None:
+            # Default encoding for HTML is iso-8859-1.
+            # Other content types may have different default encoding,
+            # or in case of binary data, may have no encoding at all.
+            encoding = 'iso-8859-1'
+
+        # lets get the output in a string
+        result = output.getvalue().decode(encoding)
+        lines = re.split(r'[\n\r]+', result)
+        for line in lines:
+            parts = line.split(':')
+            if parts[0].strip() == 'Content-Length':
+                # Not sure if Content-Length is always in bytes
+                try:
+                    size = int(parts[1].strip())
+                except Exception:
+                    size = 0
+                return size
+        return size
 
     def _file_url(self, rfile):
         # rfile['root'] is set to self.rootdir if needed but may be different.
@@ -519,7 +603,12 @@ class CurlDownload(DownloadInterface):
                 rfile['group'] = ''
                 rfile['user'] = ''
                 if self.http_parse.file_size != -1:
-                    rfile['size'] = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
+                    size = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
+                    if not str(size) == foundfile[self.http_parse.file_size - 1]:
+                        # This is an approximation of the real size (conversion to byte)
+                        # We will check later (in match()) if we can get a more accurate size
+                        rfile['modified_size'] = True
+                    rfile['size'] = size
                 else:
                     rfile['size'] = 0
                 if self.http_parse.file_date != -1:
