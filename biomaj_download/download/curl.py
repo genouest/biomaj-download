@@ -1,4 +1,5 @@
 import re
+import requests
 from datetime import datetime
 import hashlib
 import time
@@ -298,7 +299,60 @@ class CurlDownload(DownloadInterface):
             rfile['url'] = self.url
         if 'root' not in rfile or not rfile['root']:
             rfile['root'] = self.rootdir
+
+        if rfile.get('modified_size'):
+            # Size parsed is inacurate. Try to get a more accurate size with a HEAD query
+            try:
+                self.logger.debug('Trying to get a more accurate size for ' + rfile['name'])
+                head_size = self._estimate_size(rfile)
+                if head_size:
+                    rfile['size'] = head_size
+            except Exception as e:
+                self.logger.error('Exception while trying to get a more accurate size for ' + rfile['name'] + ' - ' + str(e))
+
         super(CurlDownload, self)._append_file_to_download(rfile)
+
+    def _estimate_size(self, rfile):
+        # Cannot reuse _file_url, since we did not cleanup the name yet
+        # Mostly pasted for the same stuff in direct download
+        name = re.sub('//+', '/', rfile['name'])
+        url = self.url + '/' + rfile['root'] + name
+        url_elts = url.split('://')
+        if len(url_elts) == 2:
+            url_elts[1] = re.sub("/{2,}", "/", url_elts[1])
+            full_url = '://'.join(url_elts)
+        else:
+            full_url = re.sub("/{2,}", "/", url)
+
+        return self._head_size_call(full_url)
+
+    def _head_size_call(self, full_url):
+        # Now do a HEAD call on this url
+
+        auth = ()
+        proxies = {}
+
+        if self.credentials is not None:
+            auth = tuple(self.credentials.split(":"))
+
+        if self.proxy is not None:
+            proxy = self.proxy
+            if not self.proxy.startswith("http"):
+                proxy = 'http://' + self.proxy
+            if self.proxy_auth is not None:
+                # Don't really want to manage properly the various schemes
+                proxy.replace('http://', 'http://{}@'.format(self.proxy_auth))
+                proxy.replace('https://', 'https://{}@'.format(self.proxy_auth))
+            proxies['http'] = proxy
+            proxies['https'] = proxy
+
+        try:
+            size_response = requests.head(full_url, allow_redirects=True, auth=auth, proxies=proxies)
+            size = int(size_response.headers.get('content-length', 0))
+            return size
+
+        except Exception:
+            return 0
 
     def _file_url(self, rfile):
         # rfile['root'] is set to self.rootdir if needed but may be different.
@@ -519,7 +573,12 @@ class CurlDownload(DownloadInterface):
                 rfile['group'] = ''
                 rfile['user'] = ''
                 if self.http_parse.file_size != -1:
-                    rfile['size'] = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
+                    size = humanfriendly.parse_size(foundfile[self.http_parse.file_size - 1])
+                    if not str(size) == foundfile[self.http_parse.file_size - 1]:
+                        # This is an approximation of the real size (conversion to byte)
+                        # We will check later (in match()) if we can get a more accurate size
+                        rfile['modified_size'] = True
+                    rfile['size'] = size
                 else:
                     rfile['size'] = 0
                 if self.http_parse.file_date != -1:
