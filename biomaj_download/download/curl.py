@@ -602,11 +602,11 @@ class CurlDownload(DownloadInterface):
                     rfile['day'] = today.day
                     rfile['year'] = today.year
                 if isinstance(foundfile, tuple):
-                    rfile['name'] = foundfile[self.http_parse.file_name - 1]  
+                    rfile['name'] = foundfile[self.http_parse.file_name - 1]
                     filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                     rfile['hash'] = hashlib.md5(filehash).hexdigest()
                 else:
-                    #only self.http_parse.file_name is used
+                    # only self.http_parse.file_name is used
                     rfile['name'] = foundfile
                     filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                     rfile['hash'] = hashlib.md5(filehash).hexdigest()
