@@ -568,6 +568,8 @@ class CurlDownload(DownloadInterface):
         files = re.findall(self.http_parse.file_line, result)
         if files is not None and len(files) > 0:
             for foundfile in files:
+                if not isinstance(foundfile, tuple):
+                    foundfile = tuple([foundfile])
                 rfile = {}
                 rfile['permissions'] = ''
                 rfile['group'] = ''
@@ -601,9 +603,11 @@ class CurlDownload(DownloadInterface):
                     rfile['month'] = today.month
                     rfile['day'] = today.day
                     rfile['year'] = today.year
+
                 rfile['name'] = foundfile[self.http_parse.file_name - 1]
                 filehash = (rfile['name'] + str(date) + str(rfile['size'])).encode('utf-8')
                 rfile['hash'] = hashlib.md5(filehash).hexdigest()
+
                 rfiles.append(rfile)
         return (rfiles, rdirs)
 
