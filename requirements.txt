@@ -1,3 +1,4 @@
+setuptools>=59.8.0
 pycurl
 py-bcrypt
 pika==0.13.0
