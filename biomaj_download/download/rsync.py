@@ -134,7 +134,7 @@ class RSYNCDownload(DownloadInterface):
                 continue
             date = parts[2].split('/')
             rfile['permissions'] = parts[0]
-            rfile['size'] = int(parts[1].replace(',', ''))
+            rfile['size'] = int(parts[1].replace(',', '').replace('.', ''))
             rfile['month'] = int(date[1])
             rfile['day'] = int(date[2])
             rfile['year'] = int(date[0])
