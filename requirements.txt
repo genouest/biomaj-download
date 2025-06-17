@@ -3,7 +3,7 @@ py-bcrypt
 pika==0.13.0
 redis
 PyYAML
-protobuf==3.20.3
+protobuf==4.25.8
 flask
 python-consul
 prometheus_client>=0.0.18
